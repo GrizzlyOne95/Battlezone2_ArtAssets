@@ -1,0 +1,26 @@
+__pycache__/
+*.pyc
+
+# Raw source dump
+/modelsdirectory/
+
+# Intermediate and report outputs
+artifacts/reports/
+artifacts/tmp/
+artifacts/extracts/archives/
+
+# Keep converted/exported assets and manifests
+!artifacts/
+!artifacts/extracts/
+!artifacts/extracts/images/
+!artifacts/extracts/images/**
+!artifacts/extracts/hrc_mesh_like/
+!artifacts/extracts/hrc_mesh_like/**
+!artifacts/extracts/scene_exports/
+!artifacts/extracts/scene_exports/**
+!artifacts/extracts/xsi/
+!artifacts/extracts/xsi/**
+
+# Drop non-OBJ export variants from the kept extract trees
+artifacts/extracts/**/*.gltf
+artifacts/extracts/**/*.bin

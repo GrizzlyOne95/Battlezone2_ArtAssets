@@ -1,0 +1,63 @@
+{
+  "source": "modelsdirectory/MIRE/PICTURES/miredome.xsi",
+  "obj": "artifacts/extracts/xsi/MIRE/PICTURES/miredome/miredome.obj",
+  "mtl": "artifacts/extracts/xsi/MIRE/PICTURES/miredome/miredome.mtl",
+  "gltf": "artifacts/extracts/xsi/MIRE/PICTURES/miredome/miredome.gltf",
+  "gltf_bin": "artifacts/extracts/xsi/MIRE/PICTURES/miredome/miredome.bin",
+  "textures": {
+    "modelsdirectory/MIRE/PICTURES/sky.pic": "artifacts/extracts/xsi/MIRE/PICTURES/miredome/textures/sky.png"
+  },
+  "mesh_frame_count": 1,
+  "total_frame_count": 1,
+  "camera_count": 1,
+  "light_count": 0,
+  "animated_frame_count": 0,
+  "cameras": [
+    {
+      "name": "Camera1",
+      "position": [
+        -1.534126,
+        1.347548,
+        -2.198304
+      ],
+      "target": [
+        0.0,
+        -0.0,
+        0.0
+      ],
+      "roll": 0.0,
+      "near_plane": 41.53944,
+      "far_plane": 0.1
+    }
+  ],
+  "lights": [],
+  "materials": {
+    "mat_000_sphere": {
+      "diffuse": [
+        0.7,
+        0.7,
+        0.7,
+        1.0
+      ],
+      "hardness": 50.0,
+      "specular": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "ambient": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "emissive": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "shading_type": 5,
+      "texture_source": "modelsdirectory/MIRE/PICTURES/sky.pic",
+      "texture_png": "sky.png"
+    }
+  }
+}

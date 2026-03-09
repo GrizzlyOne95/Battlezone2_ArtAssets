@@ -1,0 +1,145 @@
+{
+  "source": "modelsdirectory/ISDF_vehicles/PICTURES/ivstas00.xsi",
+  "obj": "artifacts/extracts/xsi/ISDF_vehicles/PICTURES/ivstas00/ivstas00.obj",
+  "mtl": "artifacts/extracts/xsi/ISDF_vehicles/PICTURES/ivstas00/ivstas00.mtl",
+  "gltf": "artifacts/extracts/xsi/ISDF_vehicles/PICTURES/ivstas00/ivstas00.gltf",
+  "gltf_bin": "artifacts/extracts/xsi/ISDF_vehicles/PICTURES/ivstas00/ivstas00.bin",
+  "textures": {
+    "modelsdirectory/ISDF_vehicles/PICTURES/ivstas00.pic": "artifacts/extracts/xsi/ISDF_vehicles/PICTURES/ivstas00/textures/ivstas00.png",
+    "modelsdirectory/ISDF_vehicles/PICTURES/glare.pic": "artifacts/extracts/xsi/ISDF_vehicles/PICTURES/ivstas00/textures/glare.png"
+  },
+  "mesh_frame_count": 15,
+  "total_frame_count": 15,
+  "camera_count": 1,
+  "light_count": 0,
+  "animated_frame_count": 0,
+  "cameras": [
+    {
+      "name": "Camera1",
+      "position": [
+        -5.038801,
+        5.19488,
+        10.786547
+      ],
+      "target": [
+        0.000507,
+        1.977037,
+        0.094585
+      ],
+      "roll": 0.0,
+      "near_plane": 39.561378,
+      "far_plane": 0.1
+    }
+  ],
+  "lights": [],
+  "materials": {
+    "mat_000_main_body": {
+      "diffuse": [
+        0.7,
+        0.7,
+        0.7,
+        1.0
+      ],
+      "hardness": 200.0,
+      "specular": [
+        0.3,
+        0.3,
+        0.3
+      ],
+      "ambient": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "emissive": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "shading_type": 2,
+      "texture_source": "modelsdirectory/ISDF_vehicles/PICTURES/ivstas00.pic",
+      "texture_png": "ivstas00.png"
+    },
+    "mat_001_flame_4__h": {
+      "diffuse": [
+        0.0,
+        0.5,
+        1.0,
+        1.0
+      ],
+      "hardness": 150.0,
+      "specular": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "ambient": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "emissive": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "shading_type": 0,
+      "texture_source": null,
+      "texture_png": null
+    },
+    "mat_002_rlink": {
+      "diffuse": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "hardness": 150.0,
+      "specular": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "ambient": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "emissive": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "shading_type": 2,
+      "texture_source": "modelsdirectory/ISDF_vehicles/PICTURES/ivstas00.pic",
+      "texture_png": "ivstas00.png"
+    },
+    "mat_003_cockpit": {
+      "diffuse": [
+        1.0,
+        1.0,
+        1.0,
+        0.5
+      ],
+      "hardness": 200.0,
+      "specular": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "ambient": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "emissive": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "shading_type": 2,
+      "texture_source": "modelsdirectory/ISDF_vehicles/PICTURES/glare.pic",
+      "texture_png": "glare.png"
+    }
+  }
+}

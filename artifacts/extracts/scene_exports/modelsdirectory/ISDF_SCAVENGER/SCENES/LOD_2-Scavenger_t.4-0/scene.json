@@ -1,0 +1,52 @@
+{
+  "scene_path": "modelsdirectory/ISDF_SCAVENGER/SCENES/LOD_2-Scavenger_t.4-0.dsc",
+  "obj": "artifacts/extracts/scene_exports/modelsdirectory/ISDF_SCAVENGER/SCENES/LOD_2-Scavenger_t.4-0/LOD_2-Scavenger_t.4-0.obj",
+  "mtl": "artifacts/extracts/scene_exports/modelsdirectory/ISDF_SCAVENGER/SCENES/LOD_2-Scavenger_t.4-0/LOD_2-Scavenger_t.4-0.mtl",
+  "exported_object_count": 1,
+  "missing_object_count": 1,
+  "exported_objects": [
+    {
+      "model_name": "Scavenger_t-obj2.1-0",
+      "source_hrc": "modelsdirectory/ISDF_SCAVENGER/MODELS/Scavenger_t-obj2.1-0.hrc",
+      "decoded_obj": "artifacts/extracts/hrc_mesh_like/ISDF_SCAVENGER/MODELS/Scavenger_t-obj2.1-0.obj",
+      "world_transform": {
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "rotation_xyz": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "translation_xyz": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "material_name": "Scavenger_t-mat482.1-0",
+      "texture_name": "Scavenger_t-t2d22.1-0",
+      "texture_source_picture": "ISDF_vehicles/PICTURES/ivscav00",
+      "inferred_mirror_x": false,
+      "inferred_override": null,
+      "inferred_component_rank": null
+    }
+  ],
+  "missing_objects": [
+    {
+      "model_name": "Scavenger_t-obj1.1-0",
+      "reason": "missing_decoded_obj",
+      "model_resolved_path": null
+    }
+  ],
+  "copied_textures": [
+    {
+      "material_name": "Scavenger_t-mat482.1-0",
+      "texture_name": "Scavenger_t-t2d22.1-0",
+      "source_picture": "ISDF_vehicles/PICTURES/ivscav00",
+      "png": "artifacts/extracts/scene_exports/modelsdirectory/ISDF_SCAVENGER/SCENES/LOD_2-Scavenger_t.4-0/textures/ivscav00.png"
+    }
+  ]
+}

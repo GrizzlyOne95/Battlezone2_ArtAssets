@@ -1,0 +1,23 @@
+newmtl mat_000_main_body
+Kd 0.700000 0.700000 0.700000
+Ks 0.300000 0.300000 0.300000
+d 1.000000
+map_Kd textures/ivstas00.png
+
+newmtl mat_001_flame_4__h
+Kd 0.000000 0.500000 1.000000
+Ks 0.500000 0.500000 0.500000
+d 1.000000
+
+newmtl mat_002_rlink
+Kd 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+d 1.000000
+map_Kd textures/ivstas00.png
+
+newmtl mat_003_cockpit
+Kd 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+d 0.500000
+map_Kd textures/glare.png
+

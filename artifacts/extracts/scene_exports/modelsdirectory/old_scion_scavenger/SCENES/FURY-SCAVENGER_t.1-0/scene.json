@@ -1,0 +1,72 @@
+{
+  "scene_path": "modelsdirectory/old_scion_scavenger/SCENES/FURY-SCAVENGER_t.1-0.dsc",
+  "obj": "artifacts/extracts/scene_exports/modelsdirectory/old_scion_scavenger/SCENES/FURY-SCAVENGER_t.1-0/FURY-SCAVENGER_t.1-0.obj",
+  "mtl": "artifacts/extracts/scene_exports/modelsdirectory/old_scion_scavenger/SCENES/FURY-SCAVENGER_t.1-0/FURY-SCAVENGER_t.1-0.mtl",
+  "exported_object_count": 1,
+  "missing_object_count": 5,
+  "exported_objects": [
+    {
+      "model_name": "SCAVENGER_t-main_body.1-0",
+      "source_hrc": "modelsdirectory/old_scion_scavenger/MODELS/SCAVENGER_t-main_body.1-0.hrc",
+      "decoded_obj": "artifacts/extracts/hrc_mesh_like/old_scion_scavenger/MODELS/SCAVENGER_t-main_body.1-0.obj",
+      "world_transform": {
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "rotation_xyz": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "translation_xyz": [
+          6.304932e-05,
+          8.192987,
+          0.1088289
+        ]
+      },
+      "material_name": "SCAVENGER_t-mat9.1-0",
+      "texture_name": "SCAVENGER_t-t2d13.1-0",
+      "texture_source_picture": "FURY_vehicles/PICTURES/fvrecy00",
+      "inferred_mirror_x": false,
+      "inferred_override": null,
+      "inferred_component_rank": null
+    }
+  ],
+  "missing_objects": [
+    {
+      "model_name": "SCAVENGER_t-C_SCREEN.1-0",
+      "reason": "missing_decoded_obj",
+      "model_resolved_path": null
+    },
+    {
+      "model_name": "SCAVENGER_t-face_2.1-0",
+      "reason": "missing_decoded_obj",
+      "model_resolved_path": null
+    },
+    {
+      "model_name": "SCAVENGER_t-face1__2__g.1-0",
+      "reason": "missing_decoded_obj",
+      "model_resolved_path": null
+    },
+    {
+      "model_name": "SCAVENGER_t-FLUID_SACK.1-0",
+      "reason": "missing_decoded_obj",
+      "model_resolved_path": null
+    },
+    {
+      "model_name": "SCAVENGER_t-SIPHON.1-0",
+      "reason": "missing_decoded_obj",
+      "model_resolved_path": null
+    }
+  ],
+  "copied_textures": [
+    {
+      "material_name": "SCAVENGER_t-mat9.1-0",
+      "texture_name": "SCAVENGER_t-t2d13.1-0",
+      "source_picture": "FURY_vehicles/PICTURES/fvrecy00",
+      "png": "artifacts/extracts/scene_exports/modelsdirectory/old_scion_scavenger/SCENES/FURY-SCAVENGER_t.1-0/textures/fvrecy00.png"
+    }
+  ]
+}

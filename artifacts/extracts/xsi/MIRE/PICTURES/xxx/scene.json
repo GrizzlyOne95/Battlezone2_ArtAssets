@@ -1,0 +1,90 @@
+{
+  "source": "modelsdirectory/MIRE/PICTURES/xxx.xsi",
+  "obj": "artifacts/extracts/xsi/MIRE/PICTURES/xxx/xxx.obj",
+  "mtl": "artifacts/extracts/xsi/MIRE/PICTURES/xxx/xxx.mtl",
+  "gltf": "artifacts/extracts/xsi/MIRE/PICTURES/xxx/xxx.gltf",
+  "gltf_bin": "artifacts/extracts/xsi/MIRE/PICTURES/xxx/xxx.bin",
+  "textures": {
+    "modelsdirectory/MIRE/PICTURES/ac00sA0.pic": "artifacts/extracts/xsi/MIRE/PICTURES/xxx/textures/ac00sA0.png"
+  },
+  "mesh_frame_count": 6,
+  "total_frame_count": 7,
+  "camera_count": 1,
+  "light_count": 0,
+  "animated_frame_count": 0,
+  "cameras": [
+    {
+      "name": "cam_int1",
+      "position": [
+        -594.508301,
+        79.008514,
+        893.325684
+      ],
+      "target": [
+        -589.973083,
+        1.795721,
+        750.634949
+      ],
+      "roll": 0.0,
+      "near_plane": 41.53944,
+      "far_plane": 0.1
+    }
+  ],
+  "lights": [],
+  "materials": {
+    "mat_000_align0": {
+      "diffuse": [
+        0.7,
+        0.7,
+        0.7,
+        1.0
+      ],
+      "hardness": 50.0,
+      "specular": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "ambient": [
+        0.7,
+        0.7,
+        0.7
+      ],
+      "emissive": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "shading_type": 2,
+      "texture_source": null,
+      "texture_png": null
+    },
+    "mat_001_Cluster": {
+      "diffuse": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "hardness": 1.0,
+      "specular": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "ambient": [
+        0.7,
+        0.7,
+        0.7
+      ],
+      "emissive": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "shading_type": 2,
+      "texture_source": "modelsdirectory/MIRE/PICTURES/ac00sA0.pic",
+      "texture_png": "ac00sA0.png"
+    }
+  }
+}

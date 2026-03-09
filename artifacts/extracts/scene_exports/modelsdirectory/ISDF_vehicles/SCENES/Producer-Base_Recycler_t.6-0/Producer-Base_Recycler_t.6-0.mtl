@@ -1,0 +1,4 @@
+newmtl Base_Recycler_t-mat3.4-0
+Kd 0.700000 0.700000 0.700000
+d 1.000000
+map_Kd textures/ivrecy00.png

@@ -1,0 +1,154 @@
+{
+  "scene_path": "modelsdirectory/MIRE/SCENES/MIRE-puff_plant.2-0.dsc",
+  "obj": "artifacts/extracts/scene_exports/modelsdirectory/MIRE/SCENES/MIRE-puff_plant.2-0/MIRE-puff_plant.2-0.obj",
+  "mtl": "artifacts/extracts/scene_exports/modelsdirectory/MIRE/SCENES/MIRE-puff_plant.2-0/MIRE-puff_plant.2-0.mtl",
+  "exported_object_count": 4,
+  "missing_object_count": 1,
+  "exported_objects": [
+    {
+      "model_name": "puff_plant-leafset_1.1-0",
+      "source_hrc": "modelsdirectory/MIRE/MODELS/puff_plant-leafset_1.1-0.hrc",
+      "decoded_obj": "artifacts/extracts/hrc_mesh_like/MIRE/MODELS/puff_plant-leafset_1.1-0.obj",
+      "world_transform": {
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "rotation_xyz": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "translation_xyz": [
+          0.0,
+          -9.842434,
+          0.0
+        ]
+      },
+      "material_name": "puff_plant-mat50.1-0",
+      "texture_name": "puff_plant-t2d17.1-0",
+      "texture_source_picture": "MIRE/PICTURES/GELTREE",
+      "inferred_mirror_x": false,
+      "inferred_override": null,
+      "inferred_component_rank": null
+    },
+    {
+      "model_name": "puff_plant-leafset_2.1-0",
+      "source_hrc": "modelsdirectory/MIRE/MODELS/puff_plant-leafset_2.1-0.hrc",
+      "decoded_obj": "artifacts/extracts/hrc_mesh_like/MIRE/MODELS/puff_plant-leafset_2.1-0.obj",
+      "world_transform": {
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "rotation_xyz": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "translation_xyz": [
+          0.0,
+          -9.842434,
+          0.0
+        ]
+      },
+      "material_name": "puff_plant-mat52.1-0",
+      "texture_name": "puff_plant-t2d19.1-0",
+      "texture_source_picture": "MIRE/PICTURES/BLEAF",
+      "inferred_mirror_x": false,
+      "inferred_override": null,
+      "inferred_component_rank": null
+    },
+    {
+      "model_name": "puff_plant-leafset_3.1-0",
+      "source_hrc": "modelsdirectory/MIRE/MODELS/puff_plant-leafset_3.1-0.hrc",
+      "decoded_obj": "artifacts/extracts/hrc_mesh_like/MIRE/MODELS/puff_plant-leafset_3.1-0.obj",
+      "world_transform": {
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "rotation_xyz": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "translation_xyz": [
+          0.0,
+          3.100206,
+          0.0
+        ]
+      },
+      "material_name": "puff_plant-mat53.1-0",
+      "texture_name": "puff_plant-t2d20.1-0",
+      "texture_source_picture": "MIRE/PICTURES/GELTREE",
+      "inferred_mirror_x": false,
+      "inferred_override": null,
+      "inferred_component_rank": null
+    },
+    {
+      "model_name": "puff_plant-red_cover__2.1-0",
+      "source_hrc": "modelsdirectory/MIRE/MODELS/puff_plant-red_cover__2.1-0.hrc",
+      "decoded_obj": "artifacts/extracts/hrc_mesh_like/MIRE/MODELS/puff_plant-red_cover__2.1-0.obj",
+      "world_transform": {
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "rotation_xyz": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "translation_xyz": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "material_name": "puff_plant-mat49.1-0",
+      "texture_name": "puff_plant-t2d18.1-0",
+      "texture_source_picture": "MIRE/PICTURES/branches",
+      "inferred_mirror_x": false,
+      "inferred_override": null,
+      "inferred_component_rank": null
+    }
+  ],
+  "missing_objects": [
+    {
+      "model_name": "puff_plant-puff__2.1-0",
+      "reason": "missing_decoded_obj",
+      "model_resolved_path": null
+    }
+  ],
+  "copied_textures": [
+    {
+      "material_name": "puff_plant-mat50.1-0",
+      "texture_name": "puff_plant-t2d17.1-0",
+      "source_picture": "MIRE/PICTURES/GELTREE",
+      "png": "artifacts/extracts/scene_exports/modelsdirectory/MIRE/SCENES/MIRE-puff_plant.2-0/textures/GELTREE.png"
+    },
+    {
+      "material_name": "puff_plant-mat52.1-0",
+      "texture_name": "puff_plant-t2d19.1-0",
+      "source_picture": "MIRE/PICTURES/BLEAF",
+      "png": "artifacts/extracts/scene_exports/modelsdirectory/MIRE/SCENES/MIRE-puff_plant.2-0/textures/BLEAF.png"
+    },
+    {
+      "material_name": "puff_plant-mat53.1-0",
+      "texture_name": "puff_plant-t2d20.1-0",
+      "source_picture": "MIRE/PICTURES/GELTREE",
+      "png": "artifacts/extracts/scene_exports/modelsdirectory/MIRE/SCENES/MIRE-puff_plant.2-0/textures/GELTREE.png"
+    },
+    {
+      "material_name": "puff_plant-mat49.1-0",
+      "texture_name": "puff_plant-t2d18.1-0",
+      "source_picture": "MIRE/PICTURES/branches",
+      "png": "artifacts/extracts/scene_exports/modelsdirectory/MIRE/SCENES/MIRE-puff_plant.2-0/textures/branches.png"
+    }
+  ]
+}

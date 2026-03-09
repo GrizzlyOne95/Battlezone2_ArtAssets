@@ -1,0 +1,175 @@
+{
+  "source": "modelsdirectory/MIRE/PICTURES/cave.xsi",
+  "obj": "artifacts/extracts/xsi/MIRE/PICTURES/cave/cave.obj",
+  "mtl": "artifacts/extracts/xsi/MIRE/PICTURES/cave/cave.mtl",
+  "gltf": "artifacts/extracts/xsi/MIRE/PICTURES/cave/cave.gltf",
+  "gltf_bin": "artifacts/extracts/xsi/MIRE/PICTURES/cave/cave.bin",
+  "textures": {
+    "modelsdirectory/MIRE/PICTURES/default.pic": "artifacts/extracts/xsi/MIRE/PICTURES/cave/textures/default.png",
+    "modelsdirectory/MIRE/PICTURES/ac00sA0.pic": "artifacts/extracts/xsi/MIRE/PICTURES/cave/textures/ac00sA0.png",
+    "modelsdirectory/MIRE/PICTURES/ac03dA0.pic": "artifacts/extracts/xsi/MIRE/PICTURES/cave/textures/ac03dA0.png",
+    "modelsdirectory/MIRE/PICTURES/ac03cA0.pic": "artifacts/extracts/xsi/MIRE/PICTURES/cave/textures/ac03cA0.png",
+    "modelsdirectory/MIRE/PICTURES/ac01dA0.pic": "artifacts/extracts/xsi/MIRE/PICTURES/cave/textures/ac01dA0.png"
+  },
+  "mesh_frame_count": 21,
+  "total_frame_count": 22,
+  "camera_count": 1,
+  "light_count": 0,
+  "animated_frame_count": 0,
+  "cameras": [
+    {
+      "name": "cam_int1",
+      "position": [
+        -594.508301,
+        79.008514,
+        893.325684
+      ],
+      "target": [
+        -589.973083,
+        1.795721,
+        750.634949
+      ],
+      "roll": 0.0,
+      "near_plane": 41.53944,
+      "far_plane": 0.1
+    }
+  ],
+  "lights": [],
+  "materials": {
+    "mat_000_align0": {
+      "diffuse": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "hardness": 50.0,
+      "specular": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "ambient": [
+        0.7,
+        0.7,
+        0.7
+      ],
+      "emissive": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "shading_type": 2,
+      "texture_source": "modelsdirectory/MIRE/PICTURES/default.pic",
+      "texture_png": "default.png"
+    },
+    "mat_001_Cluster": {
+      "diffuse": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "hardness": 0.0,
+      "specular": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "ambient": [
+        0.7,
+        0.7,
+        0.7
+      ],
+      "emissive": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "shading_type": 2,
+      "texture_source": "modelsdirectory/MIRE/PICTURES/ac00sA0.pic",
+      "texture_png": "ac00sA0.png"
+    },
+    "mat_002_Cluster60": {
+      "diffuse": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "hardness": 0.0,
+      "specular": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "ambient": [
+        0.7,
+        0.7,
+        0.7
+      ],
+      "emissive": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "shading_type": 2,
+      "texture_source": "modelsdirectory/MIRE/PICTURES/ac03dA0.pic",
+      "texture_png": "ac03dA0.png"
+    },
+    "mat_003_Cluster72": {
+      "diffuse": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "hardness": 0.0,
+      "specular": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "ambient": [
+        0.7,
+        0.7,
+        0.7
+      ],
+      "emissive": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "shading_type": 2,
+      "texture_source": "modelsdirectory/MIRE/PICTURES/ac03cA0.pic",
+      "texture_png": "ac03cA0.png"
+    },
+    "mat_004_Cluster78": {
+      "diffuse": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "hardness": 0.0,
+      "specular": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "ambient": [
+        0.7,
+        0.7,
+        0.7
+      ],
+      "emissive": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "shading_type": 2,
+      "texture_source": "modelsdirectory/MIRE/PICTURES/ac01dA0.pic",
+      "texture_png": "ac01dA0.png"
+    }
+  }
+}

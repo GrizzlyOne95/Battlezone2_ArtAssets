@@ -1,0 +1,192 @@
+{
+  "scene_path": "modelsdirectory/ISDF_SCAVENGER/SCENES/UTILITY-Scavenger_t.8-0.dsc",
+  "obj": "artifacts/extracts/scene_exports/modelsdirectory/ISDF_SCAVENGER/SCENES/UTILITY-Scavenger_t.8-0/UTILITY-Scavenger_t.8-0.obj",
+  "mtl": "artifacts/extracts/scene_exports/modelsdirectory/ISDF_SCAVENGER/SCENES/UTILITY-Scavenger_t.8-0/UTILITY-Scavenger_t.8-0.mtl",
+  "exported_object_count": 10,
+  "missing_object_count": 0,
+  "exported_objects": [
+    {
+      "model_name": "Scavenger_t-main_body.1-0",
+      "source_hrc": "modelsdirectory/ISDF_SCAVENGER/MODELS/Scavenger_t-main_body.2-0.hrc",
+      "decoded_obj": "artifacts/extracts/hrc_mesh_like/ISDF_SCAVENGER/MODELS/Scavenger_t-main_body.2-0.obj",
+      "world_transform": null,
+      "material_name": "Scavenger_t-mat1.1-0",
+      "texture_name": "Scavenger_t-t2d1.2-0",
+      "texture_source_picture": "ISDF_vehicles/PICTURES/ivscav00",
+      "inferred_mirror_x": false,
+      "inferred_override": "closed_sibling_main_body",
+      "inferred_component_rank": null
+    },
+    {
+      "model_name": "Scavenger_t-mudflap.1-0",
+      "source_hrc": "modelsdirectory/ISDF_SCAVENGER/MODELS/Scavenger_t-obj2.1-0.hrc",
+      "decoded_obj": "artifacts/extracts/hrc_mesh_like/ISDF_SCAVENGER/MODELS/Scavenger_t-obj2.1-0.obj",
+      "world_transform": null,
+      "material_name": "Scavenger_t-mat3.1-0",
+      "texture_name": "Scavenger_t-t2d3.2-0",
+      "texture_source_picture": "ISDF_vehicles/PICTURES/ivscav00",
+      "inferred_mirror_x": false,
+      "inferred_override": "surrogate_obj2_component_2_mudflap",
+      "inferred_component_rank": 2
+    },
+    {
+      "model_name": "Scavenger_t-obj3_2_1.2-0",
+      "source_hrc": "modelsdirectory/ISDF_SCAVENGER/MODELS/Scavenger_t-obj2.1-0.hrc",
+      "decoded_obj": "artifacts/extracts/hrc_mesh_like/ISDF_SCAVENGER/MODELS/Scavenger_t-obj2.1-0.obj",
+      "world_transform": null,
+      "material_name": "Scavenger_t-mat2.1-0",
+      "texture_name": "Scavenger_t-t2d2.2-0",
+      "texture_source_picture": "ISDF_vehicles/PICTURES/ivscav00",
+      "inferred_mirror_x": false,
+      "inferred_override": "surrogate_obj2_component_3_obj3_2_1",
+      "inferred_component_rank": 3
+    },
+    {
+      "model_name": "Scavenger_t-cockpit.1-0",
+      "source_hrc": "modelsdirectory/ISDF_SCAVENGER/MODELS/Scavenger_t-obj2.1-0.hrc",
+      "decoded_obj": "artifacts/extracts/hrc_mesh_like/ISDF_SCAVENGER/MODELS/Scavenger_t-obj2.1-0.obj",
+      "world_transform": null,
+      "material_name": "Scavenger_t-mat10.1-0",
+      "texture_name": "Scavenger_t-t2d10.1-0",
+      "texture_source_picture": "ISDF_vehicles/PICTURES/glare",
+      "inferred_mirror_x": false,
+      "inferred_override": "surrogate_obj2_component_8_cockpit",
+      "inferred_component_rank": 8
+    },
+    {
+      "model_name": "Scavenger_t-suspension_l.1-0",
+      "source_hrc": "modelsdirectory/ISDF_SCAVENGER/MODELS/Scavenger_t-suspension_l1.1-0.hrc",
+      "decoded_obj": "artifacts/extracts/hrc_mesh_like/ISDF_SCAVENGER/MODELS/Scavenger_t-suspension_l1.1-0.obj",
+      "world_transform": null,
+      "material_name": "Scavenger_t-mat8.1-0",
+      "texture_name": "Scavenger_t-t2d8.2-0",
+      "texture_source_picture": "ISDF_vehicles/PICTURES/ivscav00",
+      "inferred_mirror_x": false,
+      "inferred_override": null,
+      "inferred_component_rank": null
+    },
+    {
+      "model_name": "Scavenger_t-suspension_r.1-0",
+      "source_hrc": "modelsdirectory/ISDF_SCAVENGER/MODELS/Scavenger_t-suspension_l1.1-0.hrc",
+      "decoded_obj": "artifacts/extracts/hrc_mesh_like/ISDF_SCAVENGER/MODELS/Scavenger_t-suspension_l1.1-0.obj",
+      "world_transform": null,
+      "material_name": "Scavenger_t-mat9.1-0",
+      "texture_name": "Scavenger_t-t2d9.2-0",
+      "texture_source_picture": "ISDF_vehicles/PICTURES/ivscav00",
+      "inferred_mirror_x": true,
+      "inferred_override": null,
+      "inferred_component_rank": null
+    },
+    {
+      "model_name": "Scavenger_t-tractor_l__h.1-0",
+      "source_hrc": "modelsdirectory/ISDF_SCAVENGER/MODELS/Scavenger_t-tractor_l__h1.1-0.hrc",
+      "decoded_obj": "artifacts/extracts/hrc_mesh_like/ISDF_SCAVENGER/MODELS/Scavenger_t-tractor_l__h1.1-0.obj",
+      "world_transform": null,
+      "material_name": "Scavenger_t-mat4.2-0",
+      "texture_name": "Scavenger_t-t2d4.3-0",
+      "texture_source_picture": "ISDF_vehicles/PICTURES/tread",
+      "inferred_mirror_x": false,
+      "inferred_override": null,
+      "inferred_component_rank": null
+    },
+    {
+      "model_name": "Scavenger_t-tractor_r__h.2-0",
+      "source_hrc": "modelsdirectory/ISDF_SCAVENGER/MODELS/Scavenger_t-tractor_l__h1.2-0.hrc",
+      "decoded_obj": "artifacts/extracts/hrc_mesh_like/ISDF_SCAVENGER/MODELS/Scavenger_t-tractor_l__h1.2-0.obj",
+      "world_transform": null,
+      "material_name": "Scavenger_t-mat7.2-0",
+      "texture_name": "Scavenger_t-t2d7.3-0",
+      "texture_source_picture": "ISDF_vehicles/PICTURES/tread",
+      "inferred_mirror_x": true,
+      "inferred_override": null,
+      "inferred_component_rank": null
+    },
+    {
+      "model_name": "Scavenger_t-tread_l.1-0",
+      "source_hrc": "modelsdirectory/ISDF_SCAVENGER/MODELS/Scavenger_t-tread_l1.1-0.hrc",
+      "decoded_obj": "artifacts/extracts/hrc_mesh_like/ISDF_SCAVENGER/MODELS/Scavenger_t-tread_l1.1-0.obj",
+      "world_transform": null,
+      "material_name": "Scavenger_t-mat5.1-0",
+      "texture_name": "Scavenger_t-t2d5.1-0",
+      "texture_source_picture": "ISDF_vehicles/PICTURES/ivscav00",
+      "inferred_mirror_x": false,
+      "inferred_override": null,
+      "inferred_component_rank": null
+    },
+    {
+      "model_name": "Scavenger_t-tread_r.1-0",
+      "source_hrc": "modelsdirectory/ISDF_SCAVENGER/MODELS/Scavenger_t-tread_l1.1-0.hrc",
+      "decoded_obj": "artifacts/extracts/hrc_mesh_like/ISDF_SCAVENGER/MODELS/Scavenger_t-tread_l1.1-0.obj",
+      "world_transform": null,
+      "material_name": "Scavenger_t-mat6.1-0",
+      "texture_name": "Scavenger_t-t2d6.2-0",
+      "texture_source_picture": "ISDF_vehicles/PICTURES/ivscav00",
+      "inferred_mirror_x": true,
+      "inferred_override": null,
+      "inferred_component_rank": null
+    }
+  ],
+  "missing_objects": [],
+  "copied_textures": [
+    {
+      "material_name": "Scavenger_t-mat1.1-0",
+      "texture_name": "Scavenger_t-t2d1.2-0",
+      "source_picture": "ISDF_vehicles/PICTURES/ivscav00",
+      "png": "artifacts/extracts/scene_exports/modelsdirectory/ISDF_SCAVENGER/SCENES/UTILITY-Scavenger_t.8-0/textures/ivscav00.png"
+    },
+    {
+      "material_name": "Scavenger_t-mat3.1-0",
+      "texture_name": "Scavenger_t-t2d3.2-0",
+      "source_picture": "ISDF_vehicles/PICTURES/ivscav00",
+      "png": "artifacts/extracts/scene_exports/modelsdirectory/ISDF_SCAVENGER/SCENES/UTILITY-Scavenger_t.8-0/textures/ivscav00.png"
+    },
+    {
+      "material_name": "Scavenger_t-mat2.1-0",
+      "texture_name": "Scavenger_t-t2d2.2-0",
+      "source_picture": "ISDF_vehicles/PICTURES/ivscav00",
+      "png": "artifacts/extracts/scene_exports/modelsdirectory/ISDF_SCAVENGER/SCENES/UTILITY-Scavenger_t.8-0/textures/ivscav00.png"
+    },
+    {
+      "material_name": "Scavenger_t-mat10.1-0",
+      "texture_name": "Scavenger_t-t2d10.1-0",
+      "source_picture": "ISDF_vehicles/PICTURES/glare",
+      "png": "artifacts/extracts/scene_exports/modelsdirectory/ISDF_SCAVENGER/SCENES/UTILITY-Scavenger_t.8-0/textures/glare.png"
+    },
+    {
+      "material_name": "Scavenger_t-mat8.1-0",
+      "texture_name": "Scavenger_t-t2d8.2-0",
+      "source_picture": "ISDF_vehicles/PICTURES/ivscav00",
+      "png": "artifacts/extracts/scene_exports/modelsdirectory/ISDF_SCAVENGER/SCENES/UTILITY-Scavenger_t.8-0/textures/ivscav00.png"
+    },
+    {
+      "material_name": "Scavenger_t-mat9.1-0",
+      "texture_name": "Scavenger_t-t2d9.2-0",
+      "source_picture": "ISDF_vehicles/PICTURES/ivscav00",
+      "png": "artifacts/extracts/scene_exports/modelsdirectory/ISDF_SCAVENGER/SCENES/UTILITY-Scavenger_t.8-0/textures/ivscav00.png"
+    },
+    {
+      "material_name": "Scavenger_t-mat4.2-0",
+      "texture_name": "Scavenger_t-t2d4.3-0",
+      "source_picture": "ISDF_vehicles/PICTURES/tread",
+      "png": "artifacts/extracts/scene_exports/modelsdirectory/ISDF_SCAVENGER/SCENES/UTILITY-Scavenger_t.8-0/textures/tread.png"
+    },
+    {
+      "material_name": "Scavenger_t-mat7.2-0",
+      "texture_name": "Scavenger_t-t2d7.3-0",
+      "source_picture": "ISDF_vehicles/PICTURES/tread",
+      "png": "artifacts/extracts/scene_exports/modelsdirectory/ISDF_SCAVENGER/SCENES/UTILITY-Scavenger_t.8-0/textures/tread.png"
+    },
+    {
+      "material_name": "Scavenger_t-mat5.1-0",
+      "texture_name": "Scavenger_t-t2d5.1-0",
+      "source_picture": "ISDF_vehicles/PICTURES/ivscav00",
+      "png": "artifacts/extracts/scene_exports/modelsdirectory/ISDF_SCAVENGER/SCENES/UTILITY-Scavenger_t.8-0/textures/ivscav00.png"
+    },
+    {
+      "material_name": "Scavenger_t-mat6.1-0",
+      "texture_name": "Scavenger_t-t2d6.2-0",
+      "source_picture": "ISDF_vehicles/PICTURES/ivscav00",
+      "png": "artifacts/extracts/scene_exports/modelsdirectory/ISDF_SCAVENGER/SCENES/UTILITY-Scavenger_t.8-0/textures/ivscav00.png"
+    }
+  ]
+}

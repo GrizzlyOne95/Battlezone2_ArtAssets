@@ -1,0 +1,19 @@
+newmtl puff_plant-mat50.1-0
+Kd 0.700000 0.700000 0.700000
+d 1.000000
+map_Kd textures/GELTREE.png
+
+newmtl puff_plant-mat52.1-0
+Kd 0.700000 0.700000 0.700000
+d 1.000000
+map_Kd textures/BLEAF.png
+
+newmtl puff_plant-mat53.1-0
+Kd 0.700000 0.700000 0.700000
+d 1.000000
+map_Kd textures/GELTREE.png
+
+newmtl puff_plant-mat49.1-0
+Kd 0.700000 0.700000 0.700000
+d 1.000000
+map_Kd textures/branches.png

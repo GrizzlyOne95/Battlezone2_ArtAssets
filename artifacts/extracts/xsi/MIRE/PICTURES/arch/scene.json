@@ -1,0 +1,119 @@
+{
+  "source": "modelsdirectory/MIRE/PICTURES/arch.xsi",
+  "obj": "artifacts/extracts/xsi/MIRE/PICTURES/arch/arch.obj",
+  "mtl": "artifacts/extracts/xsi/MIRE/PICTURES/arch/arch.mtl",
+  "gltf": "artifacts/extracts/xsi/MIRE/PICTURES/arch/arch.gltf",
+  "gltf_bin": "artifacts/extracts/xsi/MIRE/PICTURES/arch/arch.bin",
+  "textures": {
+    "modelsdirectory/MIRE/PICTURES/default.pic": "artifacts/extracts/xsi/MIRE/PICTURES/arch/textures/default.png",
+    "modelsdirectory/MIRE/PICTURES/ac00sa0.pic": "artifacts/extracts/xsi/MIRE/PICTURES/arch/textures/ac00sa0.png",
+    "modelsdirectory/MIRE/PICTURES/arch.pic": "artifacts/extracts/xsi/MIRE/PICTURES/arch/textures/arch.png"
+  },
+  "mesh_frame_count": 4,
+  "total_frame_count": 5,
+  "camera_count": 1,
+  "light_count": 0,
+  "animated_frame_count": 0,
+  "cameras": [
+    {
+      "name": "cam_int1",
+      "position": [
+        -594.508301,
+        79.008514,
+        893.325684
+      ],
+      "target": [
+        -589.973083,
+        1.795721,
+        750.634949
+      ],
+      "roll": 0.0,
+      "near_plane": 41.53944,
+      "far_plane": 0.1
+    }
+  ],
+  "lights": [],
+  "materials": {
+    "mat_000_align0": {
+      "diffuse": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "hardness": 50.0,
+      "specular": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "ambient": [
+        0.7,
+        0.7,
+        0.7
+      ],
+      "emissive": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "shading_type": 2,
+      "texture_source": "modelsdirectory/MIRE/PICTURES/default.pic",
+      "texture_png": "default.png"
+    },
+    "mat_001_obj3": {
+      "diffuse": [
+        0.7,
+        0.7,
+        0.7,
+        1.0
+      ],
+      "hardness": 0.0,
+      "specular": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "ambient": [
+        0.7,
+        0.7,
+        0.7
+      ],
+      "emissive": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "shading_type": 2,
+      "texture_source": "modelsdirectory/MIRE/PICTURES/ac00sa0.pic",
+      "texture_png": "ac00sa0.png"
+    },
+    "mat_002_obj4": {
+      "diffuse": [
+        0.7,
+        0.7,
+        0.7,
+        1.0
+      ],
+      "hardness": 0.0,
+      "specular": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "ambient": [
+        0.7,
+        0.7,
+        0.7
+      ],
+      "emissive": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "shading_type": 2,
+      "texture_source": "modelsdirectory/MIRE/PICTURES/arch.pic",
+      "texture_png": "arch.png"
+    }
+  }
+}

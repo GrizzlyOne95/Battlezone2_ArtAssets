@@ -1,0 +1,90 @@
+{
+  "source": "modelsdirectory/rend_environs/PICTURES/reslida1.xsi",
+  "obj": "artifacts/extracts/xsi/rend_environs/PICTURES/reslida1/reslida1.obj",
+  "mtl": "artifacts/extracts/xsi/rend_environs/PICTURES/reslida1/reslida1.mtl",
+  "gltf": "artifacts/extracts/xsi/rend_environs/PICTURES/reslida1/reslida1.gltf",
+  "gltf_bin": "artifacts/extracts/xsi/rend_environs/PICTURES/reslida1/reslida1.bin",
+  "textures": {
+    "modelsdirectory/MIRE_BUILDINGS/PICTURES/mire.pic": "artifacts/extracts/xsi/rend_environs/PICTURES/reslida1/textures/mire.png"
+  },
+  "mesh_frame_count": 2,
+  "total_frame_count": 2,
+  "camera_count": 1,
+  "light_count": 0,
+  "animated_frame_count": 0,
+  "cameras": [
+    {
+      "name": "cam_int1",
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "target": [
+        0.0,
+        0.0,
+        5.0
+      ],
+      "roll": 0.0,
+      "near_plane": 41.53944,
+      "far_plane": 0.1
+    }
+  ],
+  "lights": [],
+  "materials": {
+    "mat_000_terrain__h": {
+      "diffuse": [
+        0.7,
+        0.7,
+        0.7,
+        1.0
+      ],
+      "hardness": 1.0,
+      "specular": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "ambient": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "emissive": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "shading_type": 2,
+      "texture_source": null,
+      "texture_png": null
+    },
+    "mat_001_obj": {
+      "diffuse": [
+        0.7,
+        0.7,
+        0.7,
+        1.0
+      ],
+      "hardness": 1.0,
+      "specular": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "ambient": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "emissive": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "shading_type": 2,
+      "texture_source": "modelsdirectory/MIRE_BUILDINGS/PICTURES/mire.pic",
+      "texture_png": "mire.png"
+    }
+  }
+}

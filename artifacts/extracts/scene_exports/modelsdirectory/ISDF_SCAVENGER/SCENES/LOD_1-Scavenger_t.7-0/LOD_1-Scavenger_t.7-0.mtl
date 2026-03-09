@@ -1,0 +1,9 @@
+newmtl Scavenger_t-mat327.1-0
+Kd 0.700000 0.700000 0.700000
+d 1.000000
+map_Kd textures/ivscav00.png
+
+newmtl Scavenger_t-mat4.4-0
+Kd 0.700000 0.700000 0.700000
+d 1.000000
+map_Kd textures/tread.png

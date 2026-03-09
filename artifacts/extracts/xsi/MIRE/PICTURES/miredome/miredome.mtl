@@ -1,0 +1,6 @@
+newmtl mat_000_sphere
+Kd 0.700000 0.700000 0.700000
+Ks 1.000000 1.000000 1.000000
+d 1.000000
+map_Kd textures/sky.png
+

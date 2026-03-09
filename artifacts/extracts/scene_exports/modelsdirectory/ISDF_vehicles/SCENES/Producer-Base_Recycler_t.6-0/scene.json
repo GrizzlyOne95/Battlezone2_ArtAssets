@@ -1,0 +1,97 @@
+{
+  "scene_path": "modelsdirectory/ISDF_vehicles/SCENES/Producer-Base_Recycler_t.6-0.dsc",
+  "obj": "artifacts/extracts/scene_exports/modelsdirectory/ISDF_vehicles/SCENES/Producer-Base_Recycler_t.6-0/Producer-Base_Recycler_t.6-0.obj",
+  "mtl": "artifacts/extracts/scene_exports/modelsdirectory/ISDF_vehicles/SCENES/Producer-Base_Recycler_t.6-0/Producer-Base_Recycler_t.6-0.mtl",
+  "exported_object_count": 1,
+  "missing_object_count": 10,
+  "exported_objects": [
+    {
+      "model_name": "Base_Recycler_t-main_body.1-0",
+      "source_hrc": "modelsdirectory/ISDF_vehicles/MODELS/Base_Recycler_t-main_body.1-0.hrc",
+      "decoded_obj": "artifacts/extracts/hrc_mesh_like/ISDF_vehicles/MODELS/Base_Recycler_t-main_body.1-0.obj",
+      "world_transform": {
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "rotation_xyz": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "translation_xyz": [
+          0.0,
+          7.787824,
+          7.760269
+        ]
+      },
+      "material_name": "Base_Recycler_t-mat3.4-0",
+      "texture_name": "Base_Recycler_t-t2d3.5-0",
+      "texture_source_picture": "ISDF_vehicles/PICTURES/ivrecy00",
+      "inferred_mirror_x": false,
+      "inferred_override": null,
+      "inferred_component_rank": null
+    }
+  ],
+  "missing_objects": [
+    {
+      "model_name": "Base_Recycler_t-hatch.1-0",
+      "reason": "missing_decoded_obj",
+      "model_resolved_path": null
+    },
+    {
+      "model_name": "Base_Recycler_t-jaw.1-0",
+      "reason": "missing_decoded_obj",
+      "model_resolved_path": null
+    },
+    {
+      "model_name": "Base_Recycler_t-ltrack.1-0",
+      "reason": "missing_decoded_obj",
+      "model_resolved_path": null
+    },
+    {
+      "model_name": "Base_Recycler_t-nose.1-0",
+      "reason": "missing_decoded_obj",
+      "model_resolved_path": null
+    },
+    {
+      "model_name": "Base_Recycler_t-nozzle_1.1-0",
+      "reason": "missing_decoded_obj",
+      "model_resolved_path": null
+    },
+    {
+      "model_name": "Base_Recycler_t-nozzle_2.1-0",
+      "reason": "missing_decoded_obj",
+      "model_resolved_path": null
+    },
+    {
+      "model_name": "Base_Recycler_t-nozzle_3.1-0",
+      "reason": "missing_decoded_obj",
+      "model_resolved_path": null
+    },
+    {
+      "model_name": "Base_Recycler_t-platform.1-0",
+      "reason": "missing_decoded_obj",
+      "model_resolved_path": null
+    },
+    {
+      "model_name": "Base_Recycler_t-ring.1-0",
+      "reason": "missing_decoded_obj",
+      "model_resolved_path": null
+    },
+    {
+      "model_name": "Base_Recycler_t-rtrack.3-0",
+      "reason": "missing_decoded_obj",
+      "model_resolved_path": null
+    }
+  ],
+  "copied_textures": [
+    {
+      "material_name": "Base_Recycler_t-mat3.4-0",
+      "texture_name": "Base_Recycler_t-t2d3.5-0",
+      "source_picture": "ISDF_vehicles/PICTURES/ivrecy00",
+      "png": "artifacts/extracts/scene_exports/modelsdirectory/ISDF_vehicles/SCENES/Producer-Base_Recycler_t.6-0/textures/ivrecy00.png"
+    }
+  ]
+}

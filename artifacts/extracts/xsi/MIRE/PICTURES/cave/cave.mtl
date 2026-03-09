@@ -1,0 +1,30 @@
+newmtl mat_000_align0
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+d 1.000000
+map_Kd textures/default.png
+
+newmtl mat_001_Cluster
+Kd 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+d 1.000000
+map_Kd textures/ac00sA0.png
+
+newmtl mat_002_Cluster60
+Kd 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+d 1.000000
+map_Kd textures/ac03dA0.png
+
+newmtl mat_003_Cluster72
+Kd 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+d 1.000000
+map_Kd textures/ac03cA0.png
+
+newmtl mat_004_Cluster78
+Kd 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+d 1.000000
+map_Kd textures/ac01dA0.png
+
