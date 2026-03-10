@@ -83,6 +83,17 @@ CHAPTER_EXTENSIONS = {
     "VOLUME_SHADERS": ".shd",
     "WAVES": ".wav",
 }
+ANIMATION_TARGET_CHAPTERS = (
+    "MODELS",
+    "SHAPES",
+    "MATERIALS",
+    "TEXTURES2D",
+    "TEXTURES3D",
+    "LIGHTS",
+    "CAMERAS",
+    "CLUSTERS",
+    "SCENES",
+)
 NAME_VERSION_RE = re.compile(r"^(.*?)(\.\d+-\d+)$")
 MAX_POLYGON_CORNERS = 32
 ISDF_SCAVENGER_BODY_OFFSET = [0.0, -7.886654, 1.047626]
@@ -508,6 +519,70 @@ def transform_vector(vector: tuple[float, float, float], matrix: list[list[float
     if mag > 0:
         return (tx / mag, ty / mag, tz / mag)
     return (tx, ty, tz)
+
+
+def matrix_translation_xyz(matrix: list[list[float]]) -> list[float]:
+    return [round(matrix[3][0], 6), round(matrix[3][1], 6), round(matrix[3][2], 6)]
+
+
+def row_major_to_gltf_matrix(matrix: list[list[float]]) -> list[float]:
+    return [float(value) for row in matrix for value in row]
+
+
+def normalize_vector(vector: tuple[float, float, float]) -> tuple[float, float, float]:
+    x, y, z = vector
+    mag = math.sqrt((x * x) + (y * y) + (z * z))
+    if mag <= 0:
+        return (0.0, 0.0, 0.0)
+    return (x / mag, y / mag, z / mag)
+
+
+def quaternion_from_euler_xyz(rotation_xyz: tuple[float, float, float], *, degrees: bool = False) -> list[float]:
+    rx, ry, rz = rotation_xyz
+    if degrees:
+        rx = math.radians(rx)
+        ry = math.radians(ry)
+        rz = math.radians(rz)
+
+    cx = math.cos(rx * 0.5)
+    sx = math.sin(rx * 0.5)
+    cy = math.cos(ry * 0.5)
+    sy = math.sin(ry * 0.5)
+    cz = math.cos(rz * 0.5)
+    sz = math.sin(rz * 0.5)
+
+    qw = (cx * cy * cz) + (sx * sy * sz)
+    qx = (sx * cy * cz) - (cx * sy * sz)
+    qy = (cx * sy * cz) + (sx * cy * sz)
+    qz = (cx * cy * sz) - (sx * sy * cz)
+    return [qx, qy, qz, qw]
+
+
+def quaternion_from_two_vectors(
+    src: tuple[float, float, float],
+    dst: tuple[float, float, float],
+) -> list[float]:
+    ax, ay, az = normalize_vector(src)
+    bx, by, bz = normalize_vector(dst)
+    dot = max(-1.0, min(1.0, (ax * bx) + (ay * by) + (az * bz)))
+
+    if dot < -0.999999:
+        axis = normalize_vector((0.0, -az, ay))
+        if axis == (0.0, 0.0, 0.0):
+            axis = normalize_vector((-bz, 0.0, bx))
+        return [axis[0], axis[1], axis[2], 0.0]
+
+    cross = (
+        (ay * bz) - (az * by),
+        (az * bx) - (ax * bz),
+        (ax * by) - (ay * bx),
+    )
+    qw = 1.0 + dot
+    qx, qy, qz = cross
+    mag = math.sqrt((qx * qx) + (qy * qy) + (qz * qz) + (qw * qw))
+    if mag <= 0:
+        return [0.0, 0.0, 0.0, 1.0]
+    return [qx / mag, qy / mag, qz / mag, qw / mag]
 
 
 def build_srt_matrix(
@@ -1330,42 +1405,128 @@ def parse_expression_files() -> dict:
     return {"file_count": len(entries), "expression_count": expression_count, "entries": entries}
 
 
-def extract_animation_model_refs(data: bytes) -> list[str]:
-    pos = data.find(b"MODELS")
-    if pos == -1:
-        return []
+def parse_animation_target_table(data: bytes) -> dict | None:
+    section_name = None
+    section_pos = -1
+    for chapter in ANIMATION_TARGET_CHAPTERS:
+        pos = data.find(chapter.encode("ascii"))
+        if pos == -1:
+            continue
+        if section_pos == -1 or pos < section_pos:
+            section_name = chapter
+            section_pos = pos
+    if section_name is None:
+        return None
 
-    refs = []
-    seen = set()
-    for match in re.finditer(rb"[ -~]{4,}", data[pos + len("MODELS") :]):
-        value = match.group().decode("latin-1", errors="replace").strip()
-        if not value:
-            continue
-        if not any(ch.isalpha() for ch in value):
-            continue
-        if value in {"No comment...", "MODELS"}:
-            continue
-        if value in seen:
-            continue
-        seen.add(value)
-        refs.append(value)
-    return refs
+    cursor = section_pos + len(section_name)
+    while cursor < len(data) and data[cursor] == 0:
+        cursor += 1
+
+    entries = []
+    while cursor < len(data) and data[cursor] == 1:
+        cursor += 1
+        name_end = data.find(b"\x00\x00\x02", cursor)
+        if name_end == -1:
+            break
+
+        raw_name = data[cursor:name_end]
+        if not raw_name or any(byte < 0x20 or byte > 0x7E for byte in raw_name):
+            break
+
+        meta = data[name_end + 3 : name_end + 6]
+        if len(meta) < 3:
+            break
+
+        entries.append(
+            {
+                "name": raw_name.decode("latin-1", errors="replace"),
+                "meta_hex": meta.hex(),
+                "meta_u16_be": int.from_bytes(meta[:2], "big"),
+                "meta_s16_be": int.from_bytes(meta[:2], "big", signed=True),
+                "meta_u8": meta[2],
+            }
+        )
+        cursor = name_end + 6
+
+    return {
+        "target_chapter": section_name,
+        "targets": entries,
+        "target_stream_offset": cursor,
+    }
 
 
 def parse_animation_files() -> dict:
     entries = []
     total_refs = 0
+    target_chapter_counts: Counter[str] = Counter()
+    marker_value_counts: Counter[float] = Counter()
+    tag_counts: Counter[int] = Counter()
+    tagset_counts: Counter[str] = Counter()
+    tagset_counts_by_chapter: dict[str, Counter[str]] = {}
     for path in sorted(MODEL_ROOT.rglob("*.ani")):
-        refs = extract_animation_model_refs(path.read_bytes())
-        total_refs += len(refs)
-        entries.append(
-            {
-                "path": rel(path),
-                "reference_count": len(refs),
-                "model_refs": refs,
-            }
-        )
-    return {"file_count": len(entries), "reference_count": total_refs, "entries": entries}
+        data = path.read_bytes()
+        parsed = parse_animation_target_table(data)
+        targets = parsed["targets"] if parsed else []
+        total_refs += len(targets)
+
+        entry = {
+            "path": rel(path),
+            "target_count": len(targets),
+            "targets": targets,
+        }
+        if parsed:
+            entry["target_chapter"] = parsed["target_chapter"]
+            entry["target_stream_offset"] = parsed["target_stream_offset"]
+            entry.update(summarize_animation_stream(data, parsed["target_stream_offset"]))
+            target_chapter_counts[parsed["target_chapter"]] += 1
+            if parsed["target_chapter"] == "MODELS":
+                entry["model_refs"] = [target["name"] for target in targets]
+
+            for marker_item in entry.get("marker_0007_0001_float_counts", []):
+                marker_value_counts[marker_item["value"]] += marker_item["count"]
+
+            for tag, payload in entry.get("u32_tag_float_samples", {}).items():
+                tag_counts[int(tag)] += payload.get("count", 0)
+
+            for candidate in entry.get("frame_candidates", []):
+                tagset = ",".join(candidate.get("channel_values", {}).keys())
+                if not tagset:
+                    continue
+                tagset_counts[tagset] += 1
+                chapter = parsed["target_chapter"]
+                if chapter not in tagset_counts_by_chapter:
+                    tagset_counts_by_chapter[chapter] = Counter()
+                tagset_counts_by_chapter[chapter][tagset] += 1
+
+        entries.append(entry)
+
+    marker_value_summary = [
+        {"value": value, "count": count}
+        for value, count in sorted(marker_value_counts.items(), key=lambda item: (-item[1], item[0]))
+    ]
+    tag_counts_summary = {str(tag): tag_counts[tag] for tag in sorted(tag_counts)}
+    tagset_summary = [
+        {"tagset": tagset, "count": count}
+        for tagset, count in tagset_counts.most_common(20)
+    ]
+    tagset_summary_by_chapter = {
+        chapter: [
+            {"tagset": tagset, "count": count}
+            for tagset, count in counter.most_common(12)
+        ]
+        for chapter, counter in sorted(tagset_counts_by_chapter.items())
+    }
+
+    return {
+        "file_count": len(entries),
+        "target_count": total_refs,
+        "target_chapter_counts": dict(sorted(target_chapter_counts.items())),
+        "stream_marker_value_counts": marker_value_summary,
+        "stream_tag_counts": tag_counts_summary,
+        "frame_candidate_tagsets": tagset_summary,
+        "frame_candidate_tagsets_by_chapter": tagset_summary_by_chapter,
+        "entries": entries,
+    }
 
 
 def unpack_be_floats(data: bytes, count: int) -> list[float]:
@@ -1373,6 +1534,15 @@ def unpack_be_floats(data: bytes, count: int) -> list[float]:
     if len(data) < size:
         return []
     return list(struct.unpack(f">{count}f", data[:size]))
+
+
+def clamp01(value: float) -> float:
+    return max(0.0, min(1.0, float(value)))
+
+
+def phong_exponent_to_roughness(exponent: float) -> float:
+    exponent = max(0.0, float(exponent))
+    return clamp01(math.sqrt(2.0 / (exponent + 2.0)))
 
 
 def classify_hrc_payload(class_id: int, subtype_id: int) -> str:
@@ -1452,6 +1622,7 @@ def parse_hrc_headers() -> dict:
 
 def parse_binary_materials() -> dict:
     entries = []
+    shading_type_counts: Counter[int] = Counter()
     for path in sorted(MODEL_ROOT.rglob("*.mtr")):
         data = path.read_bytes()
         marker = data.find(b"MTRL")
@@ -1473,12 +1644,37 @@ def parse_binary_materials() -> dict:
         shading_type_hint = None
         if shading_offset + 4 <= len(data):
             shading_type_hint = int(round(struct.unpack(">f", data[shading_offset : shading_offset + 4])[0]))
+            shading_type_counts[shading_type_hint] += 1
+
+        decoded_fields = {}
+        if len(float_window) >= 12:
+            alpha_hint = 1.0
+            if 0.0 <= float_window[11] <= 1.0:
+                alpha_hint = clamp01(float_window[11])
+
+            ior_hint = None
+            if 1.0 < float_window[11] <= 4.0:
+                ior_hint = round(float_window[11], 6)
+
+            decoded_fields = {
+                "diffuse_rgb": [round(clamp01(value), 6) for value in float_window[2:5]],
+                "specular_rgb": [round(max(0.0, value), 6) for value in float_window[5:8]],
+                "shininess": round(max(0.0, float_window[8]), 6),
+                "roughness_hint": round(phong_exponent_to_roughness(float_window[8]), 6),
+                "alpha_hint": round(alpha_hint, 6),
+                "shading_type": shading_type_hint,
+                "transparency_hint": round(float_window[9], 6),
+                "reflection_hint": round(float_window[10], 6),
+                "ior_hint": ior_hint,
+                "prefix_color_hint_rg": [round(float_window[0], 6), round(float_window[1], 6)],
+            }
 
         entries.append(
             {
                 "path": rel(path),
                 "material_name": data[marker + 4 : name_end].decode("latin-1", errors="replace"),
                 "float_window_be": [round(value, 6) for value in float_window],
+                "decoded_fields": decoded_fields,
                 "likely_fields": {
                     "color_hint_a": [round(value, 6) for value in float_window[0:2]],
                     "color_hint_b": [round(value, 6) for value in float_window[2:5]],
@@ -1494,7 +1690,602 @@ def parse_binary_materials() -> dict:
             }
         )
 
+    return {
+        "count": len(entries),
+        "shading_type_counts": dict(sorted(shading_type_counts.items())),
+        "entries": entries,
+    }
+
+
+def summarize_animation_stream(data: bytes, offset: int) -> dict:
+    tail = data[offset:]
+    prefix = tail[:64]
+    u16_prefix = []
+    for index in range(0, min(len(prefix) // 2 * 2, 32), 2):
+        u16_prefix.append(int.from_bytes(prefix[index : index + 2], "big"))
+
+    float_hints = []
+    seen_float_hints: set[float] = set()
+    scan_limit = min(len(tail), 256)
+    for index in range(0, max(0, scan_limit - 8), 2):
+        if tail[index : index + 4] != b"\x00\x07\x00\x01":
+            continue
+        next_tag = int.from_bytes(tail[index + 8 : index + 10], "big")
+        if next_tag not in {0, 1, 2, 3, 4, 5, 6, 7}:
+            continue
+        value = struct.unpack(">f", tail[index + 4 : index + 8])[0]
+        rounded = round(value, 6)
+        if not math.isfinite(value):
+            continue
+        if abs(value) < 0.01 or abs(value) > 10000.0:
+            continue
+        if rounded in seen_float_hints:
+            continue
+        seen_float_hints.add(rounded)
+        float_hints.append(rounded)
+        if len(float_hints) >= 12:
+            break
+
+    marker_counts: Counter[float] = Counter()
+    marker_scan_limit = min(len(tail), 2048)
+    for index in range(0, max(0, marker_scan_limit - 8)):
+        if tail[index : index + 4] != b"\x00\x07\x00\x01":
+            continue
+        value = struct.unpack(">f", tail[index + 4 : index + 8])[0]
+        if not math.isfinite(value):
+            continue
+        if abs(value) > 10000.0:
+            continue
+        marker_counts[round(value, 6)] += 1
+
+    marker_candidates = [
+        {"value": value, "count": count}
+        for value, count in sorted(marker_counts.items(), key=lambda item: (-item[1], item[0]))
+    ]
+
+    tag_counts: Counter[int] = Counter()
+    tag_samples: dict[int, list[float]] = {tag: [] for tag in range(1, 9)}
+    for index in range(0, max(0, marker_scan_limit - 8)):
+        tag = int.from_bytes(tail[index : index + 4], "big")
+        if not 1 <= tag <= 8:
+            continue
+        value = struct.unpack(">f", tail[index + 4 : index + 8])[0]
+        if not math.isfinite(value):
+            continue
+        if abs(value) > 1_000_000.0:
+            continue
+        tag_counts[tag] += 1
+        samples = tag_samples[tag]
+        if len(samples) < 8:
+            samples.append(round(value, 6))
+
+    tag_float_samples = {
+        str(tag): {"count": tag_counts[tag], "samples": tag_samples[tag]}
+        for tag in range(1, 9)
+        if tag_counts[tag]
+    }
+
+    frame_candidates = []
+    marker = b"\x00\x07\x00\x01"
+    frame_scan_limit = min(len(tail), 4096)
+    index = 0
+    while index < max(0, frame_scan_limit - 8) and len(frame_candidates) < 3:
+        if tail[index : index + 4] != marker:
+            index += 1
+            continue
+        time_value = struct.unpack(">f", tail[index + 4 : index + 8])[0]
+        if not math.isfinite(time_value) or abs(time_value) > 10000.0:
+            index += 1
+            continue
+
+        channel_values: dict[int, float] = {}
+        cursor = index + 8
+        window_end = min(frame_scan_limit, index + 256)
+        while cursor + 8 <= window_end:
+            if tail[cursor : cursor + 4] == marker:
+                break
+            tag = int.from_bytes(tail[cursor : cursor + 4], "big")
+            if 1 <= tag <= 8:
+                value = struct.unpack(">f", tail[cursor + 4 : cursor + 8])[0]
+                if math.isfinite(value) and abs(value) <= 1_000_000.0:
+                    channel_values.setdefault(tag, round(value, 6))
+            cursor += 1
+
+        if channel_values:
+            frame_candidates.append(
+                {
+                    "offset": index,
+                    "time_hint": round(time_value, 6),
+                    "channel_values": {str(tag): value for tag, value in sorted(channel_values.items())},
+                }
+            )
+        index += 1
+
+    return {
+        "stream_byte_count": len(tail),
+        "stream_prefix_hex": prefix.hex(" "),
+        "stream_u16_prefix_be": u16_prefix,
+        "plausible_be_float_hints": float_hints,
+        "marker_0007_0001_float_counts": marker_candidates,
+        "u32_tag_float_samples": tag_float_samples,
+        "frame_candidates": frame_candidates,
+    }
+
+
+def extract_animation_frames(
+    tail: bytes, *, max_frames: int = 60, scan_limit: int = 65536
+) -> list[dict]:
+    marker = b"\x00\x07\x00\x01"
+    frames = []
+    limit = min(len(tail), scan_limit)
+    index = 0
+    while index < max(0, limit - 8) and len(frames) < max_frames:
+        pos = tail.find(marker, index, limit - 4)
+        if pos == -1:
+            break
+        time_value = struct.unpack(">f", tail[pos + 4 : pos + 8])[0]
+        if not math.isfinite(time_value) or abs(time_value) > 10000.0:
+            index = pos + 1
+            continue
+
+        channel_values: dict[int, float] = {}
+        window_end = min(limit, pos + 1024)
+        cursor = pos + 8
+        next_marker = tail.find(marker, cursor, window_end)
+        if next_marker != -1:
+            window_end = next_marker
+
+        while cursor + 8 <= window_end:
+            tag = int.from_bytes(tail[cursor : cursor + 4], "big")
+            if 1 <= tag <= 8:
+                value = struct.unpack(">f", tail[cursor + 4 : cursor + 8])[0]
+                if math.isfinite(value) and abs(value) <= 1_000_000.0:
+                    channel_values.setdefault(tag, round(value, 6))
+            cursor += 1
+
+        if channel_values:
+            frames.append(
+                {
+                    "offset": pos,
+                    "time_hint": round(time_value, 6),
+                    "channel_values": {str(tag): value for tag, value in sorted(channel_values.items())},
+                }
+            )
+
+        index = max(pos + 1, window_end)
+
+    return frames
+
+
+def probe_animation_streams(
+    *,
+    per_chapter_limit: int = 12,
+    max_frames: int = 60,
+    scan_limit: int = 65536,
+) -> dict:
+    chapter_groups: dict[str, list[tuple[int, Path, int, int]]] = defaultdict(list)
+    for path in sorted(MODEL_ROOT.rglob("*.ani")):
+        data = path.read_bytes()
+        parsed = parse_animation_target_table(data)
+        if not parsed:
+            continue
+        offset = parsed["target_stream_offset"]
+        stream_len = max(0, len(data) - offset)
+        chapter = parsed["target_chapter"]
+        chapter_groups[chapter].append((stream_len, path, offset, len(parsed["targets"])))
+
+    entries = []
+    chapter_counts: Counter[str] = Counter()
+    delta_counts: Counter[float] = Counter()
+    tagset_counts: Counter[str] = Counter()
+
+    for chapter, items in sorted(chapter_groups.items()):
+        items.sort(key=lambda item: (item[0], str(item[1])))
+        for stream_len, path, offset, target_count in items[:per_chapter_limit]:
+            data = path.read_bytes()
+            tail = data[offset:]
+            frames = extract_animation_frames(tail, max_frames=max_frames, scan_limit=scan_limit)
+            time_values = [frame["time_hint"] for frame in frames]
+            delta_counts_local: Counter[float] = Counter()
+            for prev, curr in zip(time_values, time_values[1:]):
+                delta = round(curr - prev, 6)
+                delta_counts_local[delta] += 1
+                delta_counts[delta] += 1
+
+            tagset_counts_local: Counter[str] = Counter()
+            for frame in frames:
+                tagset = ",".join(frame["channel_values"].keys())
+                if tagset:
+                    tagset_counts_local[tagset] += 1
+                    tagset_counts[tagset] += 1
+
+            entries.append(
+                {
+                    "path": rel(path),
+                    "target_chapter": chapter,
+                    "target_count": target_count,
+                    "stream_byte_count": stream_len,
+                    "frame_count": len(frames),
+                    "frame_time_values": time_values[:12],
+                    "frame_time_delta_counts": [
+                        {"delta": delta, "count": count}
+                        for delta, count in delta_counts_local.most_common(8)
+                    ],
+                    "frame_tagset_counts": [
+                        {"tagset": tagset, "count": count}
+                        for tagset, count in tagset_counts_local.most_common(8)
+                    ],
+                    "frame_samples": frames[:6],
+                }
+            )
+            chapter_counts[chapter] += 1
+
+    return {
+        "per_chapter_limit": per_chapter_limit,
+        "max_frames": max_frames,
+        "scan_limit": scan_limit,
+        "file_count": len(entries),
+        "chapter_counts": dict(sorted(chapter_counts.items())),
+        "frame_time_delta_counts": [
+            {"delta": delta, "count": count}
+            for delta, count in delta_counts.most_common(20)
+        ],
+        "frame_tagset_counts": [
+            {"tagset": tagset, "count": count}
+            for tagset, count in tagset_counts.most_common(20)
+        ],
+        "entries": entries,
+    }
+
+
+def probe_camera_animation_links(
+    *,
+    max_frames: int = 120,
+    scan_limit: int = 65536,
+    max_entries: int | None = None,
+) -> dict:
+    cameras = load_cached_report("binary_cameras.json")
+    if cameras is None:
+        cameras = parse_binary_cameras()
+    camera_by_name = {Path(entry["path"]).stem: entry for entry in cameras.get("entries", [])}
+
+    field_labels = [
+        "position_xyz",
+        "rotation_xyz_hint",
+        "clip_near",
+        "clip_far",
+        "yfov_radians",
+        "focal_length_hint",
+        "f_stop_hint",
+        "focus_distance_hint",
+    ]
+
+    def gather_field_values(entry: dict) -> dict[str, list[float]]:
+        values: dict[str, list[float]] = {}
+        for label in field_labels:
+            raw = entry.get(label)
+            if raw is None:
+                continue
+            if isinstance(raw, list):
+                values[label] = [float(value) for value in raw]
+            else:
+                values[label] = [float(raw)]
+        return values
+
+    def match_field_candidates(tag_values: list[float], field_values: dict[str, list[float]]) -> list[dict]:
+        matches = []
+        if not tag_values:
+            return matches
+        for label, values in field_values.items():
+            best = None
+            for tag_value in tag_values:
+                for field_value in values:
+                    delta = abs(tag_value - field_value)
+                    threshold = max(0.05, abs(field_value) * 0.02)
+                    if delta <= threshold and (best is None or delta < best["delta"]):
+                        best = {
+                            "field": label,
+                            "field_value": round(field_value, 6),
+                            "tag_value": round(tag_value, 6),
+                            "delta": round(delta, 6),
+                        }
+            if best is not None:
+                matches.append(best)
+        return matches
+
+    entries = []
+    match_counts: Counter[str] = Counter()
+    ani_paths = sorted(MODEL_ROOT.rglob("*.ani"))
+    if max_entries is not None:
+        ani_paths = ani_paths[: max_entries]
+
+    for path in ani_paths:
+        data = path.read_bytes()
+        parsed = parse_animation_target_table(data)
+        if not parsed or parsed["target_chapter"] != "CAMERAS":
+            continue
+        offset = parsed["target_stream_offset"]
+        tail = data[offset:]
+        frames = extract_animation_frames(tail, max_frames=max_frames, scan_limit=scan_limit)
+        if not frames:
+            continue
+        time_values = [frame["time_hint"] for frame in frames]
+
+        tag_values: dict[str, list[float]] = defaultdict(list)
+        for frame in frames:
+            for tag, value in frame["channel_values"].items():
+                tag_values[tag].append(float(value))
+
+        tag_stats = {}
+        for tag, values in sorted(tag_values.items(), key=lambda item: int(item[0])):
+            tag_stats[tag] = {
+                "count": len(values),
+                "min": round(min(values), 6),
+                "max": round(max(values), 6),
+                "mean": round(sum(values) / len(values), 6),
+                "samples": [round(value, 6) for value in values[:6]],
+            }
+
+        target_names = [target["name"] for target in parsed["targets"]]
+        for target_name in target_names:
+            cam_entry = camera_by_name.get(target_name)
+            if cam_entry is None:
+                continue
+            field_values = gather_field_values(cam_entry)
+            tag_matches = []
+            for tag, values in tag_values.items():
+                matches = match_field_candidates(values, field_values)
+                if matches:
+                    for match in matches:
+                        match_counts[f"tag_{tag}->{match['field']}"] += 1
+                    tag_matches.append({"tag": tag, "matches": matches})
+
+            entries.append(
+                {
+                    "ani_path": rel(path),
+                    "camera_target": target_name,
+                    "camera_path": cam_entry.get("path"),
+                    "frame_count": len(frames),
+                    "time_values_head": time_values[:12],
+                    "tag_stats": tag_stats,
+                    "tag_matches": tag_matches,
+                }
+            )
+
+    match_summary = [
+        {"mapping": mapping, "count": count}
+        for mapping, count in match_counts.most_common(25)
+    ]
+
+    return {
+        "max_frames": max_frames,
+        "scan_limit": scan_limit,
+        "entry_count": len(entries),
+        "match_summary": match_summary,
+        "entries": entries,
+    }
+
+
+def read_f32_be_at(data: bytes, offset: int) -> float | None:
+    if offset < 0 or offset + 4 > len(data):
+        return None
+    return struct.unpack(">f", data[offset : offset + 4])[0]
+
+
+def read_vec3_be_at(data: bytes, offset: int) -> list[float] | None:
+    if offset < 0 or offset + 12 > len(data):
+        return None
+    return [round(value, 6) for value in struct.unpack(">fff", data[offset : offset + 12])]
+
+
+def find_marker_payload(data: bytes, marker: bytes, size: int, *, start: int = 88) -> bytes | None:
+    pos = data.find(marker, start)
+    if pos == -1:
+        return None
+    payload_start = pos + len(marker)
+    payload_end = payload_start + size
+    if payload_end > len(data):
+        return None
+    return data[payload_start:payload_end]
+
+
+def parse_binary_cameras() -> dict:
+    entries = []
+    for path in sorted(MODEL_ROOT.rglob("*.cam")):
+        data = path.read_bytes()
+
+        position_raw = find_marker_payload(data, b"\x00\x03\x00\x01", 12)
+        rotation_raw = find_marker_payload(data, b"\x00\x04\x00\x01", 12)
+        clip_near_raw = find_marker_payload(data, b"\x00\x07\x00\x01", 4)
+        clip_far_raw = find_marker_payload(data, b"\x00\x08\x00\x01", 4)
+        focal_length_raw = find_marker_payload(data, b"\x00\x09\x00\x01", 4)
+        f_stop_raw = find_marker_payload(data, b"\x00\x0A\x00\x01", 4)
+        focus_distance_raw = find_marker_payload(data, b"\x00\x0B\x00\x01", 4)
+        yfov_raw = find_marker_payload(data, b"\x00\x0C\x00\x01", 4)
+
+        position = [round(v, 6) for v in struct.unpack(">fff", position_raw)] if position_raw else None
+        rotation_xyz = [round(v, 6) for v in struct.unpack(">fff", rotation_raw)] if rotation_raw else None
+        clip_near = round(struct.unpack(">f", clip_near_raw)[0], 6) if clip_near_raw else None
+        clip_far = round(struct.unpack(">f", clip_far_raw)[0], 6) if clip_far_raw else None
+        focal_length = round(struct.unpack(">f", focal_length_raw)[0], 6) if focal_length_raw else None
+        f_stop = round(struct.unpack(">f", f_stop_raw)[0], 6) if f_stop_raw else None
+        focus_distance = round(struct.unpack(">f", focus_distance_raw)[0], 6) if focus_distance_raw else None
+        yfov_radians = round(struct.unpack(">f", yfov_raw)[0], 6) if yfov_raw else None
+
+        rotation_degrees = None
+        rotation_quaternion = None
+        if rotation_xyz is not None:
+            rotation_degrees = any(abs(value) > (math.tau * 1.25) for value in rotation_xyz)
+            rotation_quaternion = quaternion_from_euler_xyz(tuple(rotation_xyz), degrees=rotation_degrees)
+
+        entries.append(
+            {
+                "path": rel(path),
+                "position_xyz": position,
+                "rotation_xyz_hint": rotation_xyz,
+                "rotation_unit_hint": "degrees" if rotation_degrees else "radians",
+                "rotation_quaternion_hint": [round(value, 6) for value in rotation_quaternion] if rotation_quaternion else None,
+                "clip_near": clip_near,
+                "clip_far": clip_far,
+                "yfov_radians": yfov_radians,
+                "focal_length_hint": focal_length,
+                "f_stop_hint": f_stop,
+                "focus_distance_hint": focus_distance,
+                "notes": [
+                    "position_xyz and rotation_xyz_hint come from stable tagged fields 3 and 4",
+                    "rotation_unit_hint is inferred heuristically from observed value ranges",
+                    "yfov_radians is taken from stable tagged field 12 and maps cleanly to common camera FOV values",
+                ],
+            }
+        )
+
     return {"count": len(entries), "entries": entries}
+
+
+def parse_binary_lights() -> dict:
+    entries = []
+    kind_counts: Counter[str] = Counter()
+
+    for path in sorted(MODEL_ROOT.rglob("*.lig")):
+        data = path.read_bytes()
+        name = None
+        name_marker = data.find(b"\x00\x01", 88)
+        if name_marker != -1:
+            name_end = data.find(b"\x00\x00\x02", name_marker + 2)
+            if name_end != -1:
+                name = data[name_marker + 2 : name_end].decode("latin-1", errors="replace")
+
+        color_raw = find_marker_payload(data, b"\x00\x03\x00\x01", 12)
+        intensity_raw = find_marker_payload(data, b"\x00\x04\x00\x01", 4)
+        range_raw = find_marker_payload(data, b"\x00\x05\x00\x01", 4)
+        cone_scale_raw = find_marker_payload(data, b"\x00\x06\x00\x01", 4)
+        position_raw = find_marker_payload(data, b"\x00\x07\x00\x01", 12)
+        direction_raw = find_marker_payload(data, b"\x00\x08\x00\x01", 12)
+        inner_cone_raw = find_marker_payload(data, b"\x00\x09\x00\x01", 4)
+        outer_cone_raw = find_marker_payload(data, b"\x00\x0A\x00\x01", 4)
+
+        color = [round(v, 6) for v in struct.unpack(">fff", color_raw)] if color_raw else None
+        intensity = round(struct.unpack(">f", intensity_raw)[0], 6) if intensity_raw else None
+        range_hint = round(struct.unpack(">f", range_raw)[0], 6) if range_raw else None
+        cone_scale = round(struct.unpack(">f", cone_scale_raw)[0], 6) if cone_scale_raw else None
+        position = [round(v, 6) for v in struct.unpack(">fff", position_raw)] if position_raw else None
+        direction = [round(v, 6) for v in struct.unpack(">fff", direction_raw)] if direction_raw else None
+        inner_cone = round(struct.unpack(">f", inner_cone_raw)[0], 6) if inner_cone_raw else None
+        outer_cone = round(struct.unpack(">f", outer_cone_raw)[0], 6) if outer_cone_raw else None
+
+        light_kind = "point"
+        if name and "sun" in name.lower():
+            light_kind = "directional"
+        elif (
+            (name and "spot" in name.lower())
+            or (inner_cone is not None)
+            or (outer_cone is not None)
+            or (direction and any(abs(value) > 1e-6 for value in direction))
+        ):
+            light_kind = "spot"
+        kind_counts[light_kind] += 1
+
+        rotation_quaternion = None
+        if direction and any(abs(value) > 1e-6 for value in direction):
+            rotation_quaternion = quaternion_from_two_vectors((0.0, 0.0, -1.0), tuple(direction))
+
+        entries.append(
+            {
+                "path": rel(path),
+                "light_name": name,
+                "light_kind_hint": light_kind,
+                "color_rgb": color,
+                "intensity_hint": intensity,
+                "range_hint": range_hint,
+                "cone_scale_hint": cone_scale,
+                "position_xyz": position,
+                "direction_xyz_hint": direction,
+                "rotation_quaternion_hint": [round(value, 6) for value in rotation_quaternion] if rotation_quaternion else None,
+                "spot_inner_cone_angle": inner_cone,
+                "spot_outer_cone_angle": outer_cone,
+                "notes": [
+                    "color, position, and direction come from stable tagged fields in the light object",
+                    "light_kind_hint is inferred from the light name and whether a direction vector is present",
+                    "range_hint is omitted from glTF export when the source value looks like an infinite/default sentinel",
+                ],
+            }
+        )
+
+    return {
+        "count": len(entries),
+        "light_kind_counts": dict(sorted(kind_counts.items())),
+        "entries": entries,
+    }
+
+
+def analyze_nurbs_usage() -> dict:
+    hrc_report = load_cached_report("hrc_headers.json")
+    if hrc_report is None:
+        hrc_report = parse_hrc_headers()
+
+    scene_report = load_cached_report("scene_dependencies.json")
+    if scene_report is None:
+        scene_report = build_scene_dependencies()
+
+    hrc_lookup = {entry["path"]: entry for entry in hrc_report.get("entries", []) if entry.get("path")}
+    payload_counts: Counter[str] = Counter()
+    scene_counts: Counter[str] = Counter()
+    scenes_with_nurbs = 0
+    scene_entries = []
+
+    for scene in scene_report.get("entries", []):
+        scene_payloads: Counter[str] = Counter()
+        nurbs_entries = []
+        related_entries = []
+        for chapter in scene.get("chapters", []):
+            if chapter.get("chapter") != "MODELS":
+                continue
+            for item in chapter.get("entries", []):
+                resolved_path = item.get("resolved_path")
+                if not resolved_path or resolved_path not in hrc_lookup:
+                    continue
+                header = hrc_lookup[resolved_path]
+                payload_kind = header.get("payload_kind")
+                if payload_kind not in {"nurbs_like", "surface_or_fx", "spline_like"}:
+                    continue
+                payload_counts[payload_kind] += 1
+                scene_payloads[payload_kind] += 1
+                info = {
+                    "model_name": item.get("name"),
+                    "resolved_path": resolved_path,
+                    "payload_kind": payload_kind,
+                    "class_id": header.get("class_id"),
+                    "subtype_id": header.get("subtype_id"),
+                    "node_name": header.get("node_name"),
+                }
+                related_entries.append(info)
+                if payload_kind == "nurbs_like":
+                    nurbs_entries.append(info)
+
+        if not related_entries:
+            continue
+        if nurbs_entries:
+            scenes_with_nurbs += 1
+        for kind, count in scene_payloads.items():
+            scene_counts[kind] += 1
+        scene_entries.append(
+            {
+                "path": scene["path"],
+                "nurbs_model_count": len(nurbs_entries),
+                "related_model_count": len(related_entries),
+                "payload_kind_counts": dict(sorted(scene_payloads.items())),
+                "nurbs_models": nurbs_entries,
+                "related_models": related_entries,
+            }
+        )
+
+    return {
+        "scene_count_with_related_models": len(scene_entries),
+        "scene_count_with_nurbs_models": scenes_with_nurbs,
+        "payload_kind_counts": dict(sorted(payload_counts.items())),
+        "scene_payload_kind_counts": dict(sorted(scene_counts.items())),
+        "entries": scene_entries,
+    }
 
 
 def vertex_bounds(vertices: list[tuple[float, float, float]]) -> dict[str, list[float]] | None:
@@ -1983,6 +2774,364 @@ def face_tokens_with_offsets(
     return tokens
 
 
+def triangulate_obj_face_refs(
+    refs: list[tuple[int, int | None, int | None]],
+) -> list[tuple[tuple[int, int | None, int | None], tuple[int, int | None, int | None], tuple[int, int | None, int | None]]]:
+    if len(refs) < 3:
+        return []
+    if len(refs) == 3:
+        return [(refs[0], refs[1], refs[2])]
+
+    triangles = []
+    root = refs[0]
+    for index in range(1, len(refs) - 1):
+        triangles.append((root, refs[index], refs[index + 1]))
+    return triangles
+
+
+def write_gltf_scene_bundle(
+    gltf_path: Path,
+    gltf_bin_path: Path,
+    objects: list[dict],
+    materials: dict[str, dict],
+    *,
+    cameras: list[dict] | None = None,
+    lights: list[dict] | None = None,
+    extra_nodes: list[dict] | None = None,
+    node_defs: list[dict] | None = None,
+) -> None:
+    cameras = cameras or []
+    lights = lights or []
+    extra_nodes = extra_nodes or []
+    node_defs = node_defs or []
+    images = []
+    textures = []
+    gltf_materials = []
+    image_index_by_uri: dict[str, int] = {}
+    texture_index_by_uri: dict[str, int] = {}
+    material_index_by_name: dict[str, int] = {}
+
+    for material_name, material in materials.items():
+        diffuse = material.get("diffuse") or [1.0, 1.0, 1.0]
+        alpha = float(material.get("alpha", 1.0))
+        gltf_material = {
+            "name": material_name,
+            "pbrMetallicRoughness": {
+                "baseColorFactor": [
+                    float(diffuse[0]),
+                    float(diffuse[1]),
+                    float(diffuse[2]),
+                    alpha,
+                ],
+                "metallicFactor": 0.0,
+                "roughnessFactor": float(material.get("roughness_factor", 1.0)),
+            },
+            "doubleSided": True,
+        }
+        if alpha < 0.999:
+            gltf_material["alphaMode"] = "BLEND"
+
+        texture_uri = material.get("texture_uri")
+        if texture_uri:
+            if texture_uri not in image_index_by_uri:
+                image_index_by_uri[texture_uri] = len(images)
+                images.append({"uri": texture_uri})
+            if texture_uri not in texture_index_by_uri:
+                texture_index_by_uri[texture_uri] = len(textures)
+                textures.append({"source": image_index_by_uri[texture_uri]})
+            gltf_material["pbrMetallicRoughness"]["baseColorTexture"] = {
+                "index": texture_index_by_uri[texture_uri]
+            }
+
+        material_index_by_name[material_name] = len(gltf_materials)
+        gltf_materials.append(gltf_material)
+
+    buffer = bytearray()
+    buffer_views: list[dict] = []
+    accessors: list[dict] = []
+    meshes = []
+    nodes = []
+    node_index_by_name: dict[str, int] = {}
+    pending_parent_links: list[tuple[int, str]] = []
+    gltf_cameras = []
+    gltf_lights = []
+
+    def add_node(
+        name: str,
+        *,
+        matrix: list[float] | None = None,
+        extras: dict | None = None,
+        parent_name: str | None = None,
+    ) -> int:
+        if name in node_index_by_name:
+            index = node_index_by_name[name]
+            node = nodes[index]
+            if matrix is not None and "matrix" not in node:
+                node["matrix"] = matrix
+            if extras:
+                node.setdefault("extras", {}).update(extras)
+            if parent_name:
+                pending_parent_links.append((index, parent_name))
+            return index
+
+        node = {"name": name}
+        if matrix is not None:
+            node["matrix"] = matrix
+        if extras:
+            node["extras"] = extras
+        index = len(nodes)
+        nodes.append(node)
+        node_index_by_name[name] = index
+        if parent_name:
+            pending_parent_links.append((index, parent_name))
+        return index
+
+    for node_def in node_defs:
+        add_node(
+            node_def["name"],
+            matrix=node_def.get("matrix"),
+            extras=node_def.get("extras"),
+            parent_name=node_def.get("parent_name"),
+        )
+
+    for obj in objects:
+        geometry = obj["geometry"]
+        vertices = geometry["vertices"]
+        faces = geometry["faces"]
+        if not vertices or not faces:
+            continue
+
+        primitive_vertices: list[
+            tuple[
+                tuple[float, float, float],
+                tuple[float, float] | None,
+                tuple[float, float, float] | None,
+            ]
+        ] = []
+        primitive_vertex_map: dict[
+            tuple[
+                tuple[float, float, float],
+                tuple[float, float] | None,
+                tuple[float, float, float] | None,
+            ],
+            int,
+        ] = {}
+        indices = []
+        texcoords = geometry.get("texcoords") or []
+        normals = geometry.get("normals") or []
+        for refs in faces:
+            for tri in triangulate_obj_face_refs(refs):
+                for vertex_index, texcoord_index, normal_index in tri:
+                    pos = tuple(vertices[vertex_index - 1])
+                    uv = tuple(texcoords[texcoord_index - 1]) if texcoord_index is not None else None
+                    normal = tuple(normals[normal_index - 1]) if normal_index is not None else None
+                    key = (pos, uv, normal)
+                    if key not in primitive_vertex_map:
+                        primitive_vertex_map[key] = len(primitive_vertices)
+                        primitive_vertices.append(key)
+                    indices.append(primitive_vertex_map[key])
+
+        if not indices or not primitive_vertices:
+            continue
+
+        position_values = [pos for pos, _, _ in primitive_vertices]
+        positions = [coord for vertex in position_values for coord in vertex]
+        pos_min = [min(vertex[i] for vertex in position_values) for i in range(3)]
+        pos_max = [max(vertex[i] for vertex in position_values) for i in range(3)]
+        attributes = {
+            "POSITION": gltf_accessor(
+                accessors,
+                buffer_views,
+                buffer,
+                pack_floats(positions),
+                5126,
+                "VEC3",
+                len(primitive_vertices),
+                target=34962,
+                minimum=pos_min,
+                maximum=pos_max,
+            )
+        }
+
+        if any(uv is not None for _, uv, _ in primitive_vertices):
+            attributes["TEXCOORD_0"] = gltf_accessor(
+                accessors,
+                buffer_views,
+                buffer,
+                pack_floats(
+                    [coord for _, uv, _ in primitive_vertices for coord in (uv or (0.0, 0.0))]
+                ),
+                5126,
+                "VEC2",
+                len(primitive_vertices),
+                target=34962,
+            )
+
+        if any(normal is not None for _, _, normal in primitive_vertices):
+            attributes["NORMAL"] = gltf_accessor(
+                accessors,
+                buffer_views,
+                buffer,
+                pack_floats(
+                    [coord for _, _, normal in primitive_vertices for coord in (normal or (0.0, 0.0, 1.0))]
+                ),
+                5126,
+                "VEC3",
+                len(primitive_vertices),
+                target=34962,
+            )
+
+        primitive = {
+            "attributes": attributes,
+            "indices": gltf_accessor(
+                accessors,
+                buffer_views,
+                buffer,
+                pack_uints(indices),
+                5125,
+                "SCALAR",
+                len(indices),
+                target=34963,
+            ),
+        }
+        material_name = obj.get("material_name")
+        if material_name in material_index_by_name:
+            primitive["material"] = material_index_by_name[material_name]
+
+        meshes.append({"name": obj["name"], "primitives": [primitive]})
+        node_extras = {
+            "source_hrc": obj.get("source_hrc"),
+            "material_name": material_name,
+        }
+        node_name = obj.get("node_name") or obj["name"]
+        node_index = add_node(
+            node_name,
+            matrix=obj.get("node_matrix"),
+            extras=node_extras,
+            parent_name=obj.get("parent_name"),
+        )
+        if "mesh" in nodes[node_index]:
+            suffix = len(nodes)
+            node_index = add_node(
+                f"{node_name}_mesh{suffix}",
+                matrix=obj.get("node_matrix"),
+                extras=node_extras,
+                parent_name=obj.get("parent_name"),
+            )
+        nodes[node_index]["mesh"] = len(meshes) - 1
+
+    for camera in cameras:
+        yfov = camera.get("yfov_radians")
+        znear = camera.get("clip_near")
+        zfar = camera.get("clip_far")
+        if yfov is None or znear is None:
+            continue
+        gltf_cameras.append(
+            {
+                "name": camera["name"],
+                "type": "perspective",
+                "perspective": {
+                    "yfov": float(yfov),
+                    "znear": max(float(znear), 0.0001),
+                    **(
+                        {"zfar": float(zfar)}
+                        if zfar is not None and float(zfar) > float(znear)
+                        else {}
+                    ),
+                },
+            }
+        )
+        node_name = camera["name"]
+        if node_name in node_index_by_name:
+            node_name = f"{node_name}_cam"
+        node_index = add_node(node_name, extras=camera.get("extras", {}))
+        node = nodes[node_index]
+        node["camera"] = len(gltf_cameras) - 1
+        if camera.get("translation") is not None and "matrix" not in node:
+            node["translation"] = camera["translation"]
+        if camera.get("rotation") is not None and "matrix" not in node:
+            node["rotation"] = camera["rotation"]
+
+    for light in lights:
+        light_def = {
+            "name": light["name"],
+            "type": light["type"],
+            "color": light.get("color", [1.0, 1.0, 1.0]),
+            "intensity": float(light.get("intensity", 1.0)),
+        }
+        if light.get("range") is not None:
+            light_def["range"] = float(light["range"])
+        if light["type"] == "spot":
+            light_def["spot"] = {
+                "innerConeAngle": float(light.get("innerConeAngle", 0.0)),
+                "outerConeAngle": float(light.get("outerConeAngle", 0.785398)),
+            }
+        gltf_lights.append(light_def)
+        node_name = light["name"]
+        if node_name in node_index_by_name:
+            node_name = f"{node_name}_light"
+        node_index = add_node(node_name, extras=light.get("extras", {}))
+        node = nodes[node_index]
+        node["extensions"] = {"KHR_lights_punctual": {"light": len(gltf_lights) - 1}}
+        if light.get("translation") is not None and "matrix" not in node:
+            node["translation"] = light["translation"]
+        if light.get("rotation") is not None and "matrix" not in node:
+            node["rotation"] = light["rotation"]
+
+    for extra in extra_nodes:
+        node_index = add_node(
+            extra["name"],
+            extras=extra.get("extras", {}),
+            parent_name=extra.get("parent_name"),
+        )
+        node = nodes[node_index]
+        if extra.get("translation") is not None and "matrix" not in node:
+            node["translation"] = extra["translation"]
+        if extra.get("rotation") is not None and "matrix" not in node:
+            node["rotation"] = extra["rotation"]
+
+    child_indices: set[int] = set()
+    for child_index, parent_name in pending_parent_links:
+        parent_index = node_index_by_name.get(parent_name)
+        if parent_index is None:
+            continue
+        nodes[parent_index].setdefault("children", []).append(child_index)
+        child_indices.add(child_index)
+
+    gltf = {
+        "asset": {"version": "2.0", "generator": "bz2_extract.py"},
+        "scene": 0,
+        "scenes": [
+            {
+                "nodes": [
+                    index
+                    for index in range(len(nodes))
+                    if index not in child_indices
+                ]
+                or list(range(len(nodes)))
+            }
+        ],
+        "nodes": nodes,
+        "meshes": meshes,
+        "buffers": [{"byteLength": len(buffer), "uri": gltf_bin_path.name}],
+        "bufferViews": buffer_views,
+        "accessors": accessors,
+        "materials": gltf_materials,
+    }
+    if images:
+        gltf["images"] = images
+    if textures:
+        gltf["textures"] = textures
+    if gltf_cameras:
+        gltf["cameras"] = gltf_cameras
+    if gltf_lights:
+        gltf["extensionsUsed"] = ["KHR_lights_punctual"]
+        gltf["extensions"] = {"KHR_lights_punctual": {"lights": gltf_lights}}
+
+    gltf_path.write_text(json.dumps(gltf, indent=2), encoding="utf-8")
+    gltf_bin_path.write_bytes(buffer)
+
+
 def scene_export_output_dir(scene_path: str) -> Path:
     relative = Path(scene_path)
     try:
@@ -2137,9 +3286,21 @@ def build_scene_export(scene_path: str) -> dict:
     if mesh_report is None:
         mesh_report = parse_mesh_like_hrc()
 
+    hrc_header_report = load_cached_report("hrc_headers.json")
+    if hrc_header_report is None:
+        hrc_header_report = parse_hrc_headers()
+
     material_report = load_cached_report("binary_materials.json")
     if material_report is None:
         material_report = parse_binary_materials()
+
+    camera_report = load_cached_report("binary_cameras.json")
+    if camera_report is None:
+        camera_report = parse_binary_cameras()
+
+    light_report = load_cached_report("binary_lights.json")
+    if light_report is None:
+        light_report = parse_binary_lights()
 
     images_report = load_cached_report("images.json")
 
@@ -2147,8 +3308,11 @@ def build_scene_export(scene_path: str) -> dict:
     if scene is None:
         raise RuntimeError(f"Scene not found in dependencies report: {scene_path}")
 
+    hrc_lookup = {entry["path"]: entry for entry in hrc_header_report.get("entries", []) if entry.get("path")}
     mesh_lookup = {entry["path"]: entry for entry in mesh_report.get("entries", []) if entry.get("path")}
     material_lookup = {entry["path"]: entry for entry in material_report.get("entries", []) if entry.get("path")}
+    camera_lookup = {entry["path"]: entry for entry in camera_report.get("entries", []) if entry.get("path")}
+    light_lookup = {entry["path"]: entry for entry in light_report.get("entries", []) if entry.get("path")}
     model_parent = {}
     for relation in scene.get("relations", []):
         if relation["source_chapter"] == "MODELS" and relation["target_chapter"] == "MODELS":
@@ -2158,13 +3322,29 @@ def build_scene_export(scene_path: str) -> dict:
     environment_lookup = scene.get("environment", {})
     inferred_model_offsets = infer_isdf_scavenger_track_offsets(scene_path, mesh_lookup, scene)
 
-    world_matrix_cache: dict[str, list[list[float]]] = {}
+    model_override: dict[str, dict | None] = {}
+    model_mirror: dict[str, bool] = {}
+    for link in scene.get("model_material_texture_links", []):
+        model_name = link.get("model_name")
+        if not model_name:
+            continue
+        if model_name not in model_override:
+            model_override[model_name] = infer_scene_mesh_override(
+                scene_path, model_name, link.get("model_resolved_path"), mesh_lookup
+            )
+        if model_name not in model_mirror:
+            model_mirror[model_name] = infer_scene_alias_mirror_x(
+                model_name, link.get("model_resolved_path")
+            )
 
-    def model_world_matrix(model_name: str | None) -> list[list[float]]:
+    world_matrix_cache: dict[str, list[list[float]]] = {}
+    local_matrix_cache: dict[str, list[list[float]]] = {}
+
+    def model_local_matrix(model_name: str | None) -> list[list[float]]:
         if not model_name:
             return matrix_to_rows(None)
-        if model_name in world_matrix_cache:
-            return world_matrix_cache[model_name]
+        if model_name in local_matrix_cache:
+            return local_matrix_cache[model_name]
 
         env = environment_lookup.get(model_name, {})
         if env.get("srt"):
@@ -2181,8 +3361,39 @@ def build_scene_export(scene_path: str) -> dict:
             )
         else:
             local = matrix_to_rows(None)
+
+        override = model_override.get(model_name)
+        if override and override.get("local_translation_xyz"):
+            local = mul_row_major(
+                build_srt_matrix(
+                    (1.0, 1.0, 1.0),
+                    (0.0, 0.0, 0.0),
+                    override["local_translation_xyz"],
+                ),
+                local,
+            )
+
+        if model_mirror.get(model_name):
+            local = mul_row_major(
+                [
+                    [-1.0, 0.0, 0.0, 0.0],
+                    [0.0, 1.0, 0.0, 0.0],
+                    [0.0, 0.0, 1.0, 0.0],
+                    [0.0, 0.0, 0.0, 1.0],
+                ],
+                local,
+            )
+
+        local_matrix_cache[model_name] = local
+        return local
+
+    def model_world_matrix(model_name: str | None) -> list[list[float]]:
+        if not model_name:
+            return matrix_to_rows(None)
+        if model_name in world_matrix_cache:
+            return world_matrix_cache[model_name]
         parent = model_parent.get(model_name)
-        world = mul_row_major(local, model_world_matrix(parent))
+        world = mul_row_major(model_local_matrix(model_name), model_world_matrix(parent))
         world_matrix_cache[model_name] = world
         return world
 
@@ -2193,11 +3404,48 @@ def build_scene_export(scene_path: str) -> dict:
 
     obj_path = scene_dir / f"{sanitize_name(Path(scene_path).stem)}.obj"
     mtl_path = scene_dir / f"{sanitize_name(Path(scene_path).stem)}.mtl"
+    gltf_path = scene_dir / f"{sanitize_name(Path(scene_path).stem)}.gltf"
+    gltf_bin_path = scene_dir / f"{sanitize_name(Path(scene_path).stem)}.bin"
     manifest_path = scene_dir / "scene.json"
 
     exported_objects = []
     missing_objects = []
+    exported_cameras = []
+    missing_cameras = []
+    exported_lights = []
+    missing_lights = []
+    exported_placeholders = []
     used_materials: dict[str, dict] = {}
+    gltf_objects = []
+    gltf_cameras = []
+    gltf_lights = []
+    gltf_extra_nodes = []
+    exported_model_names: set[str] = set()
+    model_node_defs: list[dict] = []
+    model_node_by_name: dict[str, dict] = {}
+    model_node_name_map: dict[str, str] = {}
+    for chapter in scene.get("chapters", []):
+        if chapter["chapter"] != "MODELS":
+            continue
+        for item in chapter.get("entries", []):
+            model_name = item.get("name")
+            if not model_name:
+                continue
+            node_name = sanitize_name(model_name)
+            parent_name = model_parent.get(model_name)
+            parent_node_name = sanitize_name(parent_name) if parent_name else None
+            node_def = {
+                "name": node_name,
+                "parent_name": parent_node_name,
+                "matrix": row_major_to_gltf_matrix(model_local_matrix(model_name)),
+                "extras": {
+                    "model_name": model_name,
+                    "source_hrc": item.get("resolved_path"),
+                },
+            }
+            model_node_defs.append(node_def)
+            model_node_by_name[model_name] = node_def
+            model_node_name_map[model_name] = node_name
 
     vertex_offset = 0
     texcoord_offset = 0
@@ -2206,7 +3454,7 @@ def build_scene_export(scene_path: str) -> dict:
 
     for link in scene.get("model_material_texture_links", []):
         model_path = link.get("model_resolved_path")
-        override = infer_scene_mesh_override(scene_path, link.get("model_name"), model_path, mesh_lookup)
+        override = model_override.get(link.get("model_name") or "")
         mesh_entry = mesh_lookup.get(model_path or "")
         effective_model_path = override["source_hrc"] if override else model_path
         decoded_obj = override["decoded_obj"] if override else (mesh_entry.get("decoded_obj") if mesh_entry else None)
@@ -2248,27 +3496,9 @@ def build_scene_export(scene_path: str) -> dict:
             geometry = components[component_index]
 
         world = model_world_matrix(link.get("model_name"))
-        if override and override.get("local_translation_xyz"):
-            world = mul_row_major(
-                build_srt_matrix(
-                    (1.0, 1.0, 1.0),
-                    (0.0, 0.0, 0.0),
-                    override["local_translation_xyz"],
-                ),
-                world,
-            )
-        mirror_x = infer_scene_alias_mirror_x(link.get("model_name"), model_path)
-        if mirror_x:
-            world = mul_row_major(
-                [
-                    [-1.0, 0.0, 0.0, 0.0],
-                    [0.0, 1.0, 0.0, 0.0],
-                    [0.0, 0.0, 1.0, 0.0],
-                    [0.0, 0.0, 0.0, 1.0],
-                ],
-                world,
-            )
+        mirror_x = model_mirror.get(link.get("model_name") or "", False)
         material_name = sanitize_name(link.get("material_name") or f"{link.get('model_name', 'material')}_mat")
+        material_entry = material_lookup.get(link.get("material_resolved_path") or "", {})
         used_materials[material_name] = {
             "material_name": link.get("material_name"),
             "material_resolved_path": link.get("material_resolved_path"),
@@ -2276,20 +3506,21 @@ def build_scene_export(scene_path: str) -> dict:
             "texture_resolved_path": link.get("texture_resolved_path"),
             "texture_source_picture": link.get("texture_source_picture"),
             "texture_source_picture_png": link.get("texture_source_picture_png"),
-            "material_hint": material_lookup.get(link.get("material_resolved_path") or "", {}).get("likely_fields", {}),
+            "material_hint": material_entry.get("likely_fields", {}),
+            "material_decoded": material_entry.get("decoded_fields", {}),
         }
 
         obj_lines.append("")
         obj_lines.append(f"o {sanitize_name(link.get('model_name') or decoded_obj_path.stem)}")
         transformed_vertices = [transform_point(vertex, world) for vertex in geometry["vertices"]]
         transformed_normals = [transform_vector(normal, world) for normal in geometry["normals"]]
+        face_refs = [list(reversed(refs)) if mirror_x else list(refs) for refs in geometry["faces"]]
+        gltf_face_refs = geometry["faces"]
         obj_lines.extend(f"v {x:.6f} {y:.6f} {z:.6f}" for x, y, z in transformed_vertices)
         obj_lines.extend(f"vt {u:.6f} {v:.6f}" for u, v in geometry["texcoords"])
         obj_lines.extend(f"vn {nx:.6f} {ny:.6f} {nz:.6f}" for nx, ny, nz in transformed_normals)
         obj_lines.append(f"usemtl {material_name}")
-        for refs in geometry["faces"]:
-            if mirror_x:
-                refs = list(reversed(refs))
+        for refs in face_refs:
             out_tokens = face_tokens_with_offsets(
                 refs,
                 vertex_offset=vertex_offset,
@@ -2312,6 +3543,32 @@ def build_scene_export(scene_path: str) -> dict:
                 "inferred_component_rank": override.get("component_rank") if override else None,
             }
         )
+        if link.get("model_name"):
+            exported_model_names.add(link["model_name"])
+        model_name = link.get("model_name") or ""
+        node_name = model_node_name_map.get(model_name, sanitize_name(model_name or decoded_obj_path.stem))
+        node_matrix = None
+        parent_name = None
+        if model_name not in model_node_name_map:
+            node_matrix = row_major_to_gltf_matrix(model_local_matrix(model_name))
+            parent = model_parent.get(model_name)
+            parent_name = sanitize_name(parent) if parent else None
+        gltf_objects.append(
+            {
+                "name": sanitize_name(model_name or decoded_obj_path.stem),
+                "node_name": node_name,
+                "parent_name": parent_name,
+                "node_matrix": node_matrix,
+                "source_hrc": effective_model_path,
+                "material_name": material_name,
+                "geometry": {
+                    "vertices": geometry["vertices"],
+                    "texcoords": geometry["texcoords"],
+                    "normals": geometry["normals"],
+                    "faces": gltf_face_refs,
+                },
+            }
+        )
 
         vertex_offset += len(transformed_vertices)
         texcoord_offset += len(geometry["texcoords"])
@@ -2322,11 +3579,20 @@ def build_scene_export(scene_path: str) -> dict:
     mtl_lines = []
     copied_textures = []
     for export_name, info in used_materials.items():
+        decoded = info.get("material_decoded", {})
         hints = info.get("material_hint", {})
-        diffuse = hints.get("color_hint_b") or [1.0, 1.0, 1.0]
-        alpha = 1.0
+        diffuse = decoded.get("diffuse_rgb") or hints.get("color_hint_b") or [1.0, 1.0, 1.0]
+        specular = decoded.get("specular_rgb") or hints.get("specular_hint") or [0.0, 0.0, 0.0]
+        shininess = float(decoded.get("shininess") or hints.get("hardness_hint") or 0.0)
+        roughness = float(decoded.get("roughness_hint") or phong_exponent_to_roughness(shininess))
+        alpha = float(decoded.get("alpha_hint", 1.0))
+        illum_model = 2 if int(decoded.get("shading_type") or hints.get("shading_type_hint") or 2) != 0 else 1
+        texture_uri = None
         mtl_lines.append(f"newmtl {export_name}")
         mtl_lines.append(f"Kd {float(diffuse[0]):.6f} {float(diffuse[1]):.6f} {float(diffuse[2]):.6f}")
+        mtl_lines.append(f"Ks {float(specular[0]):.6f} {float(specular[1]):.6f} {float(specular[2]):.6f}")
+        mtl_lines.append(f"Ns {shininess:.6f}")
+        mtl_lines.append(f"illum {illum_model}")
         mtl_lines.append(f"d {alpha:.6f}")
 
         src_png = resolve_scene_texture_png(info, scene_path, images_report)
@@ -2334,6 +3600,7 @@ def build_scene_export(scene_path: str) -> dict:
             dest_png = texture_dir / src_png.name
             shutil.copy2(src_png, dest_png)
             mtl_lines.append(f"map_Kd textures/{dest_png.name}")
+            texture_uri = f"textures/{dest_png.name}"
             copied_textures.append(
                 {
                     "material_name": info.get("material_name"),
@@ -2342,18 +3609,210 @@ def build_scene_export(scene_path: str) -> dict:
                     "png": rel(dest_png),
                 }
             )
+        info["gltf_material"] = {
+            "diffuse": [float(diffuse[0]), float(diffuse[1]), float(diffuse[2])],
+            "specular": [float(specular[0]), float(specular[1]), float(specular[2])],
+            "alpha": alpha,
+            "roughness_factor": roughness,
+            "texture_uri": texture_uri,
+        }
         mtl_lines.append("")
 
     mtl_path.write_text("\n".join(mtl_lines), encoding="utf-8")
+
+    for chapter in scene.get("chapters", []):
+        if chapter["chapter"] == "CAMERAS":
+            for item in chapter.get("entries", []):
+                resolved_path = item.get("resolved_path")
+                if not resolved_path:
+                    missing_cameras.append(
+                        {
+                            "camera_name": item.get("name"),
+                            "reason": "missing_resolved_path",
+                        }
+                    )
+                    continue
+                camera_entry = camera_lookup.get(resolved_path)
+                if not camera_entry:
+                    missing_cameras.append(
+                        {
+                            "camera_name": item.get("name"),
+                            "reason": "missing_camera_decode",
+                            "camera_resolved_path": resolved_path,
+                        }
+                    )
+                    continue
+
+                exported_camera = {
+                    "camera_name": item.get("name"),
+                    "camera_resolved_path": resolved_path,
+                    "position_xyz": camera_entry.get("position_xyz"),
+                    "rotation_xyz_hint": camera_entry.get("rotation_xyz_hint"),
+                    "clip_near": camera_entry.get("clip_near"),
+                    "clip_far": camera_entry.get("clip_far"),
+                    "yfov_radians": camera_entry.get("yfov_radians"),
+                }
+                exported_cameras.append(exported_camera)
+
+                gltf_cameras.append(
+                    {
+                        "name": sanitize_name(item.get("name") or Path(resolved_path).stem),
+                        "translation": camera_entry.get("position_xyz"),
+                        "rotation": camera_entry.get("rotation_quaternion_hint"),
+                        "clip_near": camera_entry.get("clip_near"),
+                        "clip_far": camera_entry.get("clip_far"),
+                        "yfov_radians": camera_entry.get("yfov_radians"),
+                        "extras": {
+                            "source_cam": resolved_path,
+                            "rotation_xyz_hint": camera_entry.get("rotation_xyz_hint"),
+                            "rotation_unit_hint": camera_entry.get("rotation_unit_hint"),
+                            "focal_length_hint": camera_entry.get("focal_length_hint"),
+                            "f_stop_hint": camera_entry.get("f_stop_hint"),
+                            "focus_distance_hint": camera_entry.get("focus_distance_hint"),
+                        },
+                    }
+                )
+
+        if chapter["chapter"] == "LIGHTS":
+            for item in chapter.get("entries", []):
+                resolved_path = item.get("resolved_path")
+                if not resolved_path:
+                    missing_lights.append(
+                        {
+                            "light_name": item.get("name"),
+                            "reason": "missing_resolved_path",
+                        }
+                    )
+                    continue
+                light_entry = light_lookup.get(resolved_path)
+                if not light_entry:
+                    missing_lights.append(
+                        {
+                            "light_name": item.get("name"),
+                            "reason": "missing_light_decode",
+                            "light_resolved_path": resolved_path,
+                        }
+                    )
+                    continue
+
+                exported_light = {
+                    "light_name": item.get("name"),
+                    "light_resolved_path": resolved_path,
+                    "light_kind_hint": light_entry.get("light_kind_hint"),
+                    "color_rgb": light_entry.get("color_rgb"),
+                    "position_xyz": light_entry.get("position_xyz"),
+                    "direction_xyz_hint": light_entry.get("direction_xyz_hint"),
+                    "range_hint": light_entry.get("range_hint"),
+                }
+                exported_lights.append(exported_light)
+
+                light_kind = light_entry.get("light_kind_hint") or "point"
+                light_range = light_entry.get("range_hint")
+                if light_range is not None and float(light_range) >= 5000.0:
+                    light_range = None
+
+                gltf_light = {
+                    "name": sanitize_name(item.get("name") or Path(resolved_path).stem),
+                    "type": light_kind if light_kind in {"point", "spot", "directional"} else "point",
+                    "color": light_entry.get("color_rgb") or [1.0, 1.0, 1.0],
+                    "intensity": light_entry.get("intensity_hint") or 1.0,
+                    "range": light_range,
+                    "translation": light_entry.get("position_xyz"),
+                    "rotation": light_entry.get("rotation_quaternion_hint"),
+                    "innerConeAngle": min(
+                        float(light_entry.get("spot_inner_cone_angle") or 0.0),
+                        float(light_entry.get("spot_outer_cone_angle") or 0.785398),
+                    ),
+                    "outerConeAngle": max(
+                        float(light_entry.get("spot_inner_cone_angle") or 0.0),
+                        float(light_entry.get("spot_outer_cone_angle") or 0.785398),
+                    ),
+                    "extras": {
+                        "source_lig": resolved_path,
+                        "direction_xyz_hint": light_entry.get("direction_xyz_hint"),
+                        "cone_scale_hint": light_entry.get("cone_scale_hint"),
+                    },
+                }
+                gltf_lights.append(gltf_light)
+
+    for chapter in scene.get("chapters", []):
+        if chapter["chapter"] != "MODELS":
+            continue
+        for item in chapter.get("entries", []):
+            model_name = item.get("name")
+            resolved_path = item.get("resolved_path")
+            if not model_name or model_name in exported_model_names:
+                continue
+            if not resolved_path or resolved_path not in hrc_lookup:
+                continue
+            header = hrc_lookup[resolved_path]
+            payload_kind = header.get("payload_kind")
+            if payload_kind not in {"nurbs_like", "spline_like", "surface_or_fx"}:
+                continue
+            world = model_world_matrix(model_name)
+            translation = matrix_translation_xyz(world)
+            placeholder = {
+                "model_name": model_name,
+                "resolved_path": resolved_path,
+                "payload_kind": payload_kind,
+                "class_id": header.get("class_id"),
+                "subtype_id": header.get("subtype_id"),
+                "world_translation_xyz": translation,
+            }
+            exported_placeholders.append(placeholder)
+            node_def = model_node_by_name.get(model_name)
+            placeholder_extra = {
+                "source_hrc": resolved_path,
+                "payload_kind": payload_kind,
+                "class_id": header.get("class_id"),
+                "subtype_id": header.get("subtype_id"),
+                "placeholder_kind": "unresolved_hrc_payload",
+            }
+            if node_def:
+                node_def.setdefault("extras", {}).setdefault("placeholders", []).append(placeholder_extra)
+            else:
+                gltf_extra_nodes.append(
+                    {
+                        "name": sanitize_name(model_name),
+                        "translation": translation,
+                        "extras": placeholder_extra,
+                    }
+                )
+
+    write_gltf_scene_bundle(
+        gltf_path,
+        gltf_bin_path,
+        gltf_objects,
+        {
+            name: info["gltf_material"]
+            for name, info in used_materials.items()
+        },
+        cameras=gltf_cameras,
+        lights=gltf_lights,
+        extra_nodes=gltf_extra_nodes,
+        node_defs=model_node_defs,
+    )
 
     manifest = {
         "scene_path": scene_path,
         "obj": rel(obj_path),
         "mtl": rel(mtl_path),
+        "gltf": rel(gltf_path),
+        "gltf_bin": rel(gltf_bin_path),
         "exported_object_count": len(exported_objects),
         "missing_object_count": len(missing_objects),
+        "exported_camera_count": len(exported_cameras),
+        "missing_camera_count": len(missing_cameras),
+        "exported_light_count": len(exported_lights),
+        "missing_light_count": len(missing_lights),
+        "exported_placeholder_count": len(exported_placeholders),
         "exported_objects": exported_objects,
         "missing_objects": missing_objects,
+        "exported_cameras": exported_cameras,
+        "missing_cameras": missing_cameras,
+        "exported_lights": exported_lights,
+        "missing_lights": missing_lights,
+        "exported_placeholders": exported_placeholders,
         "copied_textures": copied_textures,
     }
     write_json(manifest_path, manifest)
@@ -2386,6 +3845,9 @@ def run_full(*, refresh_heavy: bool = False) -> dict:
     scene_dependencies = build_scene_dependencies()
     expressions = parse_expression_files()
     animations = parse_animation_files()
+    binary_cameras = parse_binary_cameras()
+    binary_lights = parse_binary_lights()
+    nurbs_usage = analyze_nurbs_usage()
     hrc_headers = parse_hrc_headers()
     binary_materials = parse_binary_materials()
     hrc_mesh_like = parse_mesh_like_hrc()
@@ -2399,6 +3861,9 @@ def run_full(*, refresh_heavy: bool = False) -> dict:
     write_json(REPORTS_DIR / "scene_dependencies.json", scene_dependencies)
     write_json(REPORTS_DIR / "expressions.json", expressions)
     write_json(REPORTS_DIR / "animations.json", animations)
+    write_json(REPORTS_DIR / "binary_cameras.json", binary_cameras)
+    write_json(REPORTS_DIR / "binary_lights.json", binary_lights)
+    write_json(REPORTS_DIR / "nurbs_usage.json", nurbs_usage)
     write_json(REPORTS_DIR / "hrc_headers.json", hrc_headers)
     write_json(REPORTS_DIR / "binary_materials.json", binary_materials)
     write_json(REPORTS_DIR / "hrc_mesh_like.json", hrc_mesh_like)
@@ -2413,6 +3878,9 @@ def run_full(*, refresh_heavy: bool = False) -> dict:
         "scene_dependency_report": rel(REPORTS_DIR / "scene_dependencies.json"),
         "expression_report": rel(REPORTS_DIR / "expressions.json"),
         "animation_report": rel(REPORTS_DIR / "animations.json"),
+        "binary_camera_report": rel(REPORTS_DIR / "binary_cameras.json"),
+        "binary_light_report": rel(REPORTS_DIR / "binary_lights.json"),
+        "nurbs_usage_report": rel(REPORTS_DIR / "nurbs_usage.json"),
         "hrc_header_report": rel(REPORTS_DIR / "hrc_headers.json"),
         "binary_material_report": rel(REPORTS_DIR / "binary_materials.json"),
         "hrc_mesh_like_report": rel(REPORTS_DIR / "hrc_mesh_like.json"),
@@ -2438,6 +3906,11 @@ def parse_args() -> argparse.Namespace:
             "scene-deps",
             "expressions",
             "animations",
+            "ani-stream-probe",
+            "ani-camera-probe",
+            "binary-cameras",
+            "binary-lights",
+            "nurbs-usage",
             "hrc-headers",
             "binary-materials",
             "hrc-mesh-like",
@@ -2505,6 +3978,30 @@ def main() -> int:
     elif args.command == "animations":
         payload = parse_animation_files()
         write_json(REPORTS_DIR / "animations.json", payload)
+    elif args.command == "ani-stream-probe":
+        per_chapter_limit = 12
+        max_frames = 60
+        if args.arg1 and args.arg1.isdigit():
+            per_chapter_limit = max(1, int(args.arg1))
+        if args.arg2 and args.arg2.isdigit():
+            max_frames = max(1, int(args.arg2))
+        payload = probe_animation_streams(per_chapter_limit=per_chapter_limit, max_frames=max_frames)
+        write_json(REPORTS_DIR / "animation_stream_probes.json", payload)
+    elif args.command == "ani-camera-probe":
+        max_frames = 120
+        if args.arg1 and args.arg1.isdigit():
+            max_frames = max(1, int(args.arg1))
+        payload = probe_camera_animation_links(max_frames=max_frames)
+        write_json(REPORTS_DIR / "animation_camera_probe.json", payload)
+    elif args.command == "binary-cameras":
+        payload = parse_binary_cameras()
+        write_json(REPORTS_DIR / "binary_cameras.json", payload)
+    elif args.command == "binary-lights":
+        payload = parse_binary_lights()
+        write_json(REPORTS_DIR / "binary_lights.json", payload)
+    elif args.command == "nurbs-usage":
+        payload = analyze_nurbs_usage()
+        write_json(REPORTS_DIR / "nurbs_usage.json", payload)
     elif args.command == "hrc-headers":
         payload = parse_hrc_headers()
         write_json(REPORTS_DIR / "hrc_headers.json", payload)

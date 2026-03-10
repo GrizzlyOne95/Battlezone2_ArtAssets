@@ -2,8 +2,15 @@
   "scene_path": "modelsdirectory/MIRE/SCENES/MIRE-puff_plant.2-0.dsc",
   "obj": "artifacts/extracts/scene_exports/modelsdirectory/MIRE/SCENES/MIRE-puff_plant.2-0/MIRE-puff_plant.2-0.obj",
   "mtl": "artifacts/extracts/scene_exports/modelsdirectory/MIRE/SCENES/MIRE-puff_plant.2-0/MIRE-puff_plant.2-0.mtl",
+  "gltf": "artifacts/extracts/scene_exports/modelsdirectory/MIRE/SCENES/MIRE-puff_plant.2-0/MIRE-puff_plant.2-0.gltf",
+  "gltf_bin": "artifacts/extracts/scene_exports/modelsdirectory/MIRE/SCENES/MIRE-puff_plant.2-0/MIRE-puff_plant.2-0.bin",
   "exported_object_count": 4,
   "missing_object_count": 1,
+  "exported_camera_count": 1,
+  "missing_camera_count": 1,
+  "exported_light_count": 4,
+  "missing_light_count": 0,
+  "exported_placeholder_count": 0,
   "exported_objects": [
     {
       "model_name": "puff_plant-leafset_1.1-0",
@@ -125,6 +132,119 @@
       "model_resolved_path": null
     }
   ],
+  "exported_cameras": [
+    {
+      "camera_name": "TREE4-cam_int1.74-0",
+      "camera_resolved_path": "modelsdirectory/MIRE/CAMERAS/TREE4-cam_int1.74-0.cam",
+      "position_xyz": [
+        -22.433989,
+        12.745485,
+        8.52179
+      ],
+      "rotation_xyz_hint": [
+        0.256311,
+        2.201904,
+        0.090764
+      ],
+      "clip_near": 0.1,
+      "clip_far": 32768.0,
+      "yfov_radians": 0.690476
+    }
+  ],
+  "missing_cameras": [
+    {
+      "camera_name": "TREE4-Camera1.1-0",
+      "reason": "missing_resolved_path"
+    }
+  ],
+  "exported_lights": [
+    {
+      "light_name": "motree02a-light2_1_1.1-0",
+      "light_resolved_path": "modelsdirectory/MIRE/LIGHTS/motree02a-light2_1_1.1-0.lig",
+      "light_kind_hint": "point",
+      "color_rgb": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "position_xyz": [
+        34.767853,
+        27.386713,
+        1.154901
+      ],
+      "direction_xyz_hint": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "range_hint": 10000.0
+    },
+    {
+      "light_name": "motree02a-light2_3.2-0",
+      "light_resolved_path": "modelsdirectory/MIRE/LIGHTS/motree02a-light2_3.2-0.lig",
+      "light_kind_hint": "point",
+      "color_rgb": [
+        5.0,
+        5.0,
+        5.0
+      ],
+      "position_xyz": [
+        9.682385,
+        28.516693,
+        1.154901
+      ],
+      "direction_xyz_hint": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "range_hint": 10000.0
+    },
+    {
+      "light_name": "motree02a-light3_1_1.1-0",
+      "light_resolved_path": "modelsdirectory/MIRE/LIGHTS/motree02a-light3_1_1.1-0.lig",
+      "light_kind_hint": "point",
+      "color_rgb": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "position_xyz": [
+        -36.221394,
+        31.589199,
+        -5.499526
+      ],
+      "direction_xyz_hint": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "range_hint": 10000.0
+    },
+    {
+      "light_name": "motree02a-light3_3.2-0",
+      "light_resolved_path": "modelsdirectory/MIRE/LIGHTS/motree02a-light3_3.2-0.lig",
+      "light_kind_hint": "point",
+      "color_rgb": [
+        5.0,
+        5.0,
+        5.0
+      ],
+      "position_xyz": [
+        -7.520006,
+        28.87726,
+        -5.499526
+      ],
+      "direction_xyz_hint": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "range_hint": 10000.0
+    }
+  ],
+  "missing_lights": [],
+  "exported_placeholders": [],
   "copied_textures": [
     {
       "material_name": "puff_plant-mat50.1-0",

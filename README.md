@@ -8,7 +8,8 @@ This repository intentionally excludes the raw Softimage-era source dump. It kee
 - Python extraction and Blender helper scripts
 - the community `io_scene_bz2xsi` tool snapshot under `tools/`
 - converted image assets as `.png`
-- decoded mesh and scene exports as `.obj` / `.mtl` with texture files
+- decoded mesh exports as `.obj`
+- scene exports as `.obj` / `.mtl` and on-demand `.gltf` / `.bin` with textures, decoded binary material parameters, cameras, lights, and unresolved NURBS-like placeholders when recovered
 
 ## Included output roots
 
@@ -22,11 +23,17 @@ This repository intentionally excludes the raw Softimage-era source dump. It kee
 - raw dump content under `modelsdirectory/`
 - original `.dsc`, `.hrc`, `.mtr`, `.ani`, `.pic`, `.xsi`, and related source files
 - bulky intermediate reports under `artifacts/reports/`
-- non-OBJ exports such as `.gltf` / `.bin`
+- generated `.gltf` / `.bin` exports, which stay untracked by default
 
 ## Main scripts
 
 - `scripts/bz2_extract.py`
 - `scripts/blender_import_bz2.py`
+
+Useful report commands:
+
+- `python scripts\bz2_extract.py full`
+- `python scripts\bz2_extract.py scene-export modelsdirectory/MIRE/SCENES/demo01-waterfall.8-0.dsc`
+- `python scripts\bz2_extract.py nurbs-usage`
 
 See `EXTRACTION_NOTES.md` for workflow and reconstruction notes.
