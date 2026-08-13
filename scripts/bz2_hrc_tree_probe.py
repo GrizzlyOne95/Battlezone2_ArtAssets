@@ -1,21 +1,50 @@
 #!/usr/bin/env python3
-"""Probe nested model hierarchy and transform nodes in binary Softimage HRC files.
+"""Probe nested model hierarchy and local transforms in binary Softimage HRC files.
 
-This intentionally reports evidence instead of forcing hierarchy into scene export.
-The preorder rule is regression-proven against the manually converted soft-soldier
-fixture; files whose baseline is ambiguous retain every valid candidate in the report.
+The preorder hierarchy rule is regression-proven against the manually converted
+soft-soldier fixture. Geometry-node transforms are now decoded for proven SI3D
+NURBS curve/surface records as well as null/joint nodes.
+
+Files whose hierarchy baseline is ambiguous retain every valid candidate in the
+report. Parametric SRT is only promoted when the NURBS payload decodes structurally
+and the complete nine-float transform block is finite and in-bounds.
 """
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import math
 import re
 import struct
+import sys
+from collections import Counter
 from pathlib import Path
 
 NAME_RE = re.compile(rb"\x00\x01([ -~]{1,80})\x00")
 KNOWN_CLASSES = {0, 1, 2, 4, 5, 6, 9, 10}
+PARAMETRIC_SRT_SKIP = {
+    "nurbs_curve": 12,
+    "nurbs_surface": 64,
+}
+SRT_FLOAT_COUNT = 9
+SRT_SIZE = SRT_FLOAT_COUNT * 4
+SRT_ABS_LIMIT = 1.0e12
+
+
+def _load_sibling(name: str):
+    path = Path(__file__).with_name(name)
+    module_name = path.stem
+    spec = importlib.util.spec_from_file_location(module_name, path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot load {path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+nurbs_probe = _load_sibling("bz2_nurbs_probe.py")
 
 
 def zero_run_before(data: bytes, offset: int) -> int:
@@ -23,6 +52,56 @@ def zero_run_before(data: bytes, offset: int) -> int:
     while cursor >= 0 and data[cursor] == 0:
         cursor -= 1
     return offset - 1 - cursor
+
+
+def _decode_srt_block(data: bytes, offset: int, source: str) -> tuple[dict | None, str | None]:
+    if offset < 0 or offset + SRT_SIZE > len(data):
+        return None, "srt_overrun"
+    values = list(struct.unpack_from(">9f", data, offset))
+    if not all(math.isfinite(value) for value in values):
+        return None, "srt_non_finite"
+    if any(abs(value) > SRT_ABS_LIMIT for value in values):
+        return None, "srt_implausible_magnitude"
+    return {
+        "scale": values[0:3],
+        "rotation_xyz": values[3:6],
+        "translation_xyz": values[6:9],
+        "offset": offset,
+        "size": SRT_SIZE,
+        "source": source,
+    }, None
+
+
+def _decode_parametric_srt(data: bytes, name_offset: int, name: str, class_id: int) -> tuple[dict | None, dict | None, str | None]:
+    anchor = nurbs_probe.StringAnchor(offset=name_offset, value=name, parametric=True)
+    record = nurbs_probe.decode_parametric_record(data, anchor)
+    if record is None:
+        return None, None, "parametric_decode_failed"
+
+    expected_kind = "nurbs_curve" if class_id == 9 else "nurbs_surface"
+    if record.get("kind") != expected_kind:
+        return None, None, f"parametric_kind_mismatch:{record.get('kind')}"
+
+    decoded_through = record.get("decoded_through_trims", record.get("decoded_through"))
+    if not isinstance(decoded_through, int):
+        return None, None, "parametric_missing_decoded_end"
+    skip = PARAMETRIC_SRT_SKIP[expected_kind]
+    srt_offset = decoded_through + skip
+    srt, error = _decode_srt_block(data, srt_offset, "post_parametric_metadata")
+    summary = {
+        "kind": expected_kind,
+        "record_start": record.get("record_start"),
+        "decoded_through": decoded_through,
+        "metadata_skip_to_srt": skip,
+        "srt_offset": srt_offset,
+        "trim_count": int(record.get("trim_count") or 0) if expected_kind == "nurbs_surface" else 0,
+        "reconstruction_ready": bool(record.get("reconstruction_ready")),
+    }
+    if srt is not None:
+        srt["parametric_kind"] = expected_kind
+        srt["record_decoded_through"] = decoded_through
+        srt["metadata_skip_to_srt"] = skip
+    return summary, srt, error
 
 
 def outer_model(data: bytes) -> dict | None:
@@ -54,23 +133,30 @@ def discover_records(data: bytes) -> list[dict]:
         # the tag; shorter runs are retained only in diagnostics, not the tree.
         if class_id not in KNOWN_CLASSES or zeros < 20 or zeros % 2:
             continue
+        name = match.group(1).decode("latin-1", errors="replace")
         item = {
-            "name": match.group(1).decode("latin-1", errors="replace"),
+            "name": name,
+            "name_offset": match.start(1),
             "offset": match.start(),
             "payload_offset": payload + 4,
             "class_id": class_id,
             "subtype": subtype,
             "zero_run": zeros,
         }
-        if class_id in {0, 5} and payload + 4 + 36 <= len(data):
-            values = list(struct.unpack_from(">9f", data, payload + 4))
-            if all(math.isfinite(value) for value in values):
-                item["local_srt"] = {
-                    "scale": values[0:3],
-                    "rotation_xyz": values[3:6],
-                    "translation_xyz": values[6:9],
-                    "source": "immediate_transform_payload",
-                }
+        if class_id in {0, 5}:
+            srt, error = _decode_srt_block(data, payload + 4, "immediate_transform_payload")
+            if srt is not None:
+                item["local_srt"] = srt
+            elif error:
+                item["srt_decode_error"] = error
+        elif class_id in {9, 10}:
+            parametric, srt, error = _decode_parametric_srt(data, match.start(1), name, class_id)
+            if parametric is not None:
+                item["parametric_record"] = parametric
+            if srt is not None:
+                item["local_srt"] = srt
+            elif error:
+                item["srt_decode_error"] = error
         records.append(item)
     return records
 
@@ -139,11 +225,29 @@ def probe(path: Path, forced_baseline: int | None = None) -> dict:
     tree = []
     if outer and chosen is not None:
         tree = apply_tree(records, outer["name"], chosen)
+
+    srt_sources = Counter(
+        record["local_srt"]["source"]
+        for record in records
+        if record.get("local_srt")
+    )
+    parametric_records = [record for record in records if record.get("parametric_record")]
+    parametric_srt = [record for record in parametric_records if record.get("local_srt")]
+    parametric_errors = Counter(
+        record.get("srt_decode_error", "missing")
+        for record in parametric_records
+        if not record.get("local_srt")
+    )
     return {
-        "schema": "bz2-binary-hrc-tree-probe-v1",
+        "schema": "bz2-binary-hrc-tree-probe-v2",
         "source": str(path),
         "outer_model": outer,
         "record_count": len(records),
+        "local_srt_count": sum(srt_sources.values()),
+        "local_srt_sources": dict(sorted(srt_sources.items())),
+        "parametric_record_count": len(parametric_records),
+        "parametric_srt_count": len(parametric_srt),
+        "parametric_srt_errors": dict(sorted(parametric_errors.items())),
         "baseline_candidates": baselines,
         "chosen_baseline": chosen,
         "tree": tree,
