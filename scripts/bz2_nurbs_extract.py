@@ -7,7 +7,7 @@ using ``bz2_nurbs_probe.py``, and emits open OBJ previews plus a machine-readabl
 index suitable for later scene-export integration.
 
 Surface trimming currently uses the validation tessellator from
-``bz2_nurbs_preview.py``. Its UV centroid clipping is conservative/approximate at
+``bz2_nurbs_eval.py``. Its UV centroid clipping is conservative/approximate at
 trim boundaries; the original rational NURBS and trim control data remain in the
 probe reports and should be treated as the preservation source of truth.
 """
@@ -36,7 +36,7 @@ def _load_sibling(name: str):
 
 
 probe = _load_sibling("bz2_nurbs_probe.py")
-preview = _load_sibling("bz2_nurbs_preview.py")
+preview = _load_sibling("bz2_nurbs_eval.py")
 
 
 def sha256(path: Path) -> str:
@@ -158,12 +158,22 @@ def export_hrc(
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("source_root", type=Path, help="Root directory containing HRC files")
-    parser.add_argument("--output-root", type=Path, default=Path("artifacts/extracts/hrc_nurbs"))
-    parser.add_argument("--report", type=Path, default=Path("artifacts/reports/hrc_nurbs.json"))
+    parser.add_argument(
+        "--output-root",
+        type=Path,
+        default=Path("artifacts/extracts/hrc_nurbs"),
+        help="Directory receiving OBJ outputs",
+    )
+    parser.add_argument(
+        "--report",
+        type=Path,
+        default=Path("artifacts/reports/hrc_nurbs.json"),
+        help="Machine-readable corpus index",
+    )
     parser.add_argument("--curve-steps", type=int, default=64)
     parser.add_argument("--surface-steps-u", type=int, default=32)
     parser.add_argument("--surface-steps-v", type=int, default=32)
-    parser.add_argument("--limit", type=int, default=0)
+    parser.add_argument("--limit", type=int, default=0, help="Optional HRC file limit for development")
     parser.add_argument("--only", help="Optional case-insensitive regex applied to relative HRC paths")
     return parser.parse_args()
 
@@ -184,7 +194,14 @@ def main() -> int:
     counters = Counter()
     entries: list[dict] = []
     for index, path in enumerate(files, 1):
-        entry = export_hrc(source_root, path, output_root, args.curve_steps, args.surface_steps_u, args.surface_steps_v)
+        entry = export_hrc(
+            source_root,
+            path,
+            output_root,
+            args.curve_steps,
+            args.surface_steps_u,
+            args.surface_steps_v,
+        )
         if not entry["record_count"] and not entry["failure_count"]:
             continue
         entries.append(entry)
