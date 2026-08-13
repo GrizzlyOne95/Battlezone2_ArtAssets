@@ -1,0 +1,52 @@
+{
+  "schema": "bz2-hrc-corpus-validation-v1",
+  "source": "supplied bz2_art corpus",
+  "parametric_srt": {
+    "records": 1987,
+    "valid": 1987,
+    "direct_records": 1908,
+    "archival_zip_records": 79
+  },
+  "hierarchy": {
+    "direct_hrcs_with_nested_records": 3426,
+    "direct_first_child_plus_2_valid": 3426,
+    "archive_hrcs_with_nested_records": 84,
+    "archive_first_child_plus_2_valid": 84,
+    "direct_baseline_distribution": {
+      "22": 2461,
+      "26": 961,
+      "34": 4
+    },
+    "dsc_relation_code": 110,
+    "dsc_comparable_parent_edges": 33327,
+    "dsc_matching_parent_edges": 33324,
+    "dsc_mismatching_parent_edges": 3
+  },
+  "class4": {
+    "outer_records": 5188,
+    "outer_srt_recovered": 5188,
+    "nested_records": 29120,
+    "nested_srt_recovered": 29120,
+    "nested_structural": 29058,
+    "nested_legacy_fallback": 62,
+    "nested_legacy_standard_tail": 8,
+    "nested_legacy_material_anchor": 54,
+    "archive_outer_records": 91,
+    "archive_outer_srt_recovered": 91,
+    "archive_nested_records": 1450,
+    "archive_nested_srt_recovered": 1450
+  },
+  "multirecord_parametric_placement": {
+    "hrc_files": 176,
+    "parametric_records": 1204,
+    "placeable": 1204,
+    "blocked": 0
+  },
+  "notes": [
+    "Class-4 structural parsing accepts zero-vertex transform-only nodes.",
+    "Class-4 polygons may exceed 32 corners; the corpus includes polygons up to at least 100 corners.",
+    "An all-NaN class-4 corner normal triplet is accepted as a missing-normal sentinel.",
+    "The 62 direct nested legacy class-4 records use tightly scoped movie/grouped fallback layouts after structural parsing fails.",
+    "The older broad class-4 material/texture-anchor heuristic is not authoritative and must not be used before structural parsing."
+  ]
+}
