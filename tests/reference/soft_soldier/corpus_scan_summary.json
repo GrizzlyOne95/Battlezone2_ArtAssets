@@ -1,0 +1,38 @@
+{
+  "schema": "bz2-nurbs-corpus-scan-v1",
+  "hrc_files": 7665,
+  "files_with_parametric_records": 937,
+  "files_with_trims": 9,
+  "totals": {
+    "closed_curve": 78,
+    "closed_surface_u": 879,
+    "closed_surface_v": 19,
+    "failed_tag_candidates": 9,
+    "nurbs_curve": 726,
+    "nurbs_surface": 1182,
+    "reconstructable_trim_loop": 46,
+    "trim_loops": 46,
+    "trimmed_surface": 15,
+    "unsupported_surface": 6,
+    "uv_candidate_trim_loop": 46
+  },
+  "knot_layouts": {
+    "curve:si_closed_periodic_wrap": 78,
+    "curve:si_open_endpoint_duplication": 648,
+    "surface_u:si_closed_periodic_wrap": 879,
+    "surface_u:si_open_endpoint_duplication": 303,
+    "surface_v:si_closed_periodic_wrap": 13,
+    "surface_v:si_open_endpoint_duplication": 1163,
+    "surface_v:unsupported": 6
+  },
+  "trim_loop_counts_per_surface": {
+    "1": 7,
+    "2": 5,
+    "3": 1,
+    "13": 2
+  },
+  "notes": [
+    "Generated from the supplied bz2_art corpus; raw HRC files are intentionally not committed.",
+    "The six unsupported surface instances are skin33/skin43/skin56 duplicated in the two soft-soldier HRC variants."
+  ]
+}

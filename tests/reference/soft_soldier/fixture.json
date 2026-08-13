@@ -1,0 +1,31 @@
+{
+  "schema": "bz2-soft-soldier-fixture-v3",
+  "raw_scene": "modelsdirectory/movieAssets/soft_soldier/SCENES/SLODIER_S2g-ALL_Skeleton_V13.1-0.dsc",
+  "raw_hrc_primary": "modelsdirectory/movieAssets/soft_soldier/MODELS/ALL_Skeleton_V13-null38.1-0.hrc",
+  "raw_hrc_sibling": "modelsdirectory/movieAssets/soft_soldier/MODELS/ALL_Skeleton_V13-null38.2-0.hrc",
+  "manual_reference": "isdfsoldier.blend",
+  "expected": {
+    "scene_model_entries": 559,
+    "nurbs_name_count": 33,
+    "surf_name_count": 14,
+    "parametric_name_count": 47,
+    "generated_polymsh_mesh_datablocks": 121,
+    "binary_parametric_record_count": 95,
+    "decoded_curve_count": 22,
+    "decoded_surface_count": 73,
+    "closed_curve_count": 4,
+    "closed_surface_u_count": 36,
+    "closed_surface_v_count": 3,
+    "trimmed_surface_count": 2,
+    "trim_loop_count": 15,
+    "unsupported_record_count": 3,
+    "unsupported_names": ["skin33", "skin43", "skin56"],
+    "pure_python_preview_exports": 92,
+    "pure_python_preview_skipped": 3
+  },
+  "notes": {
+    "name_pattern_scope": "The original 47-object probe counted names containing nurbs/surf. Binary tag discovery finds 95 real tag-9/tag-10 records, including nested objects such as skin30.",
+    "unsupported_variant": "skin33, skin43, and skin56 set closed_v=true while storing a clamped/open-like V knot count. The converter deliberately leaves this variant unresolved rather than forcing a seam."
+  },
+  "purpose": "Golden-reference fixture for reverse engineering binary Softimage NURBS/surface HRC payloads. The manual Blender file is not committed; generate reference_manifest.json locally from the known-good conversion."
+}
