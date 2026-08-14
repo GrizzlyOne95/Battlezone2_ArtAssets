@@ -1,0 +1,83 @@
+{
+  "schema": "bz2-model-local-texture-projection-validation-v1",
+  "dsc_corpus": {
+    "scenes_with_code400": 37,
+    "direct_scenes_with_code400": 17,
+    "archive_scenes_with_code400": 20,
+    "code400_edges": 686,
+    "models_with_code400": 598,
+    "models_with_materials": 598,
+    "models_first_material_without_401": 544,
+    "models_first_material_with_401": 54,
+    "models_with_one_code400_texture": 546,
+    "models_with_multiple_code400_textures": 52,
+    "models_with_later_material_401": 262
+  },
+  "walker_scene20": {
+    "code400_models": 34,
+    "code400_edges": 34,
+    "models_first_material_without_401": 34,
+    "models_first_material_with_401": 0,
+    "resolved_primary_hrc_gltf_nodes": 32,
+    "unresolved_primary_hrc_gltf_nodes": 2,
+    "unresolved_source_pictures": 0,
+    "projection_picture_basenames": {
+      "rusty": 25,
+      "cavern": 5,
+      "bump1": 2,
+      "chrome3": 2
+    },
+    "projection_code_candidate_distribution": {
+      "1": 5,
+      "2": 1,
+      "3": 2,
+      "4": 2,
+      "5": 24
+    },
+    "crop_enabled_count": 5,
+    "unique_transform_quartets": 4,
+    "class4_code400_nodes_checked_for_uv": 30,
+    "class4_code400_first_material_all_zero_uv": 30,
+    "notes": [
+      "revol13 and revol13_1 are class-10 NURBS nodes and still receive code-400 projection metadata",
+      "two code-400 DSC models are not nodes of the primary walker HRC and require full multi-HRC scene assembly"
+    ]
+  },
+  "walker_carey_scene": {
+    "code400_models": 37,
+    "code400_edges": 37,
+    "models_first_material_with_401": 26,
+    "models_first_material_without_401": 11,
+    "interpretation": "code 400 is independent model-local projection state rather than a replacement for a missing material-level 401 texture"
+  },
+  "tank_highres": {
+    "code400_models": 1,
+    "code400_edges": 1,
+    "models_first_material_without_401": 1,
+    "unresolved_source_pictures": 0,
+    "projection_picture_basenames": {
+      "rusty": 1
+    },
+    "primary_hrc_node_resolution": "the code-400 grid1 model is a separate DSC model, not part of the selected tank body HRC"
+  },
+  "txmp_structural_fields": {
+    "post_path_float4_offset": 6,
+    "post_path_crop_enabled_u16_offset": 58,
+    "post_path_crop_rect_u16_offsets": [60, 62, 64, 66],
+    "full_image_example": {
+      "picture": "rusty.pic",
+      "picture_resolution": [483, 363],
+      "crop_rect_raw": [0, 482, 0, 362]
+    },
+    "cropped_example": {
+      "picture": "blueglow.1.pic",
+      "picture_resolution": [500, 424],
+      "crop_rect_raw": [0, 499, 215, 423]
+    }
+  },
+  "notes": [
+    "The four float32 values at TXMP post-path offset 6 are preserved as a 2D texture-transform candidate; their exact component names are not yet asserted.",
+    "The u16 field at post-path offset 24 is preserved as a projection-or-mapping code candidate; numeric projection-type mapping remains unresolved.",
+    "Code-400 projections must not be applied through source TEXCOORD_0 when that data is degenerate/all-zero."
+  ]
+}
