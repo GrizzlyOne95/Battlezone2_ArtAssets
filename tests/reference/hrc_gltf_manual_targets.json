@@ -1,0 +1,42 @@
+{
+  "schema": "bz2-assembled-hrc-gltf-manual-targets-v1",
+  "source": "bz2_art.7z plus geometry-only manual Blender references",
+  "targets": [
+    {
+      "name": "high_res_isdf_tank_soft",
+      "source": "Archival.zip/Tank/Tank/MODELS/TankBaseFinal-NewIVTankSoft.1-0.hrc",
+      "expected_node_count": 11,
+      "expected_class4_node_count": 10,
+      "expected_mesh_count": 10,
+      "expected_unresolved_class4_srt_count": 0,
+      "manual_reference": "bz2tank.blend"
+    },
+    {
+      "name": "high_res_isdf_tank_body",
+      "source": "Archival.zip/adconcept/MODELS/tank2-NewIVTankBody.1-0.hrc",
+      "expected_node_count": 16,
+      "expected_class4_node_count": 15,
+      "expected_mesh_count": 15,
+      "expected_unresolved_class4_srt_count": 0,
+      "manual_reference": "bz2tank2.blend",
+      "notes": [
+        "later material-slot envelopes are required to recover Antenae and cyl9 SRT",
+        "12 of 13 manually matching mesh names have exact source vertex/polygon parity"
+      ]
+    },
+    {
+      "name": "high_res_isdf_walker",
+      "source": "Archival.zip/walker_final/MODELS/walker_final_carey-null1.1-0.hrc",
+      "expected_node_count": 103,
+      "expected_class4_node_count": 71,
+      "expected_mesh_count": 71,
+      "expected_unresolved_class4_srt_count": 0,
+      "expected_multicontour_polygons_tessellated": 56,
+      "manual_reference": "bz2walker.blend",
+      "notes": [
+        "all unresolved non-class4 source records are leaf nodes for this target",
+        "representative multi-contour tessellation reproduces manual Blender polygon counts exactly"
+      ]
+    }
+  ]
+}
