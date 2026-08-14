@@ -5,12 +5,13 @@ Run inside Blender after generating the materialized/scene glTF and sidecars:
 
     blender --background --python scripts/blender_finish_reconstruction.py -- \
         scene.gltf scene.scene.json scene.blend \
-        scene.texture_layers.json scene.render_state.json
+        scene.texture_layers.json scene.model_textures.json scene.render_state.json
 
 The stable camera/light importer is reused first. This layer then rebuilds the
-ordered Softimage base + alpha-overlay color stack and stores the original
-SETUP_SOFT/Mental Ray state as Blender custom properties. Overlay candidates
-are not treated as emission until the source shader semantics are proven.
+ordered Softimage base + alpha-overlay color stack, generates additive projected
+UV maps for recoverable asset textures, and stores the original SETUP_SOFT/
+Mental Ray state as Blender custom properties. Overlay candidates are not treated
+as emission until the source shader semantics are proven.
 """
 from __future__ import annotations
 
@@ -19,6 +20,7 @@ import sys
 from pathlib import Path
 
 import blender_reconstruct_scene as base
+import blender_apply_bz2_asset_uvs as asset_uvs
 
 try:
     import bpy  # type: ignore
@@ -73,7 +75,7 @@ def apply_texture_layers(sidecar_path: Path) -> dict:
         frame.label = "Recovered Softimage TEXTURES2D layers"
         frame.name = "BZ2_Softimage_Texture_Layers"
         coord = tree.nodes.new("ShaderNodeTexCoord")
-        coord.label = "Source UVs; TXMP projection transform not yet applied"
+        coord.label = "Imported/source UV fallback; asset UV stage may replace per layer"
         coord.parent = frame
         coord.location = (-900, 0)
 
@@ -124,13 +126,17 @@ def apply_texture_layers(sidecar_path: Path) -> dict:
             tree.links.remove(link)
         tree.links.new(current_color, principled.inputs["Base Color"])
         material["bz2_softimage_texture_layer_count"] = len(record.get("layers") or [])
-        material["bz2_softimage_texture_layer_status"] = "base plus alpha overlays; TXMP projection/emission semantics provisional"
+        material["bz2_softimage_texture_layer_status"] = "base plus alpha overlays; projection UVs/tiling refined by asset-fidelity stage"
+        material["bz2_source_material_name"] = material_name
         for layer in record.get("layers") or []:
             order = int(layer.get("order") or 0)
             material[f"bz2_txmp_layer_{order}_role"] = str(layer.get("role_candidate") or "")
             material[f"bz2_txmp_layer_{order}_field87"] = int(layer.get("txmp_payload_u16le_87") or 0)
             material[f"bz2_txmp_layer_{order}_field89"] = int(layer.get("txmp_payload_u16le_89") or 0)
             material[f"bz2_txmp_layer_{order}_source"] = str(layer.get("resolved_picture") or "")
+            material[f"bz2_txmp_layer_{order}_projection_code"] = int(layer.get("projection_or_mapping_code_candidate") or 0)
+            material[f"bz2_txmp_layer_{order}_uv_scale"] = list(layer.get("si_texture2d_uv_scale") or [])
+            material[f"bz2_txmp_layer_{order}_uv_offset"] = list(layer.get("si_texture2d_uv_offset") or [])
         applied += 1
 
     return {
@@ -168,25 +174,38 @@ def preserve_render_state(path: Path) -> dict:
 
 def main() -> int:
     args = _argv()
-    if len(args) != 5:
+    if len(args) not in {5, 6}:
         raise SystemExit(
             "usage: blender --background --python blender_finish_reconstruction.py -- "
-            "<scene.gltf> <scene.scene.json> <output.blend> <scene.texture_layers.json> <scene.render_state.json>"
+            "<scene.gltf> <scene.scene.json> <output.blend> <scene.texture_layers.json> "
+            "[scene.model_textures.json] <scene.render_state.json>"
         )
     if bpy is None:
         raise RuntimeError("this script must be executed by Blender Python")
-    gltf, scene_sidecar, output_blend, layer_sidecar, render_sidecar = map(Path, args)
+
+    if len(args) == 6:
+        gltf, scene_sidecar, output_blend, layer_sidecar, model_sidecar, render_sidecar = map(Path, args)
+    else:
+        gltf, scene_sidecar, output_blend, layer_sidecar, render_sidecar = map(Path, args)
+        model_sidecar = None
+
     base_summary = base.reconstruct(gltf, scene_sidecar, output_blend)
     layer_summary = apply_texture_layers(layer_sidecar)
+    asset_uv_summary = (
+        asset_uvs.apply_asset_uvs(gltf, model_sidecar, layer_sidecar)
+        if model_sidecar is not None and model_sidecar.is_file()
+        else {"status": "model_projection_sidecar_not_supplied"}
+    )
     render_summary = preserve_render_state(render_sidecar)
     bpy.ops.wm.save_as_mainfile(filepath=str(output_blend.resolve()))
     print(json.dumps({
         "output_blend": str(output_blend),
         "base_reconstruction": base_summary,
         "texture_layers": layer_summary,
+        "asset_uvs": asset_uv_summary,
         "render_state": render_summary,
     }, indent=2))
-    return 0 if not layer_summary["missing_material_count"] and not layer_summary["missing_image_count"] else 1
+    return 0 if not layer_summary["missing_material_count"] and not layer_summary["missing_image_count"] and not asset_uv_summary.get("missing_object_count", 0) else 1
 
 
 if __name__ == "__main__":

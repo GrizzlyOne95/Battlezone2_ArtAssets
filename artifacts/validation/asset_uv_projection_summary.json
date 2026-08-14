@@ -1,0 +1,62 @@
+{
+  "schema": "bz2-asset-uv-projection-validation-v1",
+  "source_policy": "Derived corpus statistics only; original Softimage assets are not committed.",
+  "priority": "Asset reconstruction fidelity: geometry, hierarchy, transforms, UVs, texture placement and tiling. Historical floor/render lighting matching is not a gate for this stage.",
+  "model_local_code400": {
+    "resolved_edge_count": 403,
+    "projection_code_counts": {
+      "1": 55,
+      "2": 18,
+      "3": 22,
+      "4": 54,
+      "5": 254
+    },
+    "role_counts": {
+      "base_or_default_candidate": 381,
+      "bump_candidate": 22
+    },
+    "nondefault_uv_scale_offset_count": 79,
+    "identity_matrix_srt_count": 403,
+    "nonidentity_matrix_srt_count": 0,
+    "implementation_consequence": "Every resolved model-local projection can use the working 1..5 fitted-support UV generator without first solving non-identity +90 matrix direction. Source UVs remain preserved as a separate map/provenance path."
+  },
+  "material_level_code401": {
+    "resolved_edge_count": 707,
+    "projection_code_counts": {
+      "1": 172,
+      "2": 308,
+      "3": 41,
+      "4": 151,
+      "7": 14,
+      "8": 21
+    },
+    "role_counts": {
+      "base_or_default_candidate": 593,
+      "alpha_overlay_candidate": 114
+    },
+    "nondefault_uv_scale_offset_count": 393,
+    "identity_matrix_srt_count": 574,
+    "nonidentity_matrix_srt_count": 133,
+    "implementation_consequence": "Identity-matrix code-401 layers with working projection codes can receive generated per-object UV maps immediately. Other layers retain source UVs but now preserve confirmed +6 scale/offset and crop placement rather than silently dropping tiling state."
+  },
+  "portable_gltf": {
+    "source_polygon_uv_policy": "Preserve HRC per-corner TEXCOORD_0 exactly.",
+    "all_zero_uv_policy": "Annotate all-zero polygon UVs as projection-dependent when model-local code-400 state exists; do not pretend they are a usable authored unwrap.",
+    "nurbs_uv_policy": "Keep normalized NURBS parameter-space UVs explicitly distinguished from recovered source texture projection.",
+    "material_texture_transform": "Non-identity confirmed SI_Texture2D +6 U/V scale+offset is emitted through KHR_texture_transform for the portable base texture."
+  },
+  "blender": {
+    "source_uv_policy": "Never overwrite imported source UVs.",
+    "generated_uv_policy": "Create additive named BZ2 projection UV maps per recoverable texture/operator.",
+    "model_local_texture_policy": "Expose mapped model-local base/bump texture nodes per object; auto-connect a base only when no other Base Color texture stack is already connected.",
+    "material_layer_policy": "Rewire supported identity-matrix layers to generated UV maps; unresolved operators/matrix direction fall back to source UV plus confirmed image-space scale/offset/crop.",
+    "cross_scope_blending": "Preserve model-local and material-level texture nodes without inventing an unproven blend order when both exist."
+  },
+  "remaining_asset_fidelity_frontier": [
+    "non-identity +90 matrix direction for material-level code-401 projection layers",
+    "authoritative handling for code-401 projection types 7 and 8",
+    "exact model-local/material-level texture composition where both contribute to one material",
+    "repeat/alternate/swap flags beyond confirmed +6 scale/offset and crop",
+    "textured NURBS projection binding"
+  ]
+}
