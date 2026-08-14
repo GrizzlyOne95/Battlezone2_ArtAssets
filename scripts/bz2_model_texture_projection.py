@@ -18,6 +18,8 @@ import bz2_texture_layers_gltf as texture_layers
 import softimage_pic
 
 VERSION_RE = re.compile(r"\.\d+-\d+$")
+SI_TEXTURE2D_SRT_OFFSET = 90
+SI_TEXTURE2D_SRT_SIZE = 36
 
 
 def parse_projection(data: bytes) -> dict:
@@ -55,6 +57,29 @@ def parse_projection(data: bytes) -> dict:
             ],
         }
     )
+
+    # Source-corpus validation against 15,150 TXMP records plus surviving
+    # readable SI_Texture2D blocks confirms that post-path offset +90 stores
+    # compact texture-matrix RXYZ/SXYZ/TXYZ values. Rotation is in radians.
+    # This is texture/projection state, not the HRC/model transform and not the
+    # separate four-float 2D transform candidate retained at +6.
+    if len(payload) >= SI_TEXTURE2D_SRT_OFFSET + SI_TEXTURE2D_SRT_SIZE:
+        result.update(
+            {
+                "projection_record_status": "decoded_structural_v2",
+                "si_texture2d_matrix_srt_status": "confirmed_from_dotxsi_corpus_v1",
+                "si_texture2d_matrix_srt_offset": SI_TEXTURE2D_SRT_OFFSET,
+                "si_texture2d_matrix_rotation_xyz_radians": list(
+                    struct.unpack_from(">3f", payload, SI_TEXTURE2D_SRT_OFFSET)
+                ),
+                "si_texture2d_matrix_scale_xyz": list(
+                    struct.unpack_from(">3f", payload, SI_TEXTURE2D_SRT_OFFSET + 12)
+                ),
+                "si_texture2d_matrix_translation_xyz": list(
+                    struct.unpack_from(">3f", payload, SI_TEXTURE2D_SRT_OFFSET + 24)
+                ),
+            }
+        )
     return result
 
 
@@ -241,7 +266,9 @@ def augment_model_projections(
         "notes": [
             "DSC relation code 400 is preserved as model-local TEXTURES2D/projection state and is distinct from material-level code 401.",
             "No model projection is applied to TEXCOORD_0; high-resolution Softimage source meshes frequently store zero UVs and depend on projection state.",
-            "The four big-endian floats at TXMP post-path offset 6 are retained as a 2D texture-transform candidate; exact component semantics remain under validation.",
+            "TXMP post-path offset 90 is confirmed as compact SI_Texture2D texture-matrix RXYZ/SXYZ/TXYZ state; rotation is stored in radians.",
+            "The four big-endian floats at TXMP post-path offset 6 remain a separate 2D texture-transform candidate; exact component semantics remain under validation.",
+            "The u16 at TXMP post-path offset 24 varies by texture family; exact mapping/projection enum semantics remain unresolved and are not guessed.",
             "The TXMP crop rectangle is preserved in source pixel coordinates; vertical-origin semantics are not guessed.",
         ],
     }
