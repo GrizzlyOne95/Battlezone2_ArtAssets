@@ -1,0 +1,104 @@
+{
+  "schema": "bz2-texture-layer-validation-v1",
+  "archive_txmp": {
+    "texture_object_count": 664,
+    "payload_u16le_87_distribution": {
+      "1": 8,
+      "2": 238,
+      "3": 418
+    },
+    "payload_u16le_89_distribution": {
+      "1": 54,
+      "2": 556,
+      "10242": 2,
+      "13058": 4,
+      "13314": 2,
+      "13570": 2,
+      "14850": 4,
+      "16130": 6,
+      "45570": 4,
+      "45826": 7,
+      "46338": 2,
+      "48898": 17,
+      "49154": 4
+    },
+    "mode89_value1_count": 54,
+    "mode89_value1_source_basenames": {
+      "blueglow.1": 40,
+      "tank_Decal1": 9,
+      "Stripes3": 1,
+      "Stripes2": 3,
+      "Stripes": 1
+    },
+    "mode89_value1_picture_resolved": 54,
+    "mode89_value1_nonopaque_alpha": 54,
+    "mode89_value1_alpha_min_below_128": 54
+  },
+  "walker_scene20": {
+    "material_with_401_count": 26,
+    "multi_layer_material_count": 8,
+    "overlay_candidate_layer_count": 9,
+    "base_color_bound_count": 26,
+    "unresolved_picture_count": 0,
+    "missing_gltf_material_count": 0
+  },
+  "walker_scene20_geometry_instances": 108,
+  "walker_multilayer_pattern": {
+    "count": 8,
+    "first_layer": "stripes.1 / payload field89=2 / base_or_default_candidate",
+    "second_layer": "blueglow.1 / payload field89=1 / alpha_overlay_candidate"
+  },
+  "tank_highres": {
+    "material_with_401_count": 12,
+    "multi_layer_material_count": 0,
+    "overlay_candidate_layer_count": 0,
+    "base_color_bound_count": 12,
+    "unresolved_picture_count": 0,
+    "missing_gltf_material_count": 0
+  },
+  "tank_geometry_instances": 22,
+  "notes": [
+    "TXMP payload offsets are measured from the first byte after the NUL terminating the source-picture path.",
+    "Field 89 value 1 is a corpus-correlated alpha-overlay candidate, not yet proven to mean emissive/additive blending.",
+    "Field 87 value 1 occurs only on the eight archival bump1 texture objects and is retained as a bump candidate.",
+    "Exact walker historical E:/WALKER source paths resolve scene-locally to walker_final/PICTURES assets."
+  ],
+  "render_state": {
+    "walker_scene20": {
+      "rendering_type": "MENTAL_RAY",
+      "resolution": [2048, 3584],
+      "rendering_frame": [1, 1, 1],
+      "ambience_rgb": [0.3, 0.3, 0.3],
+      "global_render_switches": {
+        "reflection": true,
+        "refraction": true,
+        "shadow": true
+      },
+      "mr_tracer": true,
+      "mr_shadow": true,
+      "mr_ray_reflected": 1,
+      "mr_ray_refracted": 2,
+      "mr_ray_shadow": 2,
+      "mr_threshold": [0.05, 0.05, 0.05],
+      "lens_shaders": ["Bionic_Lens1", "Bionic_Lens2"]
+    },
+    "tank_highres": {
+      "rendering_type": "MENTAL_RAY",
+      "resolution": [1200, 2100],
+      "rendering_frame": [1, 1, 1],
+      "ambience_rgb": [0.3, 0.3, 0.3],
+      "global_render_switches": {
+        "reflection": true,
+        "refraction": true,
+        "shadow": true
+      },
+      "mr_tracer": true,
+      "mr_shadow": true,
+      "mr_ray_reflected": 1,
+      "mr_ray_refracted": 2,
+      "mr_ray_shadow": 2,
+      "mr_threshold": [0.1, 0.1, 0.1],
+      "lens_shaders": []
+    }
+  }
+}
