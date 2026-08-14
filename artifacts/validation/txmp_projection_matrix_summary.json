@@ -1,0 +1,64 @@
+{
+  "schema": "bz2-txmp-projection-validation-v1",
+  "source_policy": "Derived statistics only; original 1998 Softimage files are not committed.",
+  "confirmed_layout": {
+    "post_path_offset_bytes": 90,
+    "byte_order": "big-endian",
+    "float_count": 9,
+    "field_order": [
+      "rotation_x_radians",
+      "rotation_y_radians",
+      "rotation_z_radians",
+      "scale_x",
+      "scale_y",
+      "scale_z",
+      "translation_x",
+      "translation_y",
+      "translation_z"
+    ],
+    "interpretation": "compact SI_Texture2D texture-matrix R/S/T state",
+    "not_hierarchy_transform": true
+  },
+  "corpus": {
+    "txmp_record_count": 15150,
+    "nonzero_rotation_record_count": 3361,
+    "nonunit_scale_record_count": 1,
+    "nonzero_translation_record_count": 0
+  },
+  "readable_dotxsi_crosscheck": {
+    "derived_source_label": "ivstas00.xsi SI_Texture2D",
+    "readable_matrix_diagonal_xyz": [-1.0, 1.0, -1.0],
+    "corresponding_binary_rotation_xyz_radians": [0.0, -3.1415927, 0.0],
+    "corresponding_binary_scale_xyz": [1.0, 1.0, 1.0],
+    "corresponding_binary_translation_xyz": [0.0, 0.0, 0.0],
+    "result": "matches 180-degree Y rotation"
+  },
+  "showcases": {
+    "hi_res_ISDF_walker": {
+      "model_count": 108,
+      "code400_projection_edge_count": 34,
+      "resolved_projection_edge_count": 34,
+      "observed_picture_families": ["rusty", "cavern", "bump1", "chrome3"]
+    },
+    "hi_res_ISDF_tank": {
+      "model_count": 21,
+      "code400_projection_edge_count": 1,
+      "resolved_projection_edge_count": 1,
+      "floor_projection": {
+        "model": "tank2-grid1",
+        "texture_object": "tank2-t2d85",
+        "picture_family": "rusty",
+        "matrix_rotation_xyz_radians": [0.0, 0.0, 0.0],
+        "matrix_scale_xyz": [1.0, 1.0, 1.0],
+        "matrix_translation_xyz": [0.0, 0.0, 0.0],
+        "separate_txmp_plus6_transform_candidate": [1.0, 1.0, 0.0, 0.0]
+      }
+    }
+  },
+  "unresolved": [
+    "TXMP post-path +24 mapping/projection enum meanings",
+    "projection support-space direction",
+    "TXMP post-path +6 four-float transform component/direction semantics",
+    "crop/repeat vertical-origin and wrapping semantics"
+  ]
+}
