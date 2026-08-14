@@ -1,0 +1,95 @@
+{
+  "schema": "bz2-dsc-multiroot-validation-v1",
+  "walker_scene20": {
+    "scene": "walker_final/SCENES/ISDF-walker_final.20-0.dsc",
+    "model_count": 108,
+    "root_count": 7,
+    "resolved_root_count": 7,
+    "root_models": [
+      "walker_final-bmerge19.1-0",
+      "walker_final-circle2.4-0",
+      "walker_final-fx3.13-0",
+      "walker_final-fx4.13-0",
+      "walker_final-grid1.7-0",
+      "walker_final-null1.16-0",
+      "walker_final-spline2.6-0"
+    ],
+    "mapped_model_count": 108,
+    "unmapped_model_count": 0,
+    "ambiguous_node_mapping_count": 0,
+    "code110_parent_edges": 101,
+    "code110_parent_matches": 101,
+    "code110_parent_mismatches": 0,
+    "final_node_count": 108,
+    "class4_mesh_total": 71,
+    "parametric_mesh_total": 6,
+    "final_mesh_count": 77,
+    "camera_count_after_scene_layer": 1,
+    "light_count_after_scene_layer": 6,
+    "code400_model_count": 34,
+    "code400_resolved_node_count_after_multiroot": 34,
+    "code400_unresolved_node_count_after_multiroot": 0,
+    "independent_loader_geometry_instances": 77,
+    "finite_bounds": [
+      [-10.4099611759, 0.0148522671, -4.3020743456],
+      [10.4099610215, 20.9096717834, 9.7461126533]
+    ]
+  },
+  "tank_highres": {
+    "scene": "adconcept/SCENES/hi_res-ISDF_tank.1-0.dsc",
+    "model_count": 21,
+    "root_count": 6,
+    "resolved_root_count": 6,
+    "root_models": [
+      "Main_tank-gun.1-0",
+      "tank2-bmerge5_default_7.1-0",
+      "tank2-fx1.1-0",
+      "tank2-fx2.1-0",
+      "tank2-grid1.1-0",
+      "tank2-NewIVTankBody.1-0"
+    ],
+    "mapped_model_count": 21,
+    "unmapped_model_count": 0,
+    "ambiguous_node_mapping_count": 0,
+    "code110_parent_edges": 15,
+    "code110_parent_matches": 15,
+    "code110_parent_mismatches": 0,
+    "final_node_count": 21,
+    "class4_mesh_total": 17,
+    "parametric_mesh_total": 0,
+    "final_mesh_count": 17,
+    "camera_count_after_scene_layer": 1,
+    "light_count_after_scene_layer": 9,
+    "code400_model_count": 1,
+    "code400_resolved_node_count_after_multiroot": 1,
+    "code400_unresolved_node_count_after_multiroot": 0,
+    "independent_loader_geometry_instances": 17,
+    "finite_bounds": [
+      [-3.0982003349, -0.6697094611, -4.3671078746],
+      [3.0982003075, 3.2448496125, 5.0960531171]
+    ]
+  },
+  "root_transform_evidence": {
+    "policy": "explicit DSC ENVIRONMENT SRT is authoritative for the scene root and replaces, rather than multiplies, the HRC outer transform",
+    "exact_reference_matches": [
+      "walker_final-bmerge19.1-0",
+      "Main_tank-gun.1-0",
+      "tank2-bmerge5_default_7.1-0",
+      "tank2-NewIVTankBody.1-0"
+    ],
+    "dsc_only_root_srt_examples": [
+      "walker_final-circle2.4-0",
+      "walker_final-fx3.13-0",
+      "walker_final-fx4.13-0",
+      "tank2-fx1.1-0",
+      "tank2-fx2.1-0",
+      "tank2-grid1.1-0"
+    ]
+  },
+  "notes": [
+    "Every MODELS entry marked ROOT in both reference scenes resolves to a same-name HRC in the scene-local archive folder.",
+    "Every non-root DSC model in both reference scenes maps exactly once to an internal node of one ROOT HRC.",
+    "The number of code-110 parent edges equals model_count - root_count for both exact targets and every edge matches the merged HRC hierarchy.",
+    "Support/effect roots with no currently decoded render mesh are still preserved as named scene nodes because they carry transforms, projection state, and other scene semantics."
+  ]
+}
