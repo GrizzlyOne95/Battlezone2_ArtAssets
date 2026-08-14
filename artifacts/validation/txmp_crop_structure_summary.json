@@ -1,0 +1,48 @@
+{
+  "schema": "bz2-txmp-crop-structure-validation-v1",
+  "source_policy": "Derived statistics only; original Softimage files and images are not committed.",
+  "corpus": {
+    "txmp_records_checked": 664,
+    "tail_minimum_bytes_required": 74
+  },
+  "confirmed_crop_rectangle": {
+    "post_path_offsets": {
+      "x0": 60,
+      "x1": 62,
+      "y0": 64,
+      "y1": 66
+    },
+    "encoding": "four big-endian u16 source-pixel coordinates",
+    "evidence": [
+      "glare.pic independently decodes as 64x64 and its TXMP rectangle is 0,63,0,63",
+      "rusty.pic independently decodes as 483x363 and its uncropped TXMP rectangle is 0,482,0,362",
+      "cropped cavern/blueglow/stripe records contain plausible source-pixel subrectangles"
+    ]
+  },
+  "trailing_triplet": {
+    "post_path_offsets": [68, 70, 72],
+    "observed_relation": ["x1", "y0", "y1"],
+    "records_matching_relation": 664,
+    "records_checked": 664,
+    "mismatch_count": 0,
+    "status": "structurally confirmed duplicate of the last three crop-rectangle components; semantic reason for the duplicate remains unknown",
+    "important_correction": "These three u16 values are not independent repeat/wrap state. The existing production field name crop_repeat_raw is a legacy misnomer and must not be interpreted as repeat counts or wrapping flags."
+  },
+  "readable_si_texture2d_source_fields_near_crop": [
+    "cropUMin",
+    "cropUMax",
+    "cropVMin",
+    "cropVMax",
+    "UVSwap",
+    "URepeat",
+    "VRepeat",
+    "UAlternate",
+    "VAlternate"
+  ],
+  "still_unresolved": [
+    "exact semantic role of TXMP +58",
+    "binary locations and meaning of URepeat/VRepeat/UAlternate/VAlternate if present in this TXMP layout",
+    "vertical-origin convention when converting source-pixel crop coordinates to Blender image coordinates"
+  ],
+  "parser_followup": "Add an accurately named structural field for +68..72 and retain crop_repeat_raw only as an explicitly deprecated compatibility alias until downstream sidecars have migrated."
+}
