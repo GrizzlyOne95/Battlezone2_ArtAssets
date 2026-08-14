@@ -1,0 +1,37 @@
+{
+  "schema": "bz2-class4-geometry-validation-v3",
+  "source": "bz2_art.7z",
+  "summary": {
+    "hrc_files": 7921,
+    "direct_hrc_files": 7665,
+    "archive_hrc_files": 256,
+    "hrc_files_with_class4": 6526,
+    "direct_hrc_files_with_class4": 6370,
+    "archive_hrc_files_with_class4": 156,
+    "class4_records": 35849,
+    "direct_class4_records": 34308,
+    "archive_class4_records": 1541,
+    "outer_records": 5279,
+    "nested_records": 30570,
+    "decoded_records": 35849,
+    "decoded_outer": 5279,
+    "decoded_nested": 30570,
+    "vertices": 2152275,
+    "polygons": 2385222,
+    "simple_fan_triangles": 3664508,
+    "nan_normal_corners": 57,
+    "contour_separators": 708,
+    "multi_contour_polygons": 703,
+    "max_contours_per_polygon": 3,
+    "max_polygon_corners": 159,
+    "transform_only_records": 148,
+    "records_with_polygon_gt32": 545,
+    "records_with_contour_separators": 376,
+    "zip_archives_scanned": 3
+  },
+  "failures": {},
+  "notes": [
+    "embedded ZIP HRC members are included as first-class preservation sources",
+    "simple_fan_triangles excludes multi-contour polygons pending hole-aware tessellation"
+  ]
+}
