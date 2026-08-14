@@ -10,8 +10,8 @@ Class-4 meshes are re-decoded from their authoritative ROOT HRC source, split by
 the proven polygon material-slot metadata, and rebound to the ordered DSC
 MODELS->MATERIALS code-300 list. Class-1 ROOT grids receive their object-level
 first material. Parametric meshes receive an object-level material only when a
-single untextured material is present; textured parametric projection remains a
-separate reconstruction problem.
+single material with no DSC code-401 texture relationship is present; textured
+parametric projection remains a separate reconstruction problem.
 """
 from __future__ import annotations
 
@@ -85,7 +85,7 @@ def bind_scene_materials(
     texture_dir.mkdir(parents=True, exist_ok=True)
 
     store = dscmat.open_store(asset_source)
-    model_material_defs, material_defs, chapters, _relations = dscmat.build_scene_materials(
+    model_material_defs, material_defs, chapters, relations = dscmat.build_scene_materials(
         scene_dsc,
         store,
         scene_prefix,
@@ -93,7 +93,16 @@ def bind_scene_materials(
     )
     source_material_index = dscmat.append_source_materials(gltf, material_defs)
     models = chapters.get("MODELS", [])
+    materials = chapters.get("MATERIALS", [])
     parent_by_node = _parent_map(gltf)
+    material_names_with_401 = {
+        materials[int(relation["source_index"])]
+        for relation in relations
+        if relation["source_chapter"] == "MATERIALS"
+        and relation["target_chapter"] == "TEXTURES2D"
+        and relation["relation_code"] == 401
+        and 0 <= int(relation["source_index"]) < len(materials)
+    }
 
     # Root HRC data/probes are cached because the large master hierarchy can
     # contribute many class-4 nodes to the same DSC scene.
@@ -245,13 +254,19 @@ def bind_scene_materials(
 
         if extras.get("class_id") in {9, 10}:
             # NURBS parameter-space UVs are not the original Softimage texture
-            # projection. Assign an object material only when it cannot bind a
-            # material-level texture incorrectly.
-            if len(definitions) != 1 or definitions[0].get("texture_uri"):
+            # projection. The authoritative DSC code-401 relationship therefore
+            # gates this path even when a historical TXMP source picture has not
+            # yet resolved to a portable URI.
+            has_material_texture = any(
+                definition["name"] in material_names_with_401
+                for definition in definitions
+            )
+            if len(definitions) != 1 or has_material_texture:
                 parametric_textured_deferred.append(
                     {
                         "node": node.get("name"),
                         "materials": [definition["name"] for definition in definitions],
+                        "has_code401_texture": has_material_texture,
                     }
                 )
                 continue
@@ -317,7 +332,7 @@ def bind_scene_materials(
             "class-4 polygon metadata upper 16 bits select ordered DSC relation-code-300 material slots",
             "nodes without direct code-300 materials inherit the nearest material-bearing parent in the reconstructed scene graph",
             "ROOT class-1 grids receive their first object material but retain projection-driven texturing separately",
-            "parametric meshes receive a source object material only when it is untextured; textured NURBS projection remains intentionally deferred",
+            "parametric meshes receive a source object material only when the DSC material has no code-401 texture relation; textured NURBS projection remains intentionally deferred",
             "ordered multi-texture code-401 restoration and corrected MTR semantics remain subsequent non-destructive stages",
         ],
     }
