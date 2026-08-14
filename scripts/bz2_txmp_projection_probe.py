@@ -1,22 +1,17 @@
 #!/usr/bin/env python3
-"""Probe Softimage TXMP tails for a nine-float projection transform.
+"""Probe and decode the Softimage TXMP texture-matrix S/R/T block.
 
-The model-local projection exporter deliberately preserves ``txmp_tail_hex`` in
-``scene.model_textures.json``.  This tool turns that preserved byte evidence into
-a repeatable corpus probe instead of requiring one-off hex inspection.
+The model-local projection exporter preserves ``txmp_tail_hex`` in generated
+``scene.model_textures.json`` sidecars. Source-corpus validation now confirms
+that the compact SI_Texture2D texture-matrix transform begins at post-path TXMP
+offset +90 as nine big-endian floats::
 
-Current reversal evidence says one TXMP block is laid out as nine big-endian
-floats in field order::
-
-    rotation X, Y, Z,
+    rotation X, Y, Z (radians),
     scale X, Y, Z,
     translation X, Y, Z
 
-The exact byte offset is intentionally *not* hard-coded here until it is
-correlated across enough readable SI_Texture2D/TXMP records.  Without
-``--offset``, the tool ranks every possible nine-float window.  With a selected
-``--offset``, it emits the decoded fields and an R -> S -> T transform matrix for
-each projection record.
+The exhaustive offset scanner is retained as a regression/falsification tool for
+other archives. Use ``--offset 90`` to decode the confirmed field directly.
 
 This script never writes UV0 and never mutates the source sidecar.
 """
@@ -33,6 +28,7 @@ from typing import Iterable
 FLOAT_COUNT = 9
 FLOAT_BYTES = FLOAT_COUNT * 4
 DEFAULT_TAIL_BYTES = 167
+CONFIRMED_SRT_OFFSET = 90
 
 
 def _iter_projection_records(document: dict, source: Path) -> Iterable[dict]:
@@ -69,7 +65,7 @@ def _endian_prefix(name: str) -> str:
 
 
 def decode_rst(tail: bytes, offset: int, endian: str = "big") -> dict:
-    """Decode nine floats in observed RXYZ/SXYZ/TXYZ field order."""
+    """Decode nine floats in confirmed RXYZ/SXYZ/TXYZ field order."""
     if offset < 0 or offset + FLOAT_BYTES > len(tail):
         raise ValueError(
             f"offset {offset} cannot decode {FLOAT_BYTES} bytes from tail of {len(tail)}"
@@ -88,12 +84,10 @@ def _all_finite(values: Iterable[float]) -> bool:
 
 
 def _window_score(decoded: dict) -> tuple[bool, float]:
-    """Return a deliberately conservative plausibility score.
+    """Return a conservative plausibility score for regression scanning.
 
-    This score is only a triage aid.  It does *not* claim that a high-scoring
-    window is the projection transform.  It favors values that look like normal
-    authored Softimage projection transforms while still allowing negative scale
-    (mirroring), large translations, and rotations beyond one turn.
+    The production offset is already source-confirmed at +90. This score only
+    helps detect whether another archive follows the same fixed layout.
     """
     rotation = decoded["rotation_xyz"]
     scale = decoded["scale_xyz"]
@@ -108,12 +102,10 @@ def _window_score(decoded: dict) -> tuple[bool, float]:
 
     score = 0.0
 
-    # Authored projection rotations are normally human-scale values.  Keep the
-    # bound loose enough for multiple turns and both degree/radian hypotheses.
-    score += sum(1.0 for value in rotation if abs(value) <= 1440.0)
+    # Confirmed source values are radians. Multiple turns remain possible, so
+    # keep this much looser than [-pi, pi] while rewarding human-scale angles.
+    score += sum(1.5 for value in rotation if abs(value) <= 16.0 * math.pi)
 
-    # Scale defaults to 1/1/1.  Reward common authored ranges without requiring
-    # the defaults; mirrored (negative) scales remain valid candidates.
     for value in scale:
         magnitude = abs(value)
         if 1.0e-4 <= magnitude <= 1.0e4:
@@ -121,12 +113,7 @@ def _window_score(decoded: dict) -> tuple[bool, float]:
         if abs(magnitude - 1.0) <= 1.0e-4:
             score += 1.5
 
-    # Translation may be large on support-space records, but astronomical float
-    # reinterpretations should rank below ordinary scene/projection values.
     score += sum(1.0 for value in translation if abs(value) <= 1.0e6)
-
-    # Defaults are common and useful corpus anchors, but do not dominate custom
-    # stripe/floor/glow projections.
     score += 0.5 * sum(1.0 for value in rotation if abs(value) <= 1.0e-7)
     score += 0.5 * sum(1.0 for value in translation if abs(value) <= 1.0e-7)
     return True, score
@@ -148,12 +135,12 @@ def _identity() -> list[list[float]]:
     ]
 
 
-def rst_matrix(decoded: dict, rotation_unit: str = "degrees") -> list[list[float]]:
-    """Build a column-vector matrix applying Euler XYZ, then scale, then translate.
+def rst_matrix(decoded: dict, rotation_unit: str = "radians") -> list[list[float]]:
+    """Build a diagnostic column-vector matrix from RXYZ/SXYZ/TXYZ.
 
-    ``rotation_xyz`` means rotate around X, then Y, then Z.  For column vectors
-    the rotation product is therefore ``Rz @ Ry @ Rx`` and the complete observed
-    operation order is ``T @ S @ R``.
+    The binary values are confirmed to be radians. ``degrees`` is retained only
+    for comparison with external/manual test data. Matrix multiplication here is
+    diagnostic; Blender projection-space direction remains a separate question.
     """
     rx, ry, rz = decoded["rotation_xyz"]
     if rotation_unit == "degrees":
@@ -240,12 +227,11 @@ def rank_offsets(records: list[dict], endian: str, top: int) -> list[dict]:
             continue
         coverage = valid_count / len(records)
         mean_score = sum(scores) / valid_count
-        # Coverage dominates.  A true fixed-layout field should decode sensibly
-        # across most records, while a coincidental float window usually will not.
         corpus_score = coverage * 100.0 + mean_score
         ranked.append(
             {
                 "offset": offset,
+                "is_confirmed_layout_offset": offset == CONFIRMED_SRT_OFFSET,
                 "valid_count": valid_count,
                 "record_count": len(records),
                 "coverage": coverage,
@@ -276,22 +262,26 @@ def decode_at_offset(
             continue
         decoded = decode_rst(record["tail"], offset, endian)
         valid, score = _window_score(decoded)
-        output.append(
+        metadata = {
+            key: value for key, value in record.items() if key != "tail"
+        }
+        metadata.update(
             {
-                key: value
-                for key, value in record.items()
-                if key != "tail"
-            }
-            | {
                 **decoded,
                 "plausible": valid,
                 "plausibility_score": score if valid else None,
-                "matrix_application_order": "Rxyz -> Sxyz -> Txyz",
-                "matrix_convention": "column vectors; M = T @ S @ Rz @ Ry @ Rx",
+                "field_role": (
+                    "confirmed_si_texture2d_matrix_srt"
+                    if offset == CONFIRMED_SRT_OFFSET and endian == "big"
+                    else "candidate_or_regression_decode"
+                ),
                 "rotation_unit": rotation_unit,
+                "diagnostic_matrix_application_order": "Rxyz -> Sxyz -> Txyz",
+                "diagnostic_matrix_convention": "column vectors; M = T @ S @ Rz @ Ry @ Rx",
                 "matrix4x4": rst_matrix(decoded, rotation_unit),
             }
         )
+        output.append(metadata)
     return output
 
 
@@ -308,7 +298,7 @@ def self_test() -> None:
     assert rst_matrix(identity_decoded) == _identity()
 
     sample = {
-        "rotation_xyz": [0.0, 0.0, 90.0],
+        "rotation_xyz": [0.0, 0.0, math.pi / 2.0],
         "scale_xyz": [2.0, 3.0, 4.0],
         "translation_xyz": [10.0, 20.0, 30.0],
     }
@@ -323,11 +313,15 @@ def self_test() -> None:
         for col in range(4):
             assert _almost_equal(matrix[row][col], expected[row][col])
 
-    prefix = b"sixbyt"
-    packed = struct.pack(">9f", *(sample["rotation_xyz"] + sample["scale_xyz"] + sample["translation_xyz"]))
+    prefix = bytes(CONFIRMED_SRT_OFFSET)
+    packed = struct.pack(
+        ">9f",
+        *(sample["rotation_xyz"] + sample["scale_xyz"] + sample["translation_xyz"]),
+    )
     tail = prefix + packed + bytes(DEFAULT_TAIL_BYTES - len(prefix) - len(packed))
-    decoded = decode_rst(tail, len(prefix), "big")
-    assert decoded["rotation_xyz"] == sample["rotation_xyz"]
+    decoded = decode_rst(tail, CONFIRMED_SRT_OFFSET, "big")
+    for actual, expected_value in zip(decoded["rotation_xyz"], sample["rotation_xyz"]):
+        assert _almost_equal(actual, expected_value)
     assert decoded["scale_xyz"] == sample["scale_xyz"]
     assert decoded["translation_xyz"] == sample["translation_xyz"]
 
@@ -343,19 +337,22 @@ def main() -> int:
     parser.add_argument(
         "--offset",
         type=int,
-        help="Decode a confirmed/candidate post-path TXMP byte offset instead of scanning",
+        help=(
+            "Decode one post-path TXMP byte offset instead of scanning; "
+            f"the confirmed SI_Texture2D matrix SRT offset is {CONFIRMED_SRT_OFFSET}"
+        ),
     )
     parser.add_argument(
         "--endian",
         choices=("big", "little"),
         default="big",
-        help="Float byte order (TXMP structural evidence currently favors big-endian)",
+        help="Float byte order (confirmed TXMP matrix SRT is big-endian)",
     )
     parser.add_argument(
         "--rotation-unit",
-        choices=("degrees", "radians"),
-        default="degrees",
-        help="Unit used when constructing the diagnostic matrix",
+        choices=("radians", "degrees"),
+        default="radians",
+        help="Unit used to construct the diagnostic matrix; source values are radians",
     )
     parser.add_argument("--top", type=int, default=12, help="Number of ranked offsets")
     parser.add_argument("--json-out", type=Path, help="Optional JSON report path")
@@ -369,7 +366,16 @@ def main() -> int:
     if args.self_test:
         self_test()
         if not args.sidecars:
-            print(json.dumps({"self_test": "ok"}, indent=2))
+            print(
+                json.dumps(
+                    {
+                        "self_test": "ok",
+                        "confirmed_srt_offset": CONFIRMED_SRT_OFFSET,
+                        "confirmed_rotation_unit": "radians",
+                    },
+                    indent=2,
+                )
+            )
             return 0
     if not args.sidecars:
         parser.error("provide at least one scene.model_textures.json or use --self-test")
@@ -380,21 +386,26 @@ def main() -> int:
 
     if args.offset is None:
         report = {
-            "schema": "bz2-txmp-projection-offset-probe-v1",
+            "schema": "bz2-txmp-projection-offset-probe-v2",
             "sidecars": [str(path) for path in args.sidecars],
             "record_count": len(records),
             "endian": args.endian,
-            "field_order_hypothesis": "rotation_xyz, scale_xyz, translation_xyz",
+            "confirmed_srt_offset": CONFIRMED_SRT_OFFSET,
+            "confirmed_rotation_unit": "radians",
+            "field_order": "rotation_xyz, scale_xyz, translation_xyz",
             "offset_semantics": "bytes from the first byte after the NUL-terminated TXMP picture path",
             "ranked_offsets": rank_offsets(records, args.endian, args.top),
-            "warning": "Ranking is diagnostic evidence only; do not promote an offset without corpus/source correlation.",
+            "note": "Offset +90 is source-confirmed; ranking is retained for regression/falsification on other archives.",
         }
     else:
         report = {
-            "schema": "bz2-txmp-projection-srt-v1",
+            "schema": "bz2-txmp-projection-srt-v2",
             "sidecars": [str(path) for path in args.sidecars],
             "record_count": len(records),
             "offset": args.offset,
+            "is_confirmed_layout_offset": (
+                args.offset == CONFIRMED_SRT_OFFSET and args.endian == "big"
+            ),
             "endian": args.endian,
             "rotation_unit": args.rotation_unit,
             "field_order": "rotation_xyz, scale_xyz, translation_xyz",
