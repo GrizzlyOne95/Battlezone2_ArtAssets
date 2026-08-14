@@ -57,7 +57,7 @@ def parse_projection(data: bytes) -> dict:
 
     result.update(
         {
-            "projection_record_status": "decoded_structural_v4",
+            "projection_record_status": "decoded_structural_v5",
             "scope_u32_be": int.from_bytes(payload[0:4], "big"),
             "scope_u16_be": int.from_bytes(payload[4:6], "big"),
             "texture_2d_transform_candidate": uv_transform,
@@ -84,6 +84,16 @@ def parse_projection(data: bytes) -> dict:
             "crop_repeat_raw_status": "deprecated_misnamed_alias_of_crop_rect_trailing_duplicate_raw",
         }
     )
+
+    # The post-crop +76/+78 words are preserved without semantic labels. A
+    # relation-aware corpus pass found that every model-local code-400 record
+    # with +24=5 also has +78=1 (254/254 edges), while no other +24 class does.
+    # +76=1 appears only on a subset of +24=4 records. This is useful structural
+    # evidence for projection-type behavior, but it is not sufficient to call
+    # either word wrap/repeat/alternate state yet.
+    if len(payload) >= 80:
+        result["field_u16_be_76"] = int.from_bytes(payload[76:78], "big")
+        result["field_u16_be_78"] = int.from_bytes(payload[78:80], "big")
 
     # Source-corpus validation against 15,150 TXMP records plus surviving
     # readable SI_Texture2D blocks confirms that post-path offset +90 stores
@@ -295,6 +305,7 @@ def augment_model_projections(
             "TXMP post-path offset 6 is confirmed as SI_Texture2D UScale/VScale/UOffset/VOffset image-space state.",
             "TXMP post-path offset 90 is confirmed as compact SI_Texture2D texture-matrix RXYZ/SXYZ/TXYZ state; rotation is stored in radians.",
             "TXMP post-path offset 24 strongly corresponds to Softimage projection creation/operator type; code 2 is geometry-correlated with Planar XZ and Autodesk independently identifies numeric 4 as siTxtSpherical, but the full enum is not hard-coded yet.",
+            "TXMP +78=1 is exclusive to +24=5 in the validated model-local corpus (254/254 code-400 edges); +76=1 appears only on a subset of +24=4 edges. Both words are preserved raw because their exact semantics remain unresolved.",
             "The TXMP crop rectangle is preserved in source pixel coordinates; +68/+70/+72 structurally duplicate x1/y0/y1 in the validated corpus and are not repeat/wrap values.",
             "Vertical-origin and actual repeat/wrap field semantics remain unresolved.",
         ],
