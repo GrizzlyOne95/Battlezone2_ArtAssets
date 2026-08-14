@@ -1,0 +1,106 @@
+{
+  "schema": "bz2-original-render-ground-truth-v1",
+  "source_policy": "Derived metadata only; original Softimage render PICs and source textures are not committed.",
+  "archival_render_outputs": {
+    "hi_res_ISDF_tank": {
+      "source_label": "NewTank/NewTank/RENDER_PICTURES/TANK.1.pic",
+      "width": 1200,
+      "height": 2100,
+      "components": 4,
+      "compression_packets": [
+        {"type": "mixed_rle", "channel_mask": 224},
+        {"type": "mixed_rle", "channel_mask": 16}
+      ],
+      "source_bytes": 1464317,
+      "decoded_source_bytes_consumed": 1464317,
+      "trailing_bytes": 0,
+      "decoded_rgba_sha256": "81654f5e4e8890455601969c87143f0a94e2c0d2f7513ac68098902f0ad93b2b"
+    },
+    "hi_res_ISDF_walker": {
+      "source_label": "walker_final/RENDER_PICTURES/walker_final_highres.1.pic",
+      "width": 2048,
+      "height": 3584,
+      "components": 4,
+      "compression_packets": [
+        {"type": "mixed_rle", "channel_mask": 224},
+        {"type": "mixed_rle", "channel_mask": 16}
+      ],
+      "source_bytes": 10069117,
+      "decoded_source_bytes_consumed": 10069117,
+      "trailing_bytes": 0,
+      "decoded_rgba_sha256": "fdae5d8394151518bd431bb1acff20e4105cd02cc170dfb07caa3e2c60eab93c"
+    },
+    "ISDF_walker_1200x2100": {
+      "source_label": "walker_final/RENDER_PICTURES/walker.1.pic",
+      "width": 1200,
+      "height": 2100,
+      "components": 4,
+      "compression_packets": [
+        {"type": "mixed_rle", "channel_mask": 224},
+        {"type": "mixed_rle", "channel_mask": 16}
+      ],
+      "source_bytes": 4272745,
+      "decoded_source_bytes_consumed": 4272745,
+      "trailing_bytes": 0,
+      "decoded_rgba_sha256": "5bbff4396fbe04d87c160cf28457687bf215e0619677d5a9b5c70d54d0c234d4"
+    }
+  },
+  "walker_planar_xz_ground_truth_fixture": {
+    "scene_revision": "ISDF-walker_final.20-0",
+    "setup_output_stem": "walker_final_highres",
+    "setup_resolution": [2048, 3584],
+    "setup_perspective": {
+      "fov_radians": 1.180949,
+      "aspect": 0.5714286,
+      "near": 0.1,
+      "far": 32768.0
+    },
+    "camera_relation": {
+      "relation_code": 1110,
+      "camera": "Razor2a-Camera1.1-0",
+      "interest": "Razor2a-cam_int1.20-0"
+    },
+    "camera_binary": {
+      "position_xyz": [13.408349990844727, 10.115269660949707, 25.032169342041016],
+      "interest_xyz": [1.4427839517593384, 8.57128620147705, 2.1228721141815186],
+      "clip_near": 0.10000000149011612,
+      "clip_far": 32768.0,
+      "focal_length": 50.0,
+      "f_stop": 5.599999904632568,
+      "focus_distance": 20.0,
+      "fov_radians": 1.1809489727020264
+    },
+    "floor_support_model": {
+      "model": "walker_final-grid1.7-0",
+      "outer_class": 1,
+      "outer_subtype": 2,
+      "grid_dimensions": [13, 13],
+      "vertex_count": 169,
+      "bounds_xyz": {
+        "min": [-71.5595703125, 0.0, -71.5595703125],
+        "max": [71.5595703125, 0.0, 71.5595703125]
+      },
+      "plane": "XZ at Y=0"
+    },
+    "model_texture_relation": {
+      "relation_code": 400,
+      "texture_object": "walker_final-t2d85.1-0",
+      "picture_family": "rusty",
+      "projection_creation_type_raw": 2,
+      "projection_creation_type_likely": "Planar XZ",
+      "uv_scale_offset": [1.0, 1.0, 0.0, 0.0],
+      "crop_pixels": [0, 482, 0, 362],
+      "matrix_rotation_xyz_radians": [0.0, 0.0, 0.0],
+      "matrix_scale_xyz": [1.0, 1.0, 1.0],
+      "matrix_translation_xyz": [0.0, 0.0, 0.0]
+    },
+    "picture_dimensions": [483, 363],
+    "validation_status": "The original archived render, recovered camera, exact planar grid geometry, original rusty image dimensions, and identity TXMP transform state now form an end-to-end pixel-ground-truth fixture. Direct Planar-XZ support normalization is strongly motivated, but U/V handedness/origin and support-space direction remain deliberately unpromoted until visual error is measured."
+  },
+  "next_validation": [
+    "render all planar-XZ U/V handedness and origin candidates from the recovered support bounds",
+    "compare against original walker floor pixels while masking foreground geometry/reflection-dominated regions",
+    "promote support-space direction only after one candidate wins by a stable objective metric",
+    "reuse the same machinery on the tank floor as an independent scene-level check"
+  ]
+}
