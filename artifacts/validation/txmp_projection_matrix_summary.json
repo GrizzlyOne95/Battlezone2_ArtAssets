@@ -1,0 +1,203 @@
+{
+  "schema": "bz2-txmp-projection-validation-v4",
+  "source_policy": "Derived statistics only; original 1998 Softimage files, supplied source references, textures and render outputs are not committed.",
+  "confirmed_uv_transform": {
+    "post_path_offset_bytes": 6,
+    "byte_order": "big-endian",
+    "float_count": 4,
+    "field_order": [
+      "UScale",
+      "VScale",
+      "UOffset",
+      "VOffset"
+    ],
+    "interpretation": "SI_Texture2D image-space UV scale and offset",
+    "source_evidence": "Public dotXSI exporter source writes SI_Texture2D U/V scale followed by U/V offset; BZ2 corpus values at +6 match defaults and authored placement behavior.",
+    "identity": [1.0, 1.0, 0.0, 0.0]
+  },
+  "confirmed_matrix_layout": {
+    "post_path_offset_bytes": 90,
+    "byte_order": "big-endian",
+    "float_count": 9,
+    "field_order": [
+      "rotation_x_radians",
+      "rotation_y_radians",
+      "rotation_z_radians",
+      "scale_x",
+      "scale_y",
+      "scale_z",
+      "translation_x",
+      "translation_y",
+      "translation_z"
+    ],
+    "interpretation": "compact SI_Texture2D texture-matrix R/S/T state",
+    "not_hierarchy_transform": true
+  },
+  "corpus": {
+    "txmp_record_count": 15150,
+    "nonzero_rotation_record_count": 3361,
+    "nonunit_scale_record_count": 1,
+    "nonzero_translation_record_count": 0,
+    "nondefault_uv_scale_offset_record_count_in_nested_archival_set": 263
+  },
+  "readable_dotxsi_crosscheck": {
+    "derived_source_label": "ivstas00.xsi SI_Texture2D",
+    "readable_matrix_diagonal_xyz": [-1.0, 1.0, -1.0],
+    "corresponding_binary_rotation_xyz_radians": [0.0, -3.1415927, 0.0],
+    "corresponding_binary_scale_xyz": [1.0, 1.0, 1.0],
+    "corresponding_binary_translation_xyz": [0.0, 0.0, 0.0],
+    "result": "matches 180-degree Y rotation"
+  },
+  "glare_source_anchor": {
+    "readable_source_texture": "ivstas00.xsi glare.pic SI_Texture2D",
+    "readable_mapping_type": 1,
+    "readable_image_size": [64, 64],
+    "readable_crop_pixels": [0, 63, 0, 63],
+    "readable_uv_scale": [1.0, 1.0],
+    "readable_uv_offset": [0.0, 0.0],
+    "readable_matrix": "identity",
+    "supplied_pic": {
+      "width": 64,
+      "height": 64,
+      "components": 3,
+      "compression": "mixed RLE",
+      "source_bytes": 5963
+    },
+    "archival_txmp_exemplar": {
+      "picture_family": "glare",
+      "plus6_uv_scale_offset": [1.0, 1.0, 0.0, 0.0],
+      "crop_pixels": [0, 63, 0, 63],
+      "plus90_matrix_srt": "identity",
+      "plus24_raw": 1
+    }
+  },
+  "projection_creation_type_frontier": {
+    "post_path_offset_bytes": 24,
+    "production_field": "projection_or_mapping_code_candidate",
+    "corrected_interpretation": "strong candidate for Softimage projection creation/operator type; not the readable dotXSI SI_Texture2D.mappingType field",
+    "why_mapping_type_is_rejected": "Public dotXSI exporter source uses mappingType=3 for explicit UVs, while BZ2 code-400 records with +24=3 occur on class-4 meshes whose baked polygon UVs are all zero and therefore still require projected coordinates.",
+    "relation_aware_code400_corpus": {
+      "edge_count": 403,
+      "observed_values": [1, 2, 3, 4, 5],
+      "counts": {
+        "1": 55,
+        "2": 18,
+        "3": 22,
+        "4": 54,
+        "5": 254
+      },
+      "representative_groups": {
+        "1": ["walker bmerge9", "walker bmerge10", "walker bmerge11", "walker bmerge12", "walker bmerge13"],
+        "2": ["ISDF_walker-grid1", "tank2-grid1", "scene2-grid8_1"],
+        "3": ["ISDF_walker-grid", "ISDF_walker-grid2"],
+        "4": ["ISDF_walker-revol13", "ISDF_walker-revol13_1", "American pilot body parts"],
+        "5": ["walker body and mechanical class-4 parts"]
+      },
+      "note": "Generic TXMP records outside model-local relation code 400 also contain higher values, including 7 and 8, but those values do not occur in this extracted code-400 projection set."
+    },
+    "independent_anchors": {
+      "code_2": {
+        "likely_type": "Planar XZ",
+        "status": "geometry-correlated and original-render fixture available",
+        "evidence": "ISDF-walker-grid1 is a recovered 13x13 support/floor grid whose vertices lie on XZ at Y=0; its model-local TXMP uses +24=2. Autodesk SDK examples use siTxtPlanarXZ on a grid. The original archived walker render and matching recovered camera now provide pixel-level validation ground truth."
+      },
+      "code_4": {
+        "likely_type": "Spherical",
+        "status": "official numeric anchor plus corpus correlation",
+        "evidence": "Autodesk SDK source example passes numeric 4.0 to CreateProjection and comments it as siTxtSpherical; BZ2 +24=4 occurs on revolved/rounded and pilot body geometry."
+      },
+      "code_5": {
+        "likely_type": "Cylindrical",
+        "status": "strong exclusive structural/corpus corroboration; exact authoritative enum line still pending",
+        "evidence": "Every relation-code-400 +24=5 edge has TXMP +78=1 (254/254), while every code-400 edge of types 1,2,3,4 has +78=0. Across the 664-record generic archival TXMP set the same exclusivity holds for all 117 +24=5 records. This identifies code 5 as a distinct seam/wrap-bearing projection class and is consistent with cylindrical mapping without assigning semantics to +78 itself."
+      }
+    },
+    "high_confidence_correspondence_not_productionized": {
+      "1": {
+        "likely_type": "Planar XY",
+        "status": "enum-sequence and corpus inference"
+      },
+      "2": {
+        "likely_type": "Planar XZ",
+        "status": "geometry-correlated plus original-render fixture"
+      },
+      "3": {
+        "likely_type": "Planar YZ",
+        "status": "enum-sequence and corpus inference"
+      },
+      "4": {
+        "likely_type": "Spherical",
+        "status": "official numeric anchor plus corpus correlation"
+      },
+      "5": {
+        "likely_type": "Cylindrical",
+        "status": "strong exclusive structural/corpus corroboration"
+      }
+    },
+    "promotion_policy": "Do not hard-code labels for the full table until the complete authoritative siTxtCreationType numeric definition is recovered or end-to-end projection reproduction independently validates the inferred assignments."
+  },
+  "auxiliary_projection_type_fields": {
+    "generic_archival_txmp_record_count": 664,
+    "cross_tab_plus24_plus76_plus78": [
+      {"plus24": 1, "plus76": 0, "plus78": 0, "record_count": 139},
+      {"plus24": 2, "plus76": 0, "plus78": 0, "record_count": 162},
+      {"plus24": 3, "plus76": 0, "plus78": 0, "record_count": 34},
+      {"plus24": 4, "plus76": 0, "plus78": 0, "record_count": 177},
+      {"plus24": 4, "plus76": 1, "plus78": 0, "record_count": 13},
+      {"plus24": 5, "plus76": 0, "plus78": 1, "record_count": 117},
+      {"plus24": 7, "plus76": 0, "plus78": 0, "record_count": 14},
+      {"plus24": 8, "plus76": 0, "plus78": 0, "record_count": 8}
+    ],
+    "relation_code_400_cross_tab": [
+      {"plus24": 1, "plus76": 0, "plus78": 0, "edge_count": 55},
+      {"plus24": 2, "plus76": 0, "plus78": 0, "edge_count": 18},
+      {"plus24": 3, "plus76": 0, "plus78": 0, "edge_count": 22},
+      {"plus24": 4, "plus76": 0, "plus78": 0, "edge_count": 30},
+      {"plus24": 4, "plus76": 1, "plus78": 0, "edge_count": 24},
+      {"plus24": 5, "plus76": 0, "plus78": 1, "edge_count": 254}
+    ],
+    "production_policy": "Preserve +76 and +78 as raw u16 fields only. Their exact Softimage semantic names are unresolved and they must not yet be labeled as wrap, repeat, alternate or swap flags."
+  },
+  "original_render_ground_truth": {
+    "artifact": "artifacts/validation/original_render_ground_truth_summary.json",
+    "walker_highres": {
+      "resolution": [2048, 3584],
+      "decoded_without_trailing_bytes": true
+    },
+    "tank": {
+      "resolution": [1200, 2100],
+      "decoded_without_trailing_bytes": true
+    },
+    "importance": "The archive contains the original Softimage pixel outputs, so support-space direction and U/V orientation can now be validated against historical ground truth instead of judged visually from reconstructed approximations."
+  },
+  "showcases": {
+    "hi_res_ISDF_walker": {
+      "model_count": 108,
+      "code400_projection_edge_count": 34,
+      "resolved_projection_edge_count": 34,
+      "observed_picture_families": ["rusty", "cavern", "bump1", "chrome3"]
+    },
+    "hi_res_ISDF_tank": {
+      "model_count": 21,
+      "code400_projection_edge_count": 1,
+      "resolved_projection_edge_count": 1,
+      "floor_projection": {
+        "model": "tank2-grid1",
+        "texture_object": "tank2-t2d85",
+        "picture_family": "rusty",
+        "projection_creation_type_raw": 2,
+        "projection_creation_type_likely": "Planar XZ",
+        "matrix_rotation_xyz_radians": [0.0, 0.0, 0.0],
+        "matrix_scale_xyz": [1.0, 1.0, 1.0],
+        "matrix_translation_xyz": [0.0, 0.0, 0.0],
+        "uv_scale": [1.0, 1.0],
+        "uv_offset": [0.0, 0.0]
+      }
+    }
+  },
+  "unresolved": [
+    "complete authoritative numeric siTxtCreationType table or independent visual confirmation for inferred +24 assignments",
+    "projection support-space direction and U/V handedness/origin",
+    "exact TXMP locations and semantics for repeat/wrap/alternate/swap state"
+  ]
+}

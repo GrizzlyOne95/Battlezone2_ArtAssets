@@ -18,6 +18,10 @@ import bz2_texture_layers_gltf as texture_layers
 import softimage_pic
 
 VERSION_RE = re.compile(r"\.\d+-\d+$")
+SI_TEXTURE2D_UV_TRANSFORM_OFFSET = 6
+SI_TEXTURE2D_UV_TRANSFORM_SIZE = 16
+SI_TEXTURE2D_SRT_OFFSET = 90
+SI_TEXTURE2D_SRT_SIZE = 36
 
 
 def parse_projection(data: bytes) -> dict:
@@ -31,30 +35,87 @@ def parse_projection(data: bytes) -> dict:
         result["projection_record_status"] = "short"
         return result
 
+    # Public dotXSI exporter source writes the SI_Texture2D image-space fields as
+    # UScale, VScale, UOffset, VOffset. Corpus values at TXMP post-path +6 match
+    # those defaults and authored placements exactly, so preserve both the old
+    # aggregate alias and the confirmed named fields for compatibility.
+    uv_transform = list(
+        struct.unpack_from(">4f", payload, SI_TEXTURE2D_UV_TRANSFORM_OFFSET)
+    )
+
+    crop_rect = {
+        "x0": int.from_bytes(payload[60:62], "big"),
+        "x1": int.from_bytes(payload[62:64], "big"),
+        "y0": int.from_bytes(payload[64:66], "big"),
+        "y1": int.from_bytes(payload[66:68], "big"),
+    }
+    crop_tail = [
+        int.from_bytes(payload[68:70], "big"),
+        int.from_bytes(payload[70:72], "big"),
+        int.from_bytes(payload[72:74], "big"),
+    ]
+
     result.update(
         {
-            "projection_record_status": "decoded_structural_v1",
+            "projection_record_status": "decoded_structural_v5",
             "scope_u32_be": int.from_bytes(payload[0:4], "big"),
             "scope_u16_be": int.from_bytes(payload[4:6], "big"),
-            "texture_2d_transform_candidate": list(struct.unpack_from(">4f", payload, 6)),
+            "texture_2d_transform_candidate": uv_transform,
+            "si_texture2d_uv_transform_status": "confirmed_from_dotxsi_source_and_corpus_v1",
+            "si_texture2d_uv_scale": uv_transform[0:2],
+            "si_texture2d_uv_offset": uv_transform[2:4],
             "field_u16_be_22": int.from_bytes(payload[22:24], "big"),
             "projection_or_mapping_code_candidate": int.from_bytes(payload[24:26], "big"),
             "field_f32_be_26": struct.unpack_from(">f", payload, 26)[0],
             "field_f32_be_30": struct.unpack_from(">f", payload, 30)[0],
             "crop_enabled_raw_u16_be": int.from_bytes(payload[58:60], "big"),
-            "crop_rect_pixels_raw": {
-                "x0": int.from_bytes(payload[60:62], "big"),
-                "x1": int.from_bytes(payload[62:64], "big"),
-                "y0": int.from_bytes(payload[64:66], "big"),
-                "y1": int.from_bytes(payload[66:68], "big"),
-            },
-            "crop_repeat_raw": [
-                int.from_bytes(payload[68:70], "big"),
-                int.from_bytes(payload[70:72], "big"),
-                int.from_bytes(payload[72:74], "big"),
-            ],
+            "crop_rect_pixels_raw": crop_rect,
+            "crop_rect_trailing_duplicate_raw": crop_tail,
+            "crop_rect_trailing_duplicate_status": (
+                "confirmed_x1_y0_y1_duplicate_v1"
+                if crop_tail == [crop_rect["x1"], crop_rect["y0"], crop_rect["y1"]]
+                else "unexpected_nonduplicate"
+            ),
+            # Compatibility only: this field was named before the 664-record
+            # corpus proved +68/+70/+72 always duplicate x1/y0/y1. Keep it so
+            # older sidecar consumers do not break, but never interpret it as
+            # texture repeat or wrapping state.
+            "crop_repeat_raw": crop_tail,
+            "crop_repeat_raw_status": "deprecated_misnamed_alias_of_crop_rect_trailing_duplicate_raw",
         }
     )
+
+    # The post-crop +76/+78 words are preserved without semantic labels. A
+    # relation-aware corpus pass found that every model-local code-400 record
+    # with +24=5 also has +78=1 (254/254 edges), while no other +24 class does.
+    # +76=1 appears only on a subset of +24=4 records. This is useful structural
+    # evidence for projection-type behavior, but it is not sufficient to call
+    # either word wrap/repeat/alternate state yet.
+    if len(payload) >= 80:
+        result["field_u16_be_76"] = int.from_bytes(payload[76:78], "big")
+        result["field_u16_be_78"] = int.from_bytes(payload[78:80], "big")
+
+    # Source-corpus validation against 15,150 TXMP records plus surviving
+    # readable SI_Texture2D blocks confirms that post-path offset +90 stores
+    # compact texture-matrix RXYZ/SXYZ/TXYZ values. Rotation is in radians.
+    # This is texture/projection state, not the HRC/model transform and not the
+    # separate image-space UV scale/offset state retained at +6.
+    if len(payload) >= SI_TEXTURE2D_SRT_OFFSET + SI_TEXTURE2D_SRT_SIZE:
+        result.update(
+            {
+                "si_texture2d_matrix_srt_status": "confirmed_from_dotxsi_corpus_v1",
+                "si_texture2d_matrix_srt_offset": SI_TEXTURE2D_SRT_OFFSET,
+                "si_texture2d_matrix_rotation_xyz_radians": list(
+                    struct.unpack_from(">3f", payload, SI_TEXTURE2D_SRT_OFFSET)
+                ),
+                "si_texture2d_matrix_scale_xyz": list(
+                    struct.unpack_from(">3f", payload, SI_TEXTURE2D_SRT_OFFSET + 12)
+                ),
+                "si_texture2d_matrix_translation_xyz": list(
+                    struct.unpack_from(">3f", payload, SI_TEXTURE2D_SRT_OFFSET + 24)
+                ),
+            }
+        )
     return result
 
 
@@ -241,8 +302,12 @@ def augment_model_projections(
         "notes": [
             "DSC relation code 400 is preserved as model-local TEXTURES2D/projection state and is distinct from material-level code 401.",
             "No model projection is applied to TEXCOORD_0; high-resolution Softimage source meshes frequently store zero UVs and depend on projection state.",
-            "The four big-endian floats at TXMP post-path offset 6 are retained as a 2D texture-transform candidate; exact component semantics remain under validation.",
-            "The TXMP crop rectangle is preserved in source pixel coordinates; vertical-origin semantics are not guessed.",
+            "TXMP post-path offset 6 is confirmed as SI_Texture2D UScale/VScale/UOffset/VOffset image-space state.",
+            "TXMP post-path offset 90 is confirmed as compact SI_Texture2D texture-matrix RXYZ/SXYZ/TXYZ state; rotation is stored in radians.",
+            "TXMP post-path offset 24 strongly corresponds to Softimage projection creation/operator type; code 2 is geometry-correlated with Planar XZ and Autodesk independently identifies numeric 4 as siTxtSpherical, but the full enum is not hard-coded yet.",
+            "TXMP +78=1 is exclusive to +24=5 in the validated model-local corpus (254/254 code-400 edges); +76=1 appears only on a subset of +24=4 edges. Both words are preserved raw because their exact semantics remain unresolved.",
+            "The TXMP crop rectangle is preserved in source pixel coordinates; +68/+70/+72 structurally duplicate x1/y0/y1 in the validated corpus and are not repeat/wrap values.",
+            "Vertical-origin and actual repeat/wrap field semantics remain unresolved.",
         ],
     }
     output_gltf.with_suffix(".model_textures.json").write_text(
