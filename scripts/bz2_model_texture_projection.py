@@ -43,9 +43,21 @@ def parse_projection(data: bytes) -> dict:
         struct.unpack_from(">4f", payload, SI_TEXTURE2D_UV_TRANSFORM_OFFSET)
     )
 
+    crop_rect = {
+        "x0": int.from_bytes(payload[60:62], "big"),
+        "x1": int.from_bytes(payload[62:64], "big"),
+        "y0": int.from_bytes(payload[64:66], "big"),
+        "y1": int.from_bytes(payload[66:68], "big"),
+    }
+    crop_tail = [
+        int.from_bytes(payload[68:70], "big"),
+        int.from_bytes(payload[70:72], "big"),
+        int.from_bytes(payload[72:74], "big"),
+    ]
+
     result.update(
         {
-            "projection_record_status": "decoded_structural_v2",
+            "projection_record_status": "decoded_structural_v4",
             "scope_u32_be": int.from_bytes(payload[0:4], "big"),
             "scope_u16_be": int.from_bytes(payload[4:6], "big"),
             "texture_2d_transform_candidate": uv_transform,
@@ -57,17 +69,19 @@ def parse_projection(data: bytes) -> dict:
             "field_f32_be_26": struct.unpack_from(">f", payload, 26)[0],
             "field_f32_be_30": struct.unpack_from(">f", payload, 30)[0],
             "crop_enabled_raw_u16_be": int.from_bytes(payload[58:60], "big"),
-            "crop_rect_pixels_raw": {
-                "x0": int.from_bytes(payload[60:62], "big"),
-                "x1": int.from_bytes(payload[62:64], "big"),
-                "y0": int.from_bytes(payload[64:66], "big"),
-                "y1": int.from_bytes(payload[66:68], "big"),
-            },
-            "crop_repeat_raw": [
-                int.from_bytes(payload[68:70], "big"),
-                int.from_bytes(payload[70:72], "big"),
-                int.from_bytes(payload[72:74], "big"),
-            ],
+            "crop_rect_pixels_raw": crop_rect,
+            "crop_rect_trailing_duplicate_raw": crop_tail,
+            "crop_rect_trailing_duplicate_status": (
+                "confirmed_x1_y0_y1_duplicate_v1"
+                if crop_tail == [crop_rect["x1"], crop_rect["y0"], crop_rect["y1"]]
+                else "unexpected_nonduplicate"
+            ),
+            # Compatibility only: this field was named before the 664-record
+            # corpus proved +68/+70/+72 always duplicate x1/y0/y1. Keep it so
+            # older sidecar consumers do not break, but never interpret it as
+            # texture repeat or wrapping state.
+            "crop_repeat_raw": crop_tail,
+            "crop_repeat_raw_status": "deprecated_misnamed_alias_of_crop_rect_trailing_duplicate_raw",
         }
     )
 
@@ -79,7 +93,6 @@ def parse_projection(data: bytes) -> dict:
     if len(payload) >= SI_TEXTURE2D_SRT_OFFSET + SI_TEXTURE2D_SRT_SIZE:
         result.update(
             {
-                "projection_record_status": "decoded_structural_v3",
                 "si_texture2d_matrix_srt_status": "confirmed_from_dotxsi_corpus_v1",
                 "si_texture2d_matrix_srt_offset": SI_TEXTURE2D_SRT_OFFSET,
                 "si_texture2d_matrix_rotation_xyz_radians": list(
@@ -281,8 +294,9 @@ def augment_model_projections(
             "No model projection is applied to TEXCOORD_0; high-resolution Softimage source meshes frequently store zero UVs and depend on projection state.",
             "TXMP post-path offset 6 is confirmed as SI_Texture2D UScale/VScale/UOffset/VOffset image-space state.",
             "TXMP post-path offset 90 is confirmed as compact SI_Texture2D texture-matrix RXYZ/SXYZ/TXYZ state; rotation is stored in radians.",
-            "The u16 at TXMP post-path offset 24 remains an unresolved mapping/projection enum; public exporter source confirms dotXSI mappingType value 3 means explicit UVs, but the BZ2 binary enum is not guessed beyond source-correlated evidence.",
-            "The TXMP crop rectangle is preserved in source pixel coordinates; vertical-origin semantics are not guessed.",
+            "TXMP post-path offset 24 strongly corresponds to Softimage projection creation/operator type; code 2 is geometry-correlated with Planar XZ and Autodesk independently identifies numeric 4 as siTxtSpherical, but the full enum is not hard-coded yet.",
+            "The TXMP crop rectangle is preserved in source pixel coordinates; +68/+70/+72 structurally duplicate x1/y0/y1 in the validated corpus and are not repeat/wrap values.",
+            "Vertical-origin and actual repeat/wrap field semantics remain unresolved.",
         ],
     }
     output_gltf.with_suffix(".model_textures.json").write_text(
