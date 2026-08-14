@@ -1,7 +1,21 @@
 {
-  "schema": "bz2-txmp-projection-validation-v1",
-  "source_policy": "Derived statistics only; original 1998 Softimage files are not committed.",
-  "confirmed_layout": {
+  "schema": "bz2-txmp-projection-validation-v2",
+  "source_policy": "Derived statistics only; original 1998 Softimage files and supplied source references are not committed.",
+  "confirmed_uv_transform": {
+    "post_path_offset_bytes": 6,
+    "byte_order": "big-endian",
+    "float_count": 4,
+    "field_order": [
+      "UScale",
+      "VScale",
+      "UOffset",
+      "VOffset"
+    ],
+    "interpretation": "SI_Texture2D image-space UV scale and offset",
+    "source_evidence": "Public dotXSI exporter source writes SI_Texture2D U/V scale followed by U/V offset; BZ2 corpus values at +6 match defaults and authored placement behavior.",
+    "identity": [1.0, 1.0, 0.0, 0.0]
+  },
+  "confirmed_matrix_layout": {
     "post_path_offset_bytes": 90,
     "byte_order": "big-endian",
     "float_count": 9,
@@ -23,7 +37,8 @@
     "txmp_record_count": 15150,
     "nonzero_rotation_record_count": 3361,
     "nonunit_scale_record_count": 1,
-    "nonzero_translation_record_count": 0
+    "nonzero_translation_record_count": 0,
+    "nondefault_uv_scale_offset_record_count_in_nested_archival_set": 263
   },
   "readable_dotxsi_crosscheck": {
     "derived_source_label": "ivstas00.xsi SI_Texture2D",
@@ -32,6 +47,36 @@
     "corresponding_binary_scale_xyz": [1.0, 1.0, 1.0],
     "corresponding_binary_translation_xyz": [0.0, 0.0, 0.0],
     "result": "matches 180-degree Y rotation"
+  },
+  "glare_source_anchor": {
+    "readable_source_texture": "ivstas00.xsi glare.pic SI_Texture2D",
+    "readable_mapping_type": 1,
+    "readable_image_size": [64, 64],
+    "readable_crop_pixels": [0, 63, 0, 63],
+    "readable_uv_scale": [1.0, 1.0],
+    "readable_uv_offset": [0.0, 0.0],
+    "readable_matrix": "identity",
+    "supplied_pic": {
+      "width": 64,
+      "height": 64,
+      "components": 3,
+      "compression": "mixed RLE",
+      "source_bytes": 5963
+    },
+    "archival_txmp_exemplar": {
+      "picture_family": "glare",
+      "plus6_uv_scale_offset": [1.0, 1.0, 0.0, 0.0],
+      "crop_pixels": [0, 63, 0, 63],
+      "plus90_matrix_srt": "identity",
+      "plus24_raw": 1
+    }
+  },
+  "mapping_type_frontier": {
+    "post_path_offset_bytes": 24,
+    "observed_values": [1, 2, 3, 4, 5, 6, 7, 8],
+    "status": "source-correlated candidate; enum labels not promoted",
+    "authoritative_source_fact": "Public dotXSI exporter source writes mappingType value 3 for explicit UVs.",
+    "why_not_promoted": "The same image can be reused by different texture objects with different +24 values, and no exact same-record source/binary enum table has been recovered yet."
   },
   "showcases": {
     "hi_res_ISDF_walker": {
@@ -51,14 +96,14 @@
         "matrix_rotation_xyz_radians": [0.0, 0.0, 0.0],
         "matrix_scale_xyz": [1.0, 1.0, 1.0],
         "matrix_translation_xyz": [0.0, 0.0, 0.0],
-        "separate_txmp_plus6_transform_candidate": [1.0, 1.0, 0.0, 0.0]
+        "uv_scale": [1.0, 1.0],
+        "uv_offset": [0.0, 0.0]
       }
     }
   },
   "unresolved": [
     "TXMP post-path +24 mapping/projection enum meanings",
     "projection support-space direction",
-    "TXMP post-path +6 four-float transform component/direction semantics",
     "crop/repeat vertical-origin and wrapping semantics"
   ]
 }
