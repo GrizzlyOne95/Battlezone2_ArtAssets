@@ -47,22 +47,31 @@ def parse_txmp(data: bytes) -> dict:
         raise ValueError("TXMP picture path is not NUL terminated")
     tail = data[end + 1 :]
 
-    def u16le(offset: int) -> int | None:
-        return (
-            int.from_bytes(tail[offset : offset + 2], "little")
-            if offset + 2 <= len(tail)
-            else None
-        )
-
-    field87, field89 = u16le(87), u16le(89)
-    role = "alpha_overlay_candidate" if field89 == 1 else "base_or_default_candidate"
-    if field87 == 1 and field89 != 1:
+    # PATCH: the older probe read u16 values starting at odd offsets +87/+89 as
+    # little-endian. Corpus inspection shows the actual scalar boundaries are
+    # aligned big-endian u16 words at +86/+88. The old reads happened to retain
+    # the low values often enough for the role heuristic to work, but +89 also
+    # consumes the first byte of the +90 matrix on rotated records. Decode the
+    # aligned fields authoritatively and retain the historical names only as
+    # compatibility aliases for downstream sidecars.
+    field86 = int.from_bytes(tail[86:88], "big") if len(tail) >= 88 else None
+    field88 = int.from_bytes(tail[88:90], "big") if len(tail) >= 90 else None
+    role = (
+        "alpha_overlay_candidate"
+        if field88 == 1
+        else "base_or_default_candidate"
+    )
+    if field86 == 1 and field88 != 1:
         role = "bump_candidate"
 
     result = {
         "raw_source_path": data[marker + 4 : end].decode("latin-1", errors="replace"),
-        "txmp_payload_u16le_87": field87,
-        "txmp_payload_u16le_89": field89,
+        "field_u16_be_86": field86,
+        "field_u16_be_88": field88,
+        "txmp_role_field_alignment_status": "confirmed_aligned_big_endian_u16_v1",
+        "txmp_payload_u16le_87": field86,
+        "txmp_payload_u16le_89": field88,
+        "txmp_payload_u16le_87_89_status": "deprecated_compatibility_aliases_of_field_u16_be_86_88",
         "role_candidate": role,
         "txmp_tail_hex": tail[:167].hex(),
         "txmp_common_decode_status": "path_and_role_only",
@@ -420,7 +429,8 @@ def restore_layers(
             "DSC relation code 401 is preserved in source order and may occur multiple times per material.",
             "TXMP +6 and the confirmed source-pixel crop rectangle are composed into KHR_texture_transform for portable base textures when the result is non-identity.",
             "TXMP +24 is preserved as projection/operator state; generated projection UVs are handled by the Blender asset-fidelity stage rather than being guessed into glTF TEXCOORD_0.",
-            "TXMP post-NUL payload u16le field 89 value 1 is an alpha-overlay candidate from corpus correlation, not proven emissive semantics.",
+            "TXMP +86/+88 are aligned big-endian u16 fields; the historical u16le +87/+89 names are retained only as compatibility aliases and are not the binary field boundaries.",
+            "The +88 value 1 remains an alpha-overlay candidate and +86 value 1 remains a bump candidate from corpus correlation; their exact legacy semantic names are not promoted yet.",
             "The first/default layer is portable glTF base color; later layers remain explicit for Blender reconstruction.",
             "Historical absolute picture paths resolve scene-locally first; the raw source path is retained.",
         ],
