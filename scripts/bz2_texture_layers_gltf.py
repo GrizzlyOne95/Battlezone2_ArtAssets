@@ -234,7 +234,13 @@ def export_pic(store: dscmat.SourceStore, logical: str, texture_object: str, out
 
 
 def _portable_texture_transform(layer: dict) -> dict | None:
-    """Return the source-confirmed 2D scale/offset in KHR form when non-identity."""
+    """Return confirmed image-space scale/offset/crop as KHR_texture_transform.
+
+    The crop rectangle is stored as inclusive source-pixel coordinates. A full
+    0..W-1 / 0..H-1 rectangle therefore composes to identity. This keeps the
+    portable base texture aligned with the same confirmed image-space state used
+    by the Blender asset-fidelity path.
+    """
     scale = layer.get("si_texture2d_uv_scale")
     offset = layer.get("si_texture2d_uv_offset")
     if not (
@@ -244,7 +250,21 @@ def _portable_texture_transform(layer: dict) -> dict | None:
         and len(offset) == 2
     ):
         return None
-    values = [float(scale[0]), float(scale[1]), float(offset[0]), float(offset[1])]
+    su, sv = float(scale[0]), float(scale[1])
+    ou, ov = float(offset[0]), float(offset[1])
+    crop = layer.get("crop_rect_pixels_raw") or {}
+    width, height = layer.get("width"), layer.get("height")
+    if width and height and int(width) > 1 and int(height) > 1 and crop:
+        x0 = float(crop.get("x0", 0))
+        x1 = float(crop.get("x1", int(width) - 1))
+        y0 = float(crop.get("y0", 0))
+        y1 = float(crop.get("y1", int(height) - 1))
+        crop_su = (x1 - x0) / float(int(width) - 1)
+        crop_sv = (y1 - y0) / float(int(height) - 1)
+        su, sv = su * crop_su, sv * crop_sv
+        ou = (x0 / float(int(width) - 1)) + ou * crop_su
+        ov = (y0 / float(int(height) - 1)) + ov * crop_sv
+    values = [su, sv, ou, ov]
     if all(abs(value - expected) <= 1.0e-8 for value, expected in zip(values, [1.0, 1.0, 0.0, 0.0])):
         return None
     return {"scale": values[:2], "offset": values[2:]}
@@ -398,7 +418,7 @@ def restore_layers(
         "materials": report_materials,
         "notes": [
             "DSC relation code 401 is preserved in source order and may occur multiple times per material.",
-            "TXMP +6 is decoded as source-confirmed SI_Texture2D UScale/VScale/UOffset/VOffset and non-identity base layers are represented with KHR_texture_transform.",
+            "TXMP +6 and the confirmed source-pixel crop rectangle are composed into KHR_texture_transform for portable base textures when the result is non-identity.",
             "TXMP +24 is preserved as projection/operator state; generated projection UVs are handled by the Blender asset-fidelity stage rather than being guessed into glTF TEXCOORD_0.",
             "TXMP post-NUL payload u16le field 89 value 1 is an alpha-overlay candidate from corpus correlation, not proven emissive semantics.",
             "The first/default layer is portable glTF base color; later layers remain explicit for Blender reconstruction.",
