@@ -18,6 +18,8 @@ import bz2_texture_layers_gltf as texture_layers
 import softimage_pic
 
 VERSION_RE = re.compile(r"\.\d+-\d+$")
+SI_TEXTURE2D_UV_TRANSFORM_OFFSET = 6
+SI_TEXTURE2D_UV_TRANSFORM_SIZE = 16
 SI_TEXTURE2D_SRT_OFFSET = 90
 SI_TEXTURE2D_SRT_SIZE = 36
 
@@ -33,12 +35,23 @@ def parse_projection(data: bytes) -> dict:
         result["projection_record_status"] = "short"
         return result
 
+    # Public dotXSI exporter source writes the SI_Texture2D image-space fields as
+    # UScale, VScale, UOffset, VOffset. Corpus values at TXMP post-path +6 match
+    # those defaults and authored placements exactly, so preserve both the old
+    # aggregate alias and the confirmed named fields for compatibility.
+    uv_transform = list(
+        struct.unpack_from(">4f", payload, SI_TEXTURE2D_UV_TRANSFORM_OFFSET)
+    )
+
     result.update(
         {
-            "projection_record_status": "decoded_structural_v1",
+            "projection_record_status": "decoded_structural_v2",
             "scope_u32_be": int.from_bytes(payload[0:4], "big"),
             "scope_u16_be": int.from_bytes(payload[4:6], "big"),
-            "texture_2d_transform_candidate": list(struct.unpack_from(">4f", payload, 6)),
+            "texture_2d_transform_candidate": uv_transform,
+            "si_texture2d_uv_transform_status": "confirmed_from_dotxsi_source_and_corpus_v1",
+            "si_texture2d_uv_scale": uv_transform[0:2],
+            "si_texture2d_uv_offset": uv_transform[2:4],
             "field_u16_be_22": int.from_bytes(payload[22:24], "big"),
             "projection_or_mapping_code_candidate": int.from_bytes(payload[24:26], "big"),
             "field_f32_be_26": struct.unpack_from(">f", payload, 26)[0],
@@ -62,11 +75,11 @@ def parse_projection(data: bytes) -> dict:
     # readable SI_Texture2D blocks confirms that post-path offset +90 stores
     # compact texture-matrix RXYZ/SXYZ/TXYZ values. Rotation is in radians.
     # This is texture/projection state, not the HRC/model transform and not the
-    # separate four-float 2D transform candidate retained at +6.
+    # separate image-space UV scale/offset state retained at +6.
     if len(payload) >= SI_TEXTURE2D_SRT_OFFSET + SI_TEXTURE2D_SRT_SIZE:
         result.update(
             {
-                "projection_record_status": "decoded_structural_v2",
+                "projection_record_status": "decoded_structural_v3",
                 "si_texture2d_matrix_srt_status": "confirmed_from_dotxsi_corpus_v1",
                 "si_texture2d_matrix_srt_offset": SI_TEXTURE2D_SRT_OFFSET,
                 "si_texture2d_matrix_rotation_xyz_radians": list(
@@ -266,9 +279,9 @@ def augment_model_projections(
         "notes": [
             "DSC relation code 400 is preserved as model-local TEXTURES2D/projection state and is distinct from material-level code 401.",
             "No model projection is applied to TEXCOORD_0; high-resolution Softimage source meshes frequently store zero UVs and depend on projection state.",
+            "TXMP post-path offset 6 is confirmed as SI_Texture2D UScale/VScale/UOffset/VOffset image-space state.",
             "TXMP post-path offset 90 is confirmed as compact SI_Texture2D texture-matrix RXYZ/SXYZ/TXYZ state; rotation is stored in radians.",
-            "The four big-endian floats at TXMP post-path offset 6 remain a separate 2D texture-transform candidate; exact component semantics remain under validation.",
-            "The u16 at TXMP post-path offset 24 varies by texture family; exact mapping/projection enum semantics remain unresolved and are not guessed.",
+            "The u16 at TXMP post-path offset 24 remains an unresolved mapping/projection enum; public exporter source confirms dotXSI mappingType value 3 means explicit UVs, but the BZ2 binary enum is not guessed beyond source-correlated evidence.",
             "The TXMP crop rectangle is preserved in source pixel coordinates; vertical-origin semantics are not guessed.",
         ],
     }
