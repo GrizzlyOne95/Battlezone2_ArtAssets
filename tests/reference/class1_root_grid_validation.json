@@ -1,0 +1,57 @@
+{
+  "schema": "bz2-class1-root-grid-validation-v1",
+  "corpus": {
+    "outer_class1_hrc_count": 29,
+    "primitive_kind2_lattice_count": 27,
+    "primitive_kind3_count": 1,
+    "other_class1_variant_count": 1,
+    "kind2_dimension_patterns": {
+      "13x13": 15,
+      "9x8": 5,
+      "7x8": 3,
+      "11x8": 2,
+      "5x8": 1,
+      "8x8": 1
+    }
+  },
+  "walker_scene20": {
+    "model": "walker_final-grid1.7-0",
+    "source_class": 1,
+    "source_subtype": 2,
+    "primitive_kind": 2,
+    "u_count": 13,
+    "v_count": 13,
+    "vertex_count": 169,
+    "triangle_count": 288,
+    "local_bounds": {
+      "min": [-71.5595703125, 0.0, -71.5595703125],
+      "max": [71.5595703125, 0.0, 71.5595703125]
+    },
+    "complete_scene_geometry_count_before": 77,
+    "complete_scene_geometry_count_after": 78
+  },
+  "tank_highres": {
+    "model": "tank2-grid1.1-0",
+    "source_class": 1,
+    "source_subtype": 2,
+    "primitive_kind": 2,
+    "u_count": 13,
+    "v_count": 13,
+    "vertex_count": 169,
+    "triangle_count": 288,
+    "local_bounds": {
+      "min": [-71.5595703125, 0.0, -71.5595703125],
+      "max": [71.5595703125, 0.0, 71.5595703125]
+    },
+    "dsc_instance_translation_y": -1.602825,
+    "complete_scene_geometry_count_before": 17,
+    "complete_scene_geometry_count_after": 18,
+    "render_observation": "the original TANK.1 PIC contains a broad reflective ground surface beneath the vehicle, consistent with the grid instance placement"
+  },
+  "notes": [
+    "class-1 kind-2 payload begins with u16 kind, u16 u_count, u16 v_count followed by u_count*v_count big-endian XYZ float32 vertices",
+    "the 13x13 reference grids are planar in local XZ with Y=0",
+    "generated grid topology uses adjacent lattice cells; no texture coordinates are fabricated",
+    "emission is ROOT-only because nested class-1 records in complex HRCs can represent Softimage construction/history objects"
+  ]
+}
