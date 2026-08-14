@@ -1,0 +1,56 @@
+{
+  "schema": "bz2-voyager-nurbs-ground-truth-v1",
+  "manual_reference": "voyagerlowpoly.blend",
+  "cases": [
+    {
+      "name": "nurbs133",
+      "source_nurbs": "modelsdirectory/movieAssets/movie_hires/MODELS/lowresvger-null2.3-0.hrc",
+      "source_class": 10,
+      "control_count_u": 4,
+      "control_count_v": 10,
+      "degree_u": 3,
+      "degree_v": 3,
+      "closed_u": false,
+      "closed_v": false,
+      "manual_vertices": 145,
+      "manual_polygons": 112,
+      "matching_parameter_grid": [5, 29],
+      "source_translation_xyz": [-1.2951998710632324, 1.0857360363006592, 2.169956684112549],
+      "manual_bounds_min": [-2.524980068206787, 0.6207399964332581, 1.2424659729003906],
+      "manual_bounds_max": [-0.42418599128723145, 2.0377769470214844, 2.6701059341430664],
+      "maximum_observed_bound_delta_after_srt": 4.84e-7
+    },
+    {
+      "name": "nurbs106",
+      "source_nurbs": "modelsdirectory/movieAssets/movie_hires/MODELS/lowresvger-null2.3-0.hrc",
+      "source_class": 10,
+      "control_count_u": 16,
+      "control_count_v": 9,
+      "degree_u": 3,
+      "degree_v": 3,
+      "closed_u": true,
+      "closed_v": false,
+      "later_polygonized_vertices": 112,
+      "later_polygonized_polygons": 96,
+      "matching_parameter_grid": [16, 7],
+      "notes": [
+        "topology count matches exactly",
+        "bounds are near-identical but not bit-identical because Softimage's source tessellation parameter spacing is not a proven uniform-grid rule"
+      ]
+    }
+  ],
+  "mixed_hrc_targets": [
+    {
+      "source": "modelsdirectory/movieAssets/movie_hires/MODELS/lowresvger-voyager.1-0.hrc",
+      "hierarchy_nodes": 132,
+      "class4_meshes": 72,
+      "nurbs_surfaces": 31,
+      "expected_total_gltf_geometry": 103
+    },
+    {
+      "source": "modelsdirectory/movieAssets/movie_hires/MODELS/lowresvger-null2.3-0.hrc",
+      "expected_total_gltf_geometry": 32,
+      "nurbs_surfaces": 14
+    }
+  ]
+}
