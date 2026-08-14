@@ -1,6 +1,6 @@
 {
-  "schema": "bz2-txmp-projection-validation-v3",
-  "source_policy": "Derived statistics only; original 1998 Softimage files and supplied source references are not committed.",
+  "schema": "bz2-txmp-projection-validation-v4",
+  "source_policy": "Derived statistics only; original 1998 Softimage files, supplied source references, textures and render outputs are not committed.",
   "confirmed_uv_transform": {
     "post_path_offset_bytes": 6,
     "byte_order": "big-endian",
@@ -98,13 +98,18 @@
     "independent_anchors": {
       "code_2": {
         "likely_type": "Planar XZ",
-        "status": "geometry-correlated",
-        "evidence": "ISDF_walker-grid1 is a recovered 13x13 support/floor grid whose vertices lie on XZ at Y=0; its model-local TXMP uses +24=2. Autodesk SDK examples use siTxtPlanarXZ on a grid."
+        "status": "geometry-correlated and original-render fixture available",
+        "evidence": "ISDF-walker-grid1 is a recovered 13x13 support/floor grid whose vertices lie on XZ at Y=0; its model-local TXMP uses +24=2. Autodesk SDK examples use siTxtPlanarXZ on a grid. The original archived walker render and matching recovered camera now provide pixel-level validation ground truth."
       },
       "code_4": {
         "likely_type": "Spherical",
         "status": "official numeric anchor plus corpus correlation",
         "evidence": "Autodesk SDK source example passes numeric 4.0 to CreateProjection and comments it as siTxtSpherical; BZ2 +24=4 occurs on revolved/rounded and pilot body geometry."
+      },
+      "code_5": {
+        "likely_type": "Cylindrical",
+        "status": "strong exclusive structural/corpus corroboration; exact authoritative enum line still pending",
+        "evidence": "Every relation-code-400 +24=5 edge has TXMP +78=1 (254/254), while every code-400 edge of types 1,2,3,4 has +78=0. Across the 664-record generic archival TXMP set the same exclusivity holds for all 117 +24=5 records. This identifies code 5 as a distinct seam/wrap-bearing projection class and is consistent with cylindrical mapping without assigning semantics to +78 itself."
       }
     },
     "high_confidence_correspondence_not_productionized": {
@@ -114,7 +119,7 @@
       },
       "2": {
         "likely_type": "Planar XZ",
-        "status": "geometry-correlated"
+        "status": "geometry-correlated plus original-render fixture"
       },
       "3": {
         "likely_type": "Planar YZ",
@@ -126,10 +131,44 @@
       },
       "5": {
         "likely_type": "Cylindrical",
-        "status": "enum-sequence and corpus inference"
+        "status": "strong exclusive structural/corpus corroboration"
       }
     },
-    "promotion_policy": "Do not hard-code labels for the full table until the complete authoritative siTxtCreationType numeric definition is recovered or end-to-end projection reproduction independently validates the remaining assignments."
+    "promotion_policy": "Do not hard-code labels for the full table until the complete authoritative siTxtCreationType numeric definition is recovered or end-to-end projection reproduction independently validates the inferred assignments."
+  },
+  "auxiliary_projection_type_fields": {
+    "generic_archival_txmp_record_count": 664,
+    "cross_tab_plus24_plus76_plus78": [
+      {"plus24": 1, "plus76": 0, "plus78": 0, "record_count": 139},
+      {"plus24": 2, "plus76": 0, "plus78": 0, "record_count": 162},
+      {"plus24": 3, "plus76": 0, "plus78": 0, "record_count": 34},
+      {"plus24": 4, "plus76": 0, "plus78": 0, "record_count": 177},
+      {"plus24": 4, "plus76": 1, "plus78": 0, "record_count": 13},
+      {"plus24": 5, "plus76": 0, "plus78": 1, "record_count": 117},
+      {"plus24": 7, "plus76": 0, "plus78": 0, "record_count": 14},
+      {"plus24": 8, "plus76": 0, "plus78": 0, "record_count": 8}
+    ],
+    "relation_code_400_cross_tab": [
+      {"plus24": 1, "plus76": 0, "plus78": 0, "edge_count": 55},
+      {"plus24": 2, "plus76": 0, "plus78": 0, "edge_count": 18},
+      {"plus24": 3, "plus76": 0, "plus78": 0, "edge_count": 22},
+      {"plus24": 4, "plus76": 0, "plus78": 0, "edge_count": 30},
+      {"plus24": 4, "plus76": 1, "plus78": 0, "edge_count": 24},
+      {"plus24": 5, "plus76": 0, "plus78": 1, "edge_count": 254}
+    ],
+    "production_policy": "Preserve +76 and +78 as raw u16 fields only. Their exact Softimage semantic names are unresolved and they must not yet be labeled as wrap, repeat, alternate or swap flags."
+  },
+  "original_render_ground_truth": {
+    "artifact": "artifacts/validation/original_render_ground_truth_summary.json",
+    "walker_highres": {
+      "resolution": [2048, 3584],
+      "decoded_without_trailing_bytes": true
+    },
+    "tank": {
+      "resolution": [1200, 2100],
+      "decoded_without_trailing_bytes": true
+    },
+    "importance": "The archive contains the original Softimage pixel outputs, so support-space direction and U/V orientation can now be validated against historical ground truth instead of judged visually from reconstructed approximations."
   },
   "showcases": {
     "hi_res_ISDF_walker": {
@@ -157,8 +196,8 @@
     }
   },
   "unresolved": [
-    "complete authoritative numeric siTxtCreationType table or independent confirmation for +24 values 1, 3 and 5",
-    "projection support-space direction",
-    "crop/repeat vertical-origin and wrapping semantics"
+    "complete authoritative numeric siTxtCreationType table or independent visual confirmation for inferred +24 assignments",
+    "projection support-space direction and U/V handedness/origin",
+    "exact TXMP locations and semantics for repeat/wrap/alternate/swap state"
   ]
 }
