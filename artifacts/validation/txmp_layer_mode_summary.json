@@ -1,0 +1,92 @@
+{
+  "schema": "bz2-txmp-layer-mode-validation-v1",
+  "source_policy": "Derived statistics only; original Softimage assets are not committed.",
+  "generic_archival_txmp_records": 664,
+  "plus24_counts": {
+    "1": 139,
+    "2": 162,
+    "3": 34,
+    "4": 190,
+    "5": 117,
+    "7": 14,
+    "8": 8
+  },
+  "aligned_role_words": {
+    "offsets_be_u16": [86, 88],
+    "pair_counts": {
+      "1,2": 8,
+      "2,1": 54,
+      "2,2": 184,
+      "3,2": 418
+    },
+    "legacy_u16le_87_matches_plus86": 664,
+    "legacy_u16le_89_matches_plus88": 610,
+    "legacy_role_classification_matches_aligned_fields": 664,
+    "records_checked": 664,
+    "interpretation": "The previous u16le reads beginning at +87/+89 straddled the actual aligned big-endian words at +86/+88. The +87 read happens to equal +86 in all 664 records because the adjacent +88 high byte is zero. The +89 read equals +88 in only 610/664 records because it consumes the first byte of the +90 matrix on rotated records. The coarse role classification happened to remain unchanged in 664/664 records, but the old field values are not valid binary boundaries and have been replaced by aligned +86/+88 decoding."
+  },
+  "aligned_pair_correlations": {
+    "1,2": {
+      "record_count": 8,
+      "dominant_picture_family": "bump1",
+      "working_role": "bump_candidate"
+    },
+    "2,1": {
+      "record_count": 54,
+      "dominant_picture_families": ["blueglow", "tank_Decal1", "stripes2", "stripes3"],
+      "working_role": "alpha_overlay_candidate"
+    },
+    "2,2": {
+      "record_count": 184,
+      "dominant_picture_families": ["rusty", "stripes", "chrome3", "cavern"],
+      "working_role": "base_or_default_candidate"
+    },
+    "3,2": {
+      "record_count": 418,
+      "dominant_picture_families": ["noIcon", "cavern", "ivwalk00", "mechdiff", "tank", "pipes_shade", "tank_top2a"],
+      "working_role": "base_or_default_candidate"
+    }
+  },
+  "relation_aware_edges_resolved": 1110,
+  "relation_code_by_plus24": {
+    "400:1": 55,
+    "400:2": 18,
+    "400:3": 22,
+    "400:4": 54,
+    "400:5": 254,
+    "401:1": 172,
+    "401:2": 308,
+    "401:3": 41,
+    "401:4": 151,
+    "401:7": 14,
+    "401:8": 21
+  },
+  "special_modes_7_8": {
+    "7": {
+      "linked_edges": 14,
+      "relation_codes": {"401": 14},
+      "image_stems": {
+        "chrome3": 11,
+        "reflection3": 2,
+        "reflection2": 1
+      },
+      "identity_matrix_count": 14,
+      "identity_uv_scale_offset_count": 14,
+      "representative_material_usage": [
+        "ISDF/walker METALS-PLATINUM -> chrome3",
+        "alien commnest materials -> reflection2/reflection3"
+      ]
+    },
+    "8": {
+      "linked_edges": 21,
+      "relation_codes": {"401": 21},
+      "image_stems": {"cavern": 21},
+      "identity_matrix_count": 21,
+      "identity_uv_scale_offset_count": 21,
+      "representative_material_usage": [
+        "ISDF/walker GLASS materials -> cavern"
+      ]
+    }
+  },
+  "special_mode_policy": "Codes 7 and 8 occur only on material-level relation-code-401 edges in the resolved archival scenes and carry identity +6/+90 in those linked examples. Code 7 is associated with chrome/reflection picture families and code 8 with cavern on glass materials. Preserve them as special material texture modes rather than forcing them through geometric UV generation until the exact legacy enum names/semantics are authoritative."
+}
