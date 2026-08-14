@@ -1,0 +1,29 @@
+{
+  "schema": "bz2-class4-geometry-validation-v2",
+  "source": "bz2_art.7z",
+  "summary": {
+    "hrc_files": 7665,
+    "class4_records": 34308,
+    "outer_records": 5188,
+    "decoded_records": 34308,
+    "decoded_outer": 5188,
+    "vertices": 1646823,
+    "polygons": 1910192,
+    "simple_fan_triangles": 2776854,
+    "nan_normal_corners": 57,
+    "contour_separators": 80,
+    "multi_contour_polygons": 75,
+    "max_contours_per_polygon": 3,
+    "nested_records": 29120,
+    "decoded_nested": 29120,
+    "transform_only_records": 148,
+    "records_with_contour_separators": 62,
+    "records_with_polygon_gt32": 46
+  },
+  "failures": {},
+  "notes": [
+    "simple_fan_triangles excludes multi-contour polygons because hole-aware triangulation is still required",
+    "0xFFFFFFFF corner records are contour separators, not invalid vertex indices",
+    "all-NaN normal triplets are valid missing-normal sentinels"
+  ]
+}
