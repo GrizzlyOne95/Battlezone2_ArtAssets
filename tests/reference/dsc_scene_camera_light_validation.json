@@ -1,0 +1,80 @@
+{
+  "schema": "bz2-dsc-scene-camera-light-validation-v1",
+  "source": "supplied bz2_art.7z / modelsdirectory/Archival.zip",
+  "relation_semantics": {
+    "MODELS_to_MODELS_parent": 110,
+    "CAMERAS_to_CAMERAS_interest": 1110,
+    "LIGHTS_to_LIGHTS_interest": 2110,
+    "LIGHTS_to_MODELS_parent": 2200
+  },
+  "binary_semantics": {
+    "camera_tag_3": "position_xyz",
+    "camera_tag_4": "interest_xyz",
+    "camera_tag_12": "vertical_fov_radians",
+    "light_tag_7": "position_xyz",
+    "light_tag_8": "interest_xyz",
+    "light_tag_9": "cone_angle_raw",
+    "light_tag_10": "cone_spread_raw"
+  },
+  "targets": {
+    "high_res_isdf_tank": {
+      "scene": "adconcept/SCENES/hi_res-ISDF_tank.1-0.dsc",
+      "scene_prefix": "adconcept",
+      "render_reference": "NewTank/NewTank/RENDER_PICTURES/TANK.1.pic",
+      "setup_soft": "adconcept/SETUP_SOFT/hi_res-ISDF_tank.1-0.sts",
+      "render_resolution": [1200, 2100],
+      "camera_count": 1,
+      "light_count": 9,
+      "camera": {
+        "name": "IVRTNK2-Camera1.1-0",
+        "parameter_member": "adconcept/CAMERAS/IVRTNK2-cam_int1.2-0.cam",
+        "position_xyz": [8.305604934692383, 7.163158416748047, 17.166034698486328],
+        "interest_xyz": [0.022149890661239624, 4.097160339355469, 0.8231997489929199],
+        "yfov_radians": 0.6904762983322144
+      },
+      "augmented_gltf": {
+        "geometry_instances": 22,
+        "camera_count": 1,
+        "light_count": 9,
+        "finite_bounds": true
+      },
+      "duplicate_basename_guard": "adconcept camera/light members must win over same-basename demo members"
+    },
+    "isdf_walker_scene_20": {
+      "scene": "walker_final/SCENES/ISDF-walker_final.20-0.dsc",
+      "scene_prefix": "walker_final",
+      "source_hrc": "walker_final/MODELS/walker_final-null1.16-0.hrc",
+      "render_reference": "walker_final/RENDER_PICTURES/walker_final_highres.1.pic",
+      "setup_soft": "walker_final/SETUP_SOFT/ISDF-walker_final.20-0.sts",
+      "render_resolution": [2048, 3584],
+      "source_hrc_nodes": 102,
+      "source_class4_meshes": 70,
+      "hrc_to_dsc_parent_edges": {
+        "comparable": 102,
+        "matching": 102,
+        "mismatching": 0
+      },
+      "camera_count": 1,
+      "light_count": 6,
+      "camera": {
+        "name": "Razor2a-Camera1.1-0",
+        "parameter_member": "walker_final/CAMERAS/Razor2a-cam_int1.20-0.cam",
+        "position_xyz": [13.408349990844727, 10.115269660949707, 25.032169342041016],
+        "interest_xyz": [1.4427839517593384, 8.57128620147705, 2.1228721141815186],
+        "yfov_radians": 1.1809489727020264
+      },
+      "augmented_gltf": {
+        "geometry_instances": 70,
+        "camera_count": 1,
+        "light_count": 6,
+        "finite_bounds": true
+      }
+    }
+  },
+  "notes": [
+    "Original PIC framing independently supports interpreting camera tag 4 as an interest point rather than Euler rotation.",
+    "Original scene layout independently supports interpreting light tag 8 as an interest point rather than a normalized direction vector.",
+    "Spot cone-angle/spread conversion to glTF remains provisional; raw source values are retained.",
+    "SETUP_SOFT provides render output name, resolution and frame metadata but is not treated as an object-pose source."
+  ]
+}
