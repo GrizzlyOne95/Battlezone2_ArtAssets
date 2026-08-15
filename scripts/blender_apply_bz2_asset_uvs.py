@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Create Blender UV maps and texture nodes from recovered BZ2 projection state.
 
-This is the practical asset-fidelity handoff.  It preserves imported source UVs,
+This is the practical asset-fidelity handoff. It preserves imported source UVs,
 adds one named Blender UV map per recoverable Softimage projection, rewires
 material-level texture nodes to those maps when the operator is supported, and
 adds model-local texture nodes without guessing unresolved cross-scope blending.
@@ -137,9 +137,13 @@ def _link_uv_map(material, texture_node, uv_name: str, label: str):
 
 
 def _combined_source_uv_transform(layer: dict) -> tuple[tuple[float, float], tuple[float, float]]:
+    """Compose confirmed repeat, scale/offset and crop for source-UV fallback."""
+    repeats = layer.get("si_texture2d_repeat_uv") or [1, 1]
     scale = layer.get("si_texture2d_uv_scale") or [1.0, 1.0]
     offset = layer.get("si_texture2d_uv_offset") or [0.0, 0.0]
-    su, sv = float(scale[0]), float(scale[1])
+    ru = float(repeats[0]) if len(repeats) >= 1 else 1.0
+    rv = float(repeats[1]) if len(repeats) >= 2 else 1.0
+    su, sv = float(scale[0]) * ru, float(scale[1]) * rv
     ou, ov = float(offset[0]), float(offset[1])
     crop = layer.get("crop_rect_pixels_raw") or {}
     width, height = layer.get("width"), layer.get("height")
@@ -157,7 +161,7 @@ def _combined_source_uv_transform(layer: dict) -> tuple[tuple[float, float], tup
 
 
 def _link_source_uv_transform(material, texture_node, layer: dict, label: str):
-    """At least restore confirmed image-space tiling/offset on unresolved operators."""
+    """Restore confirmed image-space placement when the projection is unresolved."""
     tree = material.node_tree
     coord_name = _safe_name(label, "BZ2SRCUV")
     coord = tree.nodes.get(coord_name)
@@ -177,7 +181,7 @@ def _link_source_uv_transform(material, texture_node, layer: dict, label: str):
     mapping.inputs["Scale"].default_value[0] = scale[0]
     mapping.inputs["Scale"].default_value[1] = scale[1]
     mapping.inputs["Scale"].default_value[2] = 1.0
-    mapping.label = f"Confirmed +6/crop; operator deferred: {label}"
+    mapping.label = f"Confirmed repeat/+6/crop; operator deferred: {label}"
     coord.location = (texture_node.location.x - 440, texture_node.location.y)
     mapping.location = (texture_node.location.x - 220, texture_node.location.y)
     for link in list(mapping.inputs["Vector"].links):
@@ -187,6 +191,20 @@ def _link_source_uv_transform(material, texture_node, layer: dict, label: str):
         tree.links.remove(link)
     tree.links.new(mapping.outputs["Vector"], texture_node.inputs["Vector"])
     return mapping
+
+
+def _mark_special_material_mode(material, texture_node, layer: dict, code: int, texture_object: str) -> None:
+    """Preserve code-7/8 material textures without inventing geometric UV mapping."""
+    candidate = (
+        "reflection_environment_candidate"
+        if code == 7
+        else "glass_environment_candidate"
+    )
+    texture_node.label = f"SPECIAL MODE {code} ({candidate}): {texture_object}"
+    material[f"bz2_special_texture_mode_{code}_{_safe_name(texture_object, '')}"] = candidate
+    material["bz2_special_texture_mode_status"] = (
+        "source texture preserved; existing imported UV connection is provisional until the legacy special material mapping is reconstructed"
+    )
 
 
 def _copy_materials_for_model_projection(obj, source_names: dict[int, str]) -> None:
@@ -275,6 +293,7 @@ def apply_asset_uvs(gltf_path: Path, model_sidecar_path: Path, layer_sidecar_pat
     generated = 0
     material_rewired = 0
     source_uv_fallbacks = 0
+    special_modes_preserved = 0
     deferred = []
     missing_objects = []
     object_records = []
@@ -324,14 +343,15 @@ def apply_asset_uvs(gltf_path: Path, model_sidecar_path: Path, layer_sidecar_pat
                 deferred.append({"object": obj.name, "texture": projection.get("texture_object"), "reason": f"{type(exc).__name__}:{exc}"})
                 continue
             projection["blender_uv_map"] = uv_result["uv_map"]
-            projection["blender_uv_status"] = "working_projection_generated_v1"
+            projection["blender_uv_status"] = "working_projection_generated_v2_repeat_aware"
             generated += 1
             object_generated.append({"texture": projection.get("texture_object"), **uv_result})
 
         # Rewire material-level texture layers. Supported identity-matrix
-        # projections get dedicated generated UV maps; unresolved operators or
-        # matrix transforms still receive the confirmed +6 scale/offset/crop on
-        # the imported source UV instead of silently losing authored tiling.
+        # projections get dedicated generated UV maps. Special modes 7/8 are
+        # explicitly preserved as special material mappings instead of being
+        # mislabeled as geometric UV projections. Other unresolved transforms
+        # retain confirmed repeat/+6/crop on the source-UV fallback path.
         for slot in obj.material_slots:
             material = slot.material
             if material is None:
@@ -348,6 +368,18 @@ def apply_asset_uvs(gltf_path: Path, model_sidecar_path: Path, layer_sidecar_pat
                 if tex_node is None:
                     continue
                 code = int(layer.get("projection_or_mapping_code_candidate") or 0)
+                if code in {7, 8}:
+                    _mark_special_material_mode(material, tex_node, layer, code, texture_object)
+                    special_modes_preserved += 1
+                    deferred.append(
+                        {
+                            "object": obj.name,
+                            "texture": texture_object,
+                            "reason": f"special_material_mode_{code}",
+                            "fallback": "existing_imported_uv_connection_preserved_as_provisional_visualization",
+                        }
+                    )
+                    continue
                 safe_projection = (
                     projection_uv.projection_type_name(code) is not None
                     and projection_uv.matrix_srt_is_identity(layer)
@@ -369,10 +401,10 @@ def apply_asset_uvs(gltf_path: Path, model_sidecar_path: Path, layer_sidecar_pat
                         if not projection_uv.matrix_srt_is_identity(layer)
                         else f"unsupported_projection_code_{code}"
                     )
-                    deferred.append({"object": obj.name, "texture": texture_object, "reason": reason, "fallback": "source_uv_plus_confirmed_image_transform"})
+                    deferred.append({"object": obj.name, "texture": texture_object, "reason": reason, "fallback": "source_uv_plus_confirmed_repeat_image_transform"})
 
         model_nodes = _add_model_projection_nodes(obj, projections, model_dir)
-        obj["bz2_asset_uv_status"] = "generated projection UV maps are additive; imported source UVs preserved"
+        obj["bz2_asset_uv_status"] = "repeat-aware generated projection UV maps are additive; imported source UVs preserved"
         obj["bz2_source_uv_all_zero"] = bool(source_uv.get("active_uv_all_zero")) if source_uv.get("active_uv_all_zero") is not None else False
         obj["bz2_generated_projection_uv_count"] = len(object_generated)
         object_records.append({
@@ -383,10 +415,11 @@ def apply_asset_uvs(gltf_path: Path, model_sidecar_path: Path, layer_sidecar_pat
         })
 
     return {
-        "schema": "bz2-blender-asset-uv-fidelity-v1",
+        "schema": "bz2-blender-asset-uv-fidelity-v2",
         "generated_projection_uv_map_count": generated,
         "material_texture_node_rewired_count": material_rewired,
         "source_uv_transform_fallback_count": source_uv_fallbacks,
+        "special_material_mode_preserved_count": special_modes_preserved,
         "deferred_projection_count": len(deferred),
         "deferred_projections": deferred,
         "missing_object_count": len(missing_objects),
@@ -394,8 +427,9 @@ def apply_asset_uvs(gltf_path: Path, model_sidecar_path: Path, layer_sidecar_pat
         "objects": object_records,
         "notes": [
             "Imported source UV maps are never overwritten; generated projection maps are additive named UV layers.",
-            "Model-local code-400 projections use the working 1..5 projection table only when +90 matrix SRT is identity.",
-            "Material-level layers with unresolved operator/matrix direction retain source UVs but still receive confirmed +6 scale/offset and crop transforms.",
+            "Model-local code-400 projections use the working 1..5 projection table only when +90 matrix SRT is identity and now apply recovered URepeat/VRepeat before +6 scale/offset/crop.",
+            "Material-level unresolved matrix transforms retain source UVs but receive recovered repeat plus confirmed +6 scale/offset and crop transforms.",
+            "Material-level special modes 7/8 are preserved and labeled explicitly; the existing imported UV connection remains only as provisional visualization rather than being promoted as the recovered special mapping.",
             "Model-local texture image nodes are exposed per object; base color is auto-connected only when the material had no existing base-color texture stack.",
         ],
     }
