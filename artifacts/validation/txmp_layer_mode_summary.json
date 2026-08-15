@@ -1,0 +1,78 @@
+{
+  "schema": "bz2-txmp-layer-mode-validation-v3",
+  "source_policy": "Derived statistics only; original Softimage assets are not committed.",
+  "aligned_role_words": {
+    "offsets_be_u16": [86, 88],
+    "nested_664_record_pair_counts": {
+      "1,2": 8,
+      "2,1": 54,
+      "2,2": 184,
+      "3,2": 418
+    },
+    "legacy_u16le_87_matches_plus86": 664,
+    "legacy_u16le_89_matches_plus88": 610,
+    "legacy_role_classification_matches_aligned_fields": 664,
+    "interpretation": "The previous u16le reads beginning at +87/+89 straddled the actual aligned big-endian words at +86/+88. The coarse nested-corpus role classification happened to remain unchanged, but the old field boundaries were invalid and have been replaced by aligned decoding."
+  },
+  "nested_high_resolution_subset": {
+    "generic_txmp_record_count": 664,
+    "relation_aware_edge_count": 1110,
+    "relation_code_by_plus24": {
+      "400:1": 55,
+      "400:2": 18,
+      "400:3": 22,
+      "400:4": 54,
+      "400:5": 254,
+      "401:1": 172,
+      "401:2": 308,
+      "401:3": 41,
+      "401:4": 151,
+      "401:7": 14,
+      "401:8": 21
+    },
+    "special_mode_7": {
+      "linked_code401_edges": 14,
+      "image_stems": {"chrome3": 11, "reflection3": 2, "reflection2": 1},
+      "identity_matrix_count": 14,
+      "unit_repeat_count": 14,
+      "working_description": "reflection/chrome-associated special material mode in this subset"
+    },
+    "special_mode_8": {
+      "linked_code401_edges": 21,
+      "image_stems": {"cavern": 21},
+      "identity_matrix_count": 21,
+      "unit_repeat_count": 21,
+      "working_description": "cavern/glass-associated special material mode in this subset"
+    }
+  },
+  "full_outer_archive_correction": {
+    "artifact": "artifacts/validation/txmp_full_archive_projection_summary.json",
+    "raw_txmp_record_count": 14486,
+    "resolved_code400_edge_count": 283,
+    "resolved_code401_edge_count": 9985,
+    "code7": {
+      "resolved_code401_edges": 93,
+      "picture_stems": {"reflection3": 93},
+      "conclusion": "Very strong reflection/environment association across the full outer archive."
+    },
+    "code8": {
+      "resolved_code401_edges": 5,
+      "picture_stems": {"reflection3": 3, "reflection": 1, "backgr": 1},
+      "resolved_code400_edges": 3,
+      "code400_picture_stems": ["eye_tip_specular_map", "eye_tip_specular_map2"],
+      "conclusion": "The nested cavern/glass association is not a universal code-8 definition. Full-archive code 8 is also used for reflection/background/specular-related state."
+    },
+    "code6": {
+      "resolved_code400_edges": 65,
+      "resolved_code401_edges": 154,
+      "conclusion": "Code 6 is a substantial full-archive state absent from the nested high-resolution relation-code-400 subset and must remain part of the projection/material frontier."
+    }
+  },
+  "working_role_correlations_at_86_88": {
+    "1,2": "bump candidate in nested validation",
+    "2,1": "alpha-overlay candidate in nested validation",
+    "2,2": "base/default candidate in nested validation",
+    "3,2": "base/default candidate in nested validation"
+  },
+  "production_policy": "Preserve +86/+88 aligned values and +24 raw. Nested high-resolution layer-role/mode correlations are useful but are explicitly subset-scoped. Modes 6/7/8 are not forced through the ordinary geometric UV generator; code 7 is strongly reflection-associated in the full outer archive, while code 8 has broader environment/specular usage than the nested glass example suggested."
+}

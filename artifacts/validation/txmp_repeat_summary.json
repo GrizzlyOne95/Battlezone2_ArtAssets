@@ -1,0 +1,77 @@
+{
+  "schema": "bz2-txmp-repeat-validation-v1",
+  "source_policy": "Derived statistics only; original Softimage assets and public exporter source are not committed.",
+  "confirmed_repeat_layout": {
+    "post_path_offsets_bytes": {
+      "URepeat": 2,
+      "VRepeat": 4
+    },
+    "encoding": "big-endian u16",
+    "interpretation": "legacy SI_Texture2D URepeat/VRepeat tiling factors",
+    "source_evidence": "The public dotXSI exporter writes SI_Texture2D UVSwap, URepeat, VRepeat, UAlternate, VAlternate, then UScale/VScale/UOffset/VOffset. In BZ2 TXMP the two small-integer words at +2/+4 sit immediately before the independently confirmed +6 scale/offset quartet and correlate with authored tiling patterns.",
+    "application_order_used_by_reconstruction": [
+      "projection/operator coordinates",
+      "URepeat/VRepeat",
+      "UScale/VScale and UOffset/VOffset",
+      "source-pixel crop rectangle"
+    ]
+  },
+  "generic_archival_corpus": {
+    "record_count": 664,
+    "repeat_pair_counts": {
+      "1,1": 495,
+      "2,2": 118,
+      "1,4": 16,
+      "3,1": 13,
+      "20,20": 8,
+      "2,1": 8,
+      "4,1": 4,
+      "6,6": 2
+    },
+    "representative_authored_correlations": {
+      "bump1": [20, 20],
+      "cementwall": [4, 1],
+      "hazardfloor_and_ceiling": [1, 4],
+      "arch_ac00sa0": [6, 6],
+      "stripes": [2, 1],
+      "rusty_cylindrical_family": [2, 2],
+      "chrome_support_family": [3, 1]
+    }
+  },
+  "relation_aware_scene_corpus": {
+    "model_local_code400": {
+      "resolved_edge_count": 403,
+      "nonunit_repeat_edge_count": 304,
+      "repeat_pair_counts": {
+        "2,2": 258,
+        "1,1": 99,
+        "3,1": 24,
+        "20,20": 22
+      },
+      "nonunit_by_projection_code": {
+        "2": 4,
+        "3": 22,
+        "4": 24,
+        "5": 254
+      },
+      "implementation_consequence": "Most model-local projected assets require repeat factors for correct texture density. The generated Blender UV path now applies them before +6 scale/offset and crop."
+    },
+    "material_level_code401": {
+      "resolved_edge_count": 707,
+      "nonunit_repeat_edge_count": 53,
+      "repeat_pair_counts": {
+        "1,1": 654,
+        "1,4": 32,
+        "2,1": 12,
+        "4,1": 8,
+        "6,6": 1
+      },
+      "implementation_consequence": "Portable KHR_texture_transform and supported Blender material projections now include repeat factors rather than treating all code-401 textures as one tile per normalized UV interval."
+    }
+  },
+  "remaining_neighbor_fields": {
+    "post_path_plus0": "raw u16, zero in all 664 validated records; consistent with the neighboring UVSwap source field but not promoted because the corpus contains no non-default anchor",
+    "UAlternate": "binary location not yet proven",
+    "VAlternate": "binary location not yet proven"
+  }
+}

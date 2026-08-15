@@ -29,6 +29,7 @@ import bz2_texture_layers_gltf as texture_layers
 import bz2_mtr_gltf_refine as mtr_refine
 import bz2_dsc_scene_gltf as scene_gltf
 import bz2_model_texture_projection as model_projection
+import bz2_uv_provenance_gltf as uv_provenance
 import bz2_fx_director_scene as fx_director
 import bz2_sts_render_state as sts_render_state
 
@@ -94,6 +95,7 @@ def _copy_stage_reports(scene_gltf_path: Path, report_dir: Path) -> list[str]:
         ".mtr.json",
         ".scene.json",
         ".model_textures.json",
+        ".uv_provenance.json",
         ".fx.json",
     )
     for suffix in known_suffixes:
@@ -219,6 +221,13 @@ def reconstruct(
     _summary_error("model-local projections", projections, ("unresolved_picture_count",))
     stages.append({"stage": "model_projections", "summary": projections})
 
+    # Make the distinction between genuine per-corner source UVs, all-zero UVs
+    # that require Softimage projection state, and normalized NURBS parameter UVs
+    # explicit in the portable asset before Blender generates additive maps.
+    uv = uv_provenance.annotate(final_gltf, final_gltf)
+    _summary_error("UV provenance", uv, ("decode_failure_count",))
+    stages.append({"stage": "uv_provenance", "summary": uv})
+
     fx = fx_director.attach_fx_directors(
         final_gltf,
         scene_dsc,
@@ -244,17 +253,18 @@ def reconstruct(
     blender_script = Path(__file__).with_name("blender_finish_reconstruction.py")
     scene_sidecar = final_gltf.with_suffix(".scene.json")
     texture_sidecar = final_gltf.with_suffix(".texture_layers.json")
+    model_texture_sidecar = final_gltf.with_suffix(".model_textures.json")
     output_blend = output_dir / "scene.blend"
     blender_command = (
         f'blender --background --python "{blender_script}" -- '
         f'"{final_gltf}" "{scene_sidecar}" "{output_blend}" '
-        f'"{texture_sidecar}" "{render_state_path}"'
+        f'"{texture_sidecar}" "{model_texture_sidecar}" "{render_state_path}"'
     )
     (output_dir / "blender_command.txt").write_text(blender_command + "\n", encoding="utf-8")
 
     final_doc = json.loads(final_gltf.read_text(encoding="utf-8"))
     manifest = {
-        "schema": "bz2-reconstructed-scene-bundle-v1",
+        "schema": "bz2-reconstructed-scene-bundle-v2",
         "scene_dsc": str(scene_dsc),
         "asset_source": str(asset_source),
         "scene_prefix": scene_prefix,
@@ -262,6 +272,9 @@ def reconstruct(
         "scene_gltf": str(final_gltf),
         "scene_bin": str(output_dir / final_doc["buffers"][0]["uri"]),
         "render_state": str(render_state_path) if render_state_path.is_file() else None,
+        "texture_layers": str(texture_sidecar),
+        "model_texture_projections": str(model_texture_sidecar),
+        "uv_provenance": str(final_gltf.with_suffix(".uv_provenance.json")),
         "blender_output": str(output_blend),
         "blender_command": blender_command,
         "final_node_count": len(final_doc.get("nodes", [])),
@@ -272,6 +285,9 @@ def reconstruct(
         ),
         "final_material_count": len(final_doc.get("materials", [])),
         "final_image_count": len(final_doc.get("images", [])),
+        "source_explicit_polygon_uv_primitive_count": uv.get("source_explicit_polygon_uv_primitive_count"),
+        "source_zero_uv_primitive_count": uv.get("source_zero_uv_primitive_count"),
+        "zero_uv_with_model_projection_count": uv.get("zero_uv_with_model_projection_count"),
         "copied_stage_reports": copied_reports,
         "stage_summaries": [
             {
@@ -282,8 +298,9 @@ def reconstruct(
         ],
         "notes": [
             "scene.gltf is the portable reconstruction product; source-format sidecars remain alongside it for Blender and future decoder refinements",
-            "the Blender command is emitted but not executed by this pipeline",
-            "renderer-specific Mental Ray, projection-support, and FxDirector semantics remain source metadata unless an explicit reconstruction stage has been proven",
+            "source HRC polygon UVs are preserved; all-zero UVs that depend on projection state are explicitly annotated rather than treated as valid authored unwraps",
+            "the Blender command now generates additive projection UV maps and restores confirmed texture scale/offset/crop while leaving source UVs intact",
+            "renderer-specific Mental Ray and FxDirector semantics remain metadata unless an explicit reconstruction stage has been proven",
         ],
     }
     manifest_path = output_dir / "reconstruction.json"
