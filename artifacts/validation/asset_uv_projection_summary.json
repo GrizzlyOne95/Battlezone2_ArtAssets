@@ -1,102 +1,103 @@
 {
-  "schema": "bz2-asset-uv-projection-validation-v3",
+  "schema": "bz2-asset-uv-projection-validation-v4",
   "source_policy": "Derived corpus statistics only; original Softimage assets are not committed.",
   "priority": "Asset reconstruction fidelity: geometry, hierarchy, transforms, UVs, texture placement and tiling. Historical floor/render lighting matching is not a gate for this stage.",
-  "model_local_code400": {
-    "resolved_edge_count": 403,
-    "projection_code_counts": {
-      "1": 55,
-      "2": 18,
-      "3": 22,
-      "4": 54,
-      "5": 254
+  "nested_high_resolution_subset": {
+    "model_local_code400": {
+      "resolved_edge_count": 403,
+      "projection_code_counts": {"1": 55, "2": 18, "3": 22, "4": 54, "5": 254},
+      "role_counts": {"base_or_default_candidate": 381, "bump_candidate": 22},
+      "nondefault_uv_scale_offset_count": 79,
+      "nonunit_repeat_count": 304,
+      "repeat_pair_counts": {"1,1": 99, "2,2": 258, "3,1": 24, "20,20": 22},
+      "effective_identity_matrix_srt_count": 403,
+      "meaningful_nonidentity_matrix_srt_count": 0,
+      "implementation_consequence": "This subset can use the working 1..5 fitted-support UV generator without first solving nonidentity +90. Repeats are applied before +6 scale/offset and crop."
     },
-    "role_counts": {
-      "base_or_default_candidate": 381,
-      "bump_candidate": 22
-    },
-    "nondefault_uv_scale_offset_count": 79,
-    "nonunit_repeat_count": 304,
-    "repeat_pair_counts": {
-      "1,1": 99,
-      "2,2": 258,
-      "3,1": 24,
-      "20,20": 22
-    },
-    "effective_identity_matrix_srt_count": 403,
-    "meaningful_nonidentity_matrix_srt_count": 0,
-    "implementation_consequence": "Every resolved model-local projection can use the working 1..5 fitted-support UV generator without first solving non-identity +90 matrix direction. The generator applies recovered URepeat/VRepeat before +6 scale/offset and crop; this materially fixes texture density on 304/403 model-local projection edges. Source UVs remain preserved as a separate map/provenance path."
-  },
-  "material_level_code401": {
-    "resolved_edge_count": 707,
-    "projection_code_counts": {
-      "1": 172,
-      "2": 308,
-      "3": 41,
-      "4": 151,
-      "7": 14,
-      "8": 21
-    },
-    "role_counts": {
-      "base_or_default_candidate": 593,
-      "alpha_overlay_candidate": 114
-    },
-    "nondefault_uv_scale_offset_count": 393,
-    "nonunit_repeat_count": 53,
-    "repeat_pair_counts": {
-      "1,1": 654,
-      "1,4": 32,
-      "2,1": 12,
-      "4,1": 8,
-      "6,6": 1
-    },
-    "byte_nonzero_matrix_srt_count": 133,
-    "numerical_noise_only_matrix_count": 4,
-    "effective_identity_matrix_srt_count_at_1e_5": 578,
-    "meaningful_nonidentity_matrix_srt_count_at_1e_5": 129,
-    "meaningful_nonidentity_matrix_scale_count": 0,
-    "meaningful_nonidentity_matrix_translation_count": 0,
-    "meaningful_nonidentity_matrix_status": "rotation_only",
-    "implementation_consequence": "578 code-401 layers are now treated as effectively identity-matrix at a 1e-5 tolerance, including four records whose only nonzero values are floating decomposition residue around 1e-7..1e-6 radians. The remaining 129 meaningful +90 records are rotation-only. Portable base textures and generated projections include recovered repeat counts plus confirmed +6 scale/offset and crop. Exact UVW rotation application remains the main matrix frontier."
-  },
-  "special_material_modes": {
-    "7": {
-      "resolved_edge_count": 14,
-      "relation_code": 401,
-      "picture_families": ["chrome3", "reflection2", "reflection3"],
-      "working_status": "reflection/environment-associated special material mode; not forced through geometric UV projection"
-    },
-    "8": {
-      "resolved_edge_count": 21,
-      "relation_code": 401,
-      "picture_families": ["cavern"],
-      "working_status": "glass/environment-associated special material mode; not forced through geometric UV projection"
+    "material_level_code401": {
+      "resolved_edge_count": 707,
+      "projection_code_counts": {"1": 172, "2": 308, "3": 41, "4": 151, "7": 14, "8": 21},
+      "role_counts": {"base_or_default_candidate": 593, "alpha_overlay_candidate": 114},
+      "nondefault_uv_scale_offset_count": 393,
+      "nonunit_repeat_count": 53,
+      "byte_nonzero_matrix_srt_count": 133,
+      "numerical_noise_only_matrix_count": 4,
+      "effective_identity_matrix_srt_count_at_1e_5": 578,
+      "meaningful_nonidentity_matrix_srt_count_at_1e_5": 129,
+      "meaningful_nonidentity_matrix_status": "rotation_only"
     }
   },
-  "portable_gltf": {
-    "source_polygon_uv_policy": "Preserve HRC per-corner TEXCOORD_0 exactly.",
-    "all_zero_uv_policy": "Annotate all-zero polygon UVs as projection-dependent when model-local code-400 state exists; do not pretend they are a usable authored unwrap.",
-    "nurbs_uv_policy": "Keep normalized NURBS parameter-space UVs explicitly distinguished from recovered source texture projection.",
-    "material_texture_transform": "Recovered SI_Texture2D URepeat/VRepeat, confirmed +6 U/V scale+offset, and source-pixel crop are composed into KHR_texture_transform for the portable base texture when non-identity."
+  "full_outer_bz2_art_census": {
+    "artifact": "artifacts/validation/txmp_full_archive_projection_summary.json",
+    "txmp_record_count": 14486,
+    "dsc_scene_count": 1139,
+    "model_local_code400": {
+      "resolved_edge_count": 283,
+      "projection_code_counts": {"1": 18, "2": 11, "3": 5, "4": 172, "5": 9, "6": 65, "8": 3},
+      "effective_identity_matrix_srt_count_at_1e_5": 229,
+      "meaningful_nonidentity_matrix_srt_count_at_1e_5": 54,
+      "important": "Full-archive code 400 is not limited to codes 1..5 and is not universally identity-matrix."
+    },
+    "material_level_code401": {
+      "resolved_edge_count": 9985,
+      "projection_code_counts": {"1": 318, "2": 1487, "3": 343, "4": 7425, "5": 160, "6": 154, "7": 93, "8": 5},
+      "effective_identity_matrix_srt_count_at_1e_5": 8101,
+      "meaningful_nonidentity_matrix_srt_count_at_1e_5": 1884,
+      "important": "The full source archive has a much larger matrix frontier than the nested showcase subset."
+    }
   },
-  "blender": {
-    "source_uv_policy": "Never overwrite imported source UVs.",
-    "generated_uv_policy": "Create additive named BZ2 projection UV maps per recoverable texture/operator and apply URepeat/VRepeat before +6 placement/crop.",
-    "model_local_texture_policy": "Expose mapped model-local base/bump texture nodes per object; auto-connect a base only when no other Base Color texture stack is already connected.",
-    "material_layer_policy": "Rewire supported effective-identity-matrix layers to generated UV maps; meaningful rotation-bearing layers retain explicit source state rather than being promoted with an unproven UVW rotation direction.",
-    "cross_scope_blending": "Preserve model-local and material-level texture nodes without inventing an unproven blend order when both exist."
+  "projection_generator_policy": {
+    "working_codes": [1, 2, 3, 4, 5],
+    "scope": "practical mapping validated primarily against the nested high-resolution asset family",
+    "unsupported_full_archive_states": [6, 8],
+    "nonidentity_policy": "defer meaningful +90 transforms until UVW application/direction is recovered",
+    "source_uv_policy": "never overwrite imported HRC UV maps"
   },
-  "matrix_validation_constraint": "Softimage projection-definition S/R/T is separate from the raw projection cluster; changing the projection transform does not modify raw UVs until the transform is frozen. Therefore raw HRC UVs alone are not valid evidence for choosing +90 matrix direction.",
+  "texture_placement": {
+    "repeat": "Recovered SI_Texture2D URepeat/VRepeat at +2/+4 is applied before +6 placement.",
+    "scale_offset": "Confirmed SI_Texture2D UScale/VScale/UOffset/VOffset at +6.",
+    "crop": "Confirmed source-pixel crop at +60..+66.",
+    "portable_gltf": "Repeat, scale/offset and crop are composed into KHR_texture_transform for bound portable base textures when nonidentity."
+  },
+  "special_modes": {
+    "7": {
+      "full_outer_code401_edge_count": 93,
+      "picture_family": "reflection3 in 93/93",
+      "working_status": "strong reflection/environment-associated special material mode; not forced through ordinary geometric UV projection"
+    },
+    "8": {
+      "full_outer_code401_edge_count": 5,
+      "full_outer_code400_edge_count": 3,
+      "picture_families": ["reflection3", "reflection", "backgr", "eye_tip_specular_map"],
+      "working_status": "broader environment/specular-associated state; nested cavern/glass usage is subset-specific"
+    },
+    "6": {
+      "full_outer_code400_edge_count": 65,
+      "full_outer_code401_edge_count": 154,
+      "working_status": "substantial unresolved full-archive projection/material state"
+    }
+  },
+  "retracted_inference": {
+    "plus78_code5_exclusivity": "Does not hold in the full outer archive; +78=1 occurs with multiple +24 codes and relation scopes.",
+    "global_code5_cylindrical_from_plus78": "Retracted. Code 5 may remain a practical nested-subset working mapping, but +78 is not supporting evidence globally.",
+    "universal_1_to_5_enum": "Retracted as a full-archive assumption."
+  },
+  "model_material_composition": {
+    "status": "frontier",
+    "nested_high_resolution_observation": "266 code-400 models also have code-401 material textures, but the target texture objects do not overlap. Common combinations include rusty model-local state plus stripes/blueglow material layers.",
+    "current_policy": "Preserve both scopes; do not invent a final cross-scope blend order until composition is better established."
+  },
   "remaining_asset_fidelity_frontier": [
-    "exact UVW application/direction for the 129 meaningful rotation-bearing +90 code-401 layers",
-    "exact model-local/material-level texture composition where both contribute to one material",
-    "authoritative UAlternate/VAlternate/UVSwap behavior when non-default source anchors are found",
-    "exact Blender equivalents for special material modes 7 and 8",
+    "source-generation-aware interpretation/handling for +24 codes 6 and 8 and other full-archive model-local states",
+    "exact +90 UVW rotation application for meaningful nonidentity code-400/code-401 records",
+    "model-local code-400 plus ordered material code-401 composition, including alpha overlays and bump routing",
+    "authoritative UAlternate/VAlternate/UVSwap behavior when non-default source anchors are recovered",
     "textured NURBS projection binding"
   ],
   "supporting_artifacts": [
     "artifacts/validation/txmp_repeat_summary.json",
     "artifacts/validation/txmp_layer_mode_summary.json",
-    "artifacts/validation/txmp_matrix_frontier_summary.json"
+    "artifacts/validation/txmp_matrix_frontier_summary.json",
+    "artifacts/validation/txmp_full_archive_projection_summary.json"
   ]
 }
