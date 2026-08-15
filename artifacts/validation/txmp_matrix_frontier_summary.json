@@ -1,0 +1,50 @@
+{
+  "schema": "bz2-txmp-matrix-frontier-validation-v1",
+  "source_policy": "Derived statistics and source-behavior conclusions only; original Softimage assets are not committed.",
+  "relation_code401": {
+    "resolved_edge_count": 707,
+    "byte_nonzero_matrix_edge_count": 133,
+    "numerical_noise_only_edge_count": 4,
+    "meaningful_nonidentity_edge_count_at_1e_5": 129,
+    "effective_identity_edge_count_at_1e_5": 578,
+    "meaningful_nonidentity_projection_code_counts": {
+      "1": 10,
+      "2": 97,
+      "3": 3,
+      "4": 19
+    },
+    "meaningful_rotation_axis_patterns": {
+      "X_only": 48,
+      "Y_only": 68,
+      "Z_only": 7,
+      "Y_and_Z": 3,
+      "X_Y_and_Z": 3
+    },
+    "meaningful_nonunit_matrix_scale_count": 0,
+    "meaningful_nonzero_matrix_translation_count": 0,
+    "conclusion": "The remaining code-401 +90 frontier is rotation-only in the validated archival scene corpus. Four records previously counted as non-identity are only floating decomposition residue around 1e-7..1e-6 radians and are treated as identity at a 1e-5 tolerance."
+  },
+  "representative_rotation_counts": {
+    "0,+pi,0": 46,
+    "-0.784,0,0": 13,
+    "-1.118,0,0": 13,
+    "+0.758,0,0": 11,
+    "-2.048,0,0": 11,
+    "0,-pi/2,0": 8,
+    "0,-pi,0": 6,
+    "0,+pi/4,0": 3,
+    "0,0,+pi": 3
+  },
+  "raw_uv_validation_constraint": {
+    "status": "important",
+    "conclusion": "Raw HRC polygon UVs cannot by themselves determine the +90 matrix direction.",
+    "reason": "Softimage keeps texture-projection-definition S/R/T separate from the raw texture projection cluster. Editing the projection transform does not change the UVs shown in the Texture Editor until the projection transformation is frozen/baked. Texture.GetTransformValues is the API that computes the fully transformed UVW values from the raw projection plus projection definition, texture-level effects and image-clip effects.",
+    "implication": "A raw-HRC-UV versus +90 candidate comparison is invalid unless a known freeze transition or transformed UV reference is available. Matrix-direction validation should instead use a frozen-before/after source pair, an authoritative formula/source implementation, or a visual/source application case that evaluates the transformed projection."
+  },
+  "implementation_policy": {
+    "matrix_identity_tolerance": 0.00001,
+    "why": "This excludes four sub-microradian-to-microradian decomposition residues while preserving the smallest clearly authored rotation in the relation-aware corpus (~0.00646 rad).",
+    "current_behavior": "Only the 129 meaningful rotation-bearing code-401 layers remain deferred for exact +90 direction. The four noise-only layers now use the normal identity-matrix generated-UV path.",
+    "next_target": "Recover the exact UVW rotation application/direction; scale and translation do not need to be solved simultaneously for the current code-401 corpus."
+  }
+}
