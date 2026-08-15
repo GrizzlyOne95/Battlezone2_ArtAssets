@@ -34,6 +34,7 @@ WORKING_PROJECTION_TYPES = {
 }
 
 EPSILON = 1.0e-9
+MATRIX_IDENTITY_TOLERANCE = 1.0e-5
 
 
 def projection_type_name(code: int | None) -> str | None:
@@ -150,7 +151,18 @@ def apply_crop(uv: Sequence[float], crop: dict | None, image_size: Sequence[int]
     )
 
 
-def matrix_srt_is_identity(projection: dict, tolerance: float = 1.0e-6) -> bool:
+def matrix_srt_is_identity(
+    projection: dict,
+    tolerance: float = MATRIX_IDENTITY_TOLERANCE,
+) -> bool:
+    """Treat sub-1e-5 SRT residue as numerical decomposition noise.
+
+    A relation-aware code-401 corpus pass found 133 records with byte-nonzero
+    rotation components, but four are only ~1e-7..1e-6 radians. At 1e-5 the
+    meaningful frontier is 129 authored rotations; no corresponding non-unit
+    matrix scale or translation is present. This tolerance prevents harmless
+    decomposition residue from needlessly deferring otherwise identity layers.
+    """
     rotation = projection.get("si_texture2d_matrix_rotation_xyz_radians")
     scale = projection.get("si_texture2d_matrix_scale_xyz")
     translation = projection.get("si_texture2d_matrix_translation_xyz")
@@ -208,6 +220,12 @@ def self_test() -> None:
     assert abs(transformed[1] - 0.25) < 1.0e-9
     cropped = apply_crop((1.0, 1.0), {"x0": 0, "x1": 482, "y0": 0, "y1": 362}, (483, 363))
     assert all(abs(value - 1.0) < 1.0e-9 for value in cropped)
+    noisy_identity = {
+        "si_texture2d_matrix_rotation_xyz_radians": [1.0e-6, -3.0e-7, 0.0],
+        "si_texture2d_matrix_scale_xyz": [1.0, 1.0, 1.0],
+        "si_texture2d_matrix_translation_xyz": [0.0, 0.0, 0.0],
+    }
+    assert matrix_srt_is_identity(noisy_identity)
     projection = {
         "projection_or_mapping_code_candidate": 2,
         "si_texture2d_repeat_uv": [2, 3],
