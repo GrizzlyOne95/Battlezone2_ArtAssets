@@ -108,7 +108,37 @@ Material-level DSC code-401 texture records decode the same common TXMP state as
 
 The full `+26..+57` block is intentionally preserved even though most of its semantic names are not yet proven. This prevents future alternate/wrap/effect work from needing another destructive reparse of the source archive.
 
-For Blender, supported identity-matrix projection layers receive dedicated generated UV maps. If a material-level layer has an unresolved projection code or non-identity `+90` matrix, the pipeline does not promote a guessed projection. Confirmed image-space state remains available in the sidecar and fallback material path while transform direction is solved.
+For Blender, supported effective-identity-matrix projection layers receive dedicated generated UV maps. If a material-level layer has an unresolved projection code or meaningful `+90` matrix rotation, the pipeline does not promote a guessed projection. Confirmed image-space state remains available in the sidecar and fallback material path while transform direction is solved.
+
+## Code-401 +90 matrix frontier
+
+The matrix problem is narrower than the earlier raw count suggested. Of the 707 resolved material-level code-401 texture edges:
+
+```text
+byte-nonzero +90 records                    133
+numerical decomposition residue only          4
+effective identity at 1e-5 tolerance        578
+meaningful non-identity                      129
+meaningful non-unit +90 scale                  0
+meaningful non-zero +90 translation            0
+```
+
+All 129 meaningful records are therefore **rotation-only**. Their projection-code distribution is:
+
+```text
+code 1   10
+code 2   97
+code 3    3
+code 4   19
+```
+
+The four noise-only records contain only roughly `1e-7..1e-6` radian residue. The working identity test now uses `1e-5`, well below the smallest clearly authored rotation in the same corpus (about `0.00646` radians), so those four layers no longer get needlessly deferred.
+
+One tempting validation route has also been explicitly rejected: comparing the raw HRC polygon UVs directly with a candidate `+90` transform. Softimage keeps projection-definition S/R/T separate from the raw projection cluster; changing the projection transform does **not** change the UV coordinates shown in the Texture Editor until the transform is frozen. Its `Texture.GetTransformValues` API computes the fully transformed UVW values from the raw projection plus transformation/effect state. Consequently, raw HRC UVs are useful source coordinates, but they cannot by themselves tell us whether the `+90` matrix should be applied direct/inverse or in what exact UVW order.
+
+The next matrix target is therefore only the **exact UVW rotation application/direction** for those 129 records. We do not need to solve matrix scaling and translation simultaneously for the current code-401 corpus.
+
+Derived evidence is retained in `artifacts/validation/txmp_matrix_frontier_summary.json`.
 
 ## Aligned layer/mode words at +86/+88
 
@@ -161,7 +191,7 @@ A model-local base texture is automatically connected only when the material doe
 Work should proceed in this order:
 
 1. validate the repeat-aware projected UVs across ordinary walker/tank/mechanical assets;
-2. recover non-identity `+90` direction for the material-level code-401 records that need it;
+2. recover the exact UVW rotation application/direction for the 129 meaningful code-401 `+90` records;
 3. reconstruct the model-local/material-layer composition rules;
 4. recover `UAlternate`/`VAlternate` and any non-default `UVSwap`/wrapping behavior from source-correlated anchors;
 5. give special material modes 7/8 Blender equivalents only when their historical semantics are sufficiently anchored;
