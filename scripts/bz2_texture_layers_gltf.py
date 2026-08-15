@@ -100,13 +100,21 @@ def parse_txmp(data: bytes) -> dict:
                 ),
             }
         )
-    if len(tail) >= 34:
-        result.update(
-            {
-                "field_f32_be_26": struct.unpack_from(">f", tail, 26)[0],
-                "field_f32_be_30": struct.unpack_from(">f", tail, 30)[0],
-            }
-        )
+
+    # PATCH: +26..+57 is an aligned contiguous eight-float block. Earlier
+    # production output retained only +26/+30. Preserve every scalar now so
+    # repeat/alternate/layer-effect correlations can be solved from sidecars
+    # without another source-archive pass. No semantic labels are assigned yet.
+    scalar_block = []
+    for offset in range(26, 58, 4):
+        if len(tail) < offset + 4:
+            break
+        value = struct.unpack_from(">f", tail, offset)[0]
+        result[f"field_f32_be_{offset}"] = value
+        scalar_block.append(value)
+    if len(scalar_block) == 8:
+        result["field_f32_be_26_54_raw"] = scalar_block
+        result["field_f32_be_26_54_status"] = "aligned_contiguous_raw_block_v1"
 
     if len(tail) >= 74:
         crop_rect = {
@@ -143,6 +151,14 @@ def parse_txmp(data: bytes) -> dict:
             {
                 "field_u16_be_76": int.from_bytes(tail[76:78], "big"),
                 "field_u16_be_78": int.from_bytes(tail[78:80], "big"),
+            }
+        )
+    if len(tail) >= 86:
+        result.update(
+            {
+                "field_u16_be_80": int.from_bytes(tail[80:82], "big"),
+                "field_u16_be_82": int.from_bytes(tail[82:84], "big"),
+                "field_u16_be_84": int.from_bytes(tail[84:86], "big"),
             }
         )
 
@@ -429,6 +445,8 @@ def restore_layers(
             "DSC relation code 401 is preserved in source order and may occur multiple times per material.",
             "TXMP +6 and the confirmed source-pixel crop rectangle are composed into KHR_texture_transform for portable base textures when the result is non-identity.",
             "TXMP +24 is preserved as projection/operator state; generated projection UVs are handled by the Blender asset-fidelity stage rather than being guessed into glTF TEXCOORD_0.",
+            "TXMP +26..+57 is preserved as an aligned eight-float raw scalar block so remaining placement/effect semantics can be solved without losing source state.",
+            "TXMP +80/+82/+84 are also retained as aligned raw u16 words; all are zero in the current 664-record archival validation set but future source packages may vary.",
             "TXMP +86/+88 are aligned big-endian u16 fields; the historical u16le +87/+89 names are retained only as compatibility aliases and are not the binary field boundaries.",
             "The +88 value 1 remains an alpha-overlay candidate and +86 value 1 remains a bump candidate from corpus correlation; their exact legacy semantic names are not promoted yet.",
             "The first/default layer is portable glTF base color; later layers remain explicit for Blender reconstruction.",
