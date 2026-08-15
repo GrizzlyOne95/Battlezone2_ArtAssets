@@ -126,17 +126,22 @@ def apply_texture_layers(sidecar_path: Path) -> dict:
             tree.links.remove(link)
         tree.links.new(current_color, principled.inputs["Base Color"])
         material["bz2_softimage_texture_layer_count"] = len(record.get("layers") or [])
-        material["bz2_softimage_texture_layer_status"] = "base plus alpha overlays; projection UVs/tiling refined by asset-fidelity stage"
+        material["bz2_softimage_texture_layer_status"] = "base plus alpha overlays; repeat-aware projection UVs/tiling refined by asset-fidelity stage"
         material["bz2_source_material_name"] = material_name
         for layer in record.get("layers") or []:
             order = int(layer.get("order") or 0)
             material[f"bz2_txmp_layer_{order}_role"] = str(layer.get("role_candidate") or "")
-            material[f"bz2_txmp_layer_{order}_field87"] = int(layer.get("txmp_payload_u16le_87") or 0)
-            material[f"bz2_txmp_layer_{order}_field89"] = int(layer.get("txmp_payload_u16le_89") or 0)
+            material[f"bz2_txmp_layer_{order}_field86"] = int(layer.get("field_u16_be_86") or 0)
+            material[f"bz2_txmp_layer_{order}_field88"] = int(layer.get("field_u16_be_88") or 0)
             material[f"bz2_txmp_layer_{order}_source"] = str(layer.get("resolved_picture") or "")
             material[f"bz2_txmp_layer_{order}_projection_code"] = int(layer.get("projection_or_mapping_code_candidate") or 0)
+            material[f"bz2_txmp_layer_{order}_uv_repeat"] = list(layer.get("si_texture2d_repeat_uv") or [])
             material[f"bz2_txmp_layer_{order}_uv_scale"] = list(layer.get("si_texture2d_uv_scale") or [])
             material[f"bz2_txmp_layer_{order}_uv_offset"] = list(layer.get("si_texture2d_uv_offset") or [])
+            material[f"bz2_txmp_layer_{order}_crop"] = json.dumps(layer.get("crop_rect_pixels_raw") or {})
+            material[f"bz2_txmp_layer_{order}_matrix_rotation"] = list(layer.get("si_texture2d_matrix_rotation_xyz_radians") or [])
+            material[f"bz2_txmp_layer_{order}_matrix_scale"] = list(layer.get("si_texture2d_matrix_scale_xyz") or [])
+            material[f"bz2_txmp_layer_{order}_matrix_translation"] = list(layer.get("si_texture2d_matrix_translation_xyz") or [])
         applied += 1
 
     return {
