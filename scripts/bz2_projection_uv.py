@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Generate practical UVs for legacy Softimage projection types used by BZ2 assets.
 
-This module is intentionally renderer-independent.  It converts object-local
+This module is intentionally renderer-independent. It converts object-local
 positions into fitted projection UVs for the five model-local projection types
-observed on DSC relation-code-400 edges, then applies the source-confirmed
-SI_Texture2D U/V scale+offset and source-pixel crop rectangle.
+observed on DSC relation-code-400 edges, then applies the source-correlated
+SI_Texture2D U/V repeat counts, U/V scale+offset and source-pixel crop rectangle.
 
 The operator correspondence is a working reconstruction table, not a claim that
 all historical Softimage enum names have been recovered authoritatively:
@@ -16,8 +16,8 @@ all historical Softimage enum names have been recovered authoritatively:
     5 cylindrical
 
 The supplied archival relation-code-400 corpus contains 403 resolved edges and
-all of their +90 texture-matrix SRT blocks are identity.  Non-identity matrix
-state is therefore rejected here rather than guessed.  Material-level code-401
+all of their +90 texture-matrix SRT blocks are identity. Non-identity matrix
+state is therefore rejected here rather than guessed. Material-level code-401
 layers can preserve such matrix state separately until that direction is proven.
 """
 from __future__ import annotations
@@ -66,9 +66,9 @@ def normalized_xyz(point: Sequence[float], bounds) -> tuple[float, float, float]
 def base_projection_uv(point: Sequence[float], bounds, projection_code: int) -> tuple[float, float]:
     """Project one object-local point using a support fitted to object bounds.
 
-    Softimage's default projection fills its support.  The angular projections
+    Softimage's default projection fills its support. The angular projections
     use +Y as the pole/axis, matching the documented spherical/cylindrical
-    convention.  V increases from the support's bottom toward +Y.
+    convention. V increases from the support's bottom toward +Y.
     """
     code = int(projection_code)
     if code not in WORKING_PROJECTION_TYPES:
@@ -82,7 +82,7 @@ def base_projection_uv(point: Sequence[float], bounds, projection_code: int) -> 
     if code == 3:
         return y, z
 
-    # Fit angular supports to the object's local bounding box.  Converting each
+    # Fit angular supports to the object's local bounding box. Converting each
     # axis to [-1,1] keeps non-uniform object dimensions from changing the seam
     # or pole locations merely because the source mesh is elongated.
     cx, cy, cz = 2.0 * x - 1.0, 2.0 * y - 1.0, 2.0 * z - 1.0
@@ -106,6 +106,18 @@ def unwrap_angular_seam(uvs: Sequence[Sequence[float]]) -> list[tuple[float, flo
     if max(us) - min(us) <= 0.5:
         return output
     return [(u + 1.0 if u < 0.5 else u, v) for u, v in output]
+
+
+def apply_uv_repeats(uv: Sequence[float], repeats=None) -> tuple[float, float]:
+    """Apply recovered legacy URepeat/VRepeat factors.
+
+    Softimage documents a repeat factor of 2 as shrinking a texture so that it
+    fits twice in the normalized interval. The archival TXMP values immediately
+    preceding the confirmed +6 scale/offset block correlate exactly with authored
+    tiling cases (20x20 bump, 4x1 wall, 1x4 floor/ceiling, 6x6 arch, etc.).
+    """
+    repeats = repeats if isinstance(repeats, (list, tuple)) and len(repeats) >= 2 else (1.0, 1.0)
+    return float(uv[0]) * float(repeats[0]), float(uv[1]) * float(repeats[1])
 
 
 def apply_uv_scale_offset(uv: Sequence[float], scale=None, offset=None) -> tuple[float, float]:
@@ -165,6 +177,7 @@ def project_polygon(points: Sequence[Sequence[float]], bounds, projection: dict)
     if code in {4, 5}:
         uvs = unwrap_angular_seam(uvs)
 
+    repeats = projection.get("si_texture2d_repeat_uv")
     scale = projection.get("si_texture2d_uv_scale")
     offset = projection.get("si_texture2d_uv_offset")
     crop = projection.get("crop_rect_pixels_raw")
@@ -174,7 +187,11 @@ def project_polygon(points: Sequence[Sequence[float]], bounds, projection: dict)
         else None
     )
     return [
-        apply_crop(apply_uv_scale_offset(uv, scale, offset), crop, image_size)
+        apply_crop(
+            apply_uv_scale_offset(apply_uv_repeats(uv, repeats), scale, offset),
+            crop,
+            image_size,
+        )
         for uv in uvs
     ]
 
@@ -184,6 +201,8 @@ def self_test() -> None:
     assert base_projection_uv((-1.0, -2.0, -3.0), bounds, 1) == (0.0, 0.0)
     assert base_projection_uv((1.0, 2.0, 3.0), bounds, 2) == (1.0, 1.0)
     assert base_projection_uv((0.0, 0.0, 0.0), bounds, 3) == (0.5, 0.5)
+    repeated = apply_uv_repeats((0.25, 0.5), (4, 2))
+    assert repeated == (1.0, 1.0)
     transformed = apply_uv_scale_offset((0.25, 0.5), (2.0, -1.0), (0.1, 0.75))
     assert abs(transformed[0] - 0.6) < 1.0e-9
     assert abs(transformed[1] - 0.25) < 1.0e-9
@@ -191,6 +210,7 @@ def self_test() -> None:
     assert all(abs(value - 1.0) < 1.0e-9 for value in cropped)
     projection = {
         "projection_or_mapping_code_candidate": 2,
+        "si_texture2d_repeat_uv": [2, 3],
         "si_texture2d_uv_scale": [1.0, 1.0],
         "si_texture2d_uv_offset": [0.0, 0.0],
         "crop_rect_pixels_raw": {"x0": 0, "x1": 482, "y0": 0, "y1": 362},
@@ -200,7 +220,7 @@ def self_test() -> None:
         "si_texture2d_matrix_scale_xyz": [1.0, 1.0, 1.0],
         "si_texture2d_matrix_translation_xyz": [0.0, 0.0, 0.0],
     }
-    assert project_polygon([(-1.0, 0.0, -3.0), (1.0, 0.0, 3.0)], bounds, projection) == [(0.0, 0.0), (1.0, 1.0)]
+    assert project_polygon([(-1.0, 0.0, -3.0), (1.0, 0.0, 3.0)], bounds, projection) == [(0.0, 0.0), (2.0, 3.0)]
 
 
 if __name__ == "__main__":
