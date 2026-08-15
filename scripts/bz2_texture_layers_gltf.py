@@ -9,9 +9,9 @@ glTF base color; later layers remain explicit in extras/sidecar for Blender.
 TXMP contains texture-placement state in addition to the image path. The common
 SI_Texture2D fields that have been source/corpus correlated are decoded here so
 both material-level code-401 layers and model-local code-400 projections use the
-same field names. Portable glTF base textures carry the confirmed U/V scale and
-offset through KHR_texture_transform; projection-operator UV generation remains
-a Blender/source-format concern.
+same field names. Portable glTF base textures carry recovered repeat, scale,
+offset and crop state through KHR_texture_transform; projection-operator UV
+generation remains a Blender/source-format concern.
 """
 from __future__ import annotations
 
@@ -35,9 +35,9 @@ def parse_txmp(data: bytes) -> dict:
     """Decode common legacy SI_Texture2D/TXMP state without guessing operators.
 
     The byte offsets are measured from the first byte after the NUL-terminated
-    TXMP image path. +6 and +90 are source-correlated; the crop rectangle and
-    duplicate tail are corpus-validated. +24/+76/+78 remain raw operator/auxiliary
-    values until their complete enum/flag names are authoritative.
+    TXMP image path. +2/+4, +6 and +90 are source/corpus correlated; the crop
+    rectangle and duplicate tail are corpus-validated. +24/+76/+78 remain raw
+    operator/auxiliary values until their complete enum/flag names are authoritative.
     """
     marker = data.find(b"TXMP")
     if marker < 0:
@@ -76,6 +76,24 @@ def parse_txmp(data: bytes) -> dict:
         "txmp_tail_hex": tail[:167].hex(),
         "txmp_common_decode_status": "path_and_role_only",
     }
+
+    # PATCH: +2/+4 are legacy URepeat/VRepeat. This assignment is supported by
+    # both the public dotXSI SI_Texture2D field set and the archival values:
+    # bump1=20x20, cementwall=4x1, floor/ceiling=1x4, arch=6x6, stripes=2x1.
+    # They sit immediately before the independently confirmed +6 scale/offset
+    # quartet and have the documented Softimage repeat-factor behavior.
+    if len(tail) >= 6:
+        repeat_u = int.from_bytes(tail[2:4], "big")
+        repeat_v = int.from_bytes(tail[4:6], "big")
+        result.update(
+            {
+                "field_u16_be_0": int.from_bytes(tail[0:2], "big"),
+                "field_u16_be_2": repeat_u,
+                "field_u16_be_4": repeat_v,
+                "si_texture2d_repeat_status": "confirmed_from_dotxsi_source_and_corpus_v1",
+                "si_texture2d_repeat_uv": [repeat_u, repeat_v],
+            }
+        )
 
     if len(tail) >= SI_TEXTURE2D_UV_TRANSFORM_OFFSET + SI_TEXTURE2D_UV_TRANSFORM_SIZE:
         uv_transform = list(
@@ -259,12 +277,11 @@ def export_pic(store: dscmat.SourceStore, logical: str, texture_object: str, out
 
 
 def _portable_texture_transform(layer: dict) -> dict | None:
-    """Return confirmed image-space scale/offset/crop as KHR_texture_transform.
+    """Return confirmed repeat/scale/offset/crop as KHR_texture_transform.
 
     The crop rectangle is stored as inclusive source-pixel coordinates. A full
-    0..W-1 / 0..H-1 rectangle therefore composes to identity. This keeps the
-    portable base texture aligned with the same confirmed image-space state used
-    by the Blender asset-fidelity path.
+    0..W-1 / 0..H-1 rectangle therefore composes to identity. Softimage repeat
+    factors are multiplied into the texture scale before the source +6 placement.
     """
     scale = layer.get("si_texture2d_uv_scale")
     offset = layer.get("si_texture2d_uv_offset")
@@ -275,7 +292,10 @@ def _portable_texture_transform(layer: dict) -> dict | None:
         and len(offset) == 2
     ):
         return None
-    su, sv = float(scale[0]), float(scale[1])
+    repeats = layer.get("si_texture2d_repeat_uv") or [1, 1]
+    ru = float(repeats[0]) if len(repeats) >= 1 else 1.0
+    rv = float(repeats[1]) if len(repeats) >= 2 else 1.0
+    su, sv = float(scale[0]) * ru, float(scale[1]) * rv
     ou, ov = float(offset[0]), float(offset[1])
     crop = layer.get("crop_rect_pixels_raw") or {}
     width, height = layer.get("width"), layer.get("height")
@@ -425,7 +445,7 @@ def restore_layers(
         gltf.pop("textures", None)
     output_gltf.write_text(json.dumps(gltf, indent=2), encoding="utf-8")
     sidecar = {
-        "schema": "bz2-softimage-texture-layers-v2",
+        "schema": "bz2-softimage-texture-layers-v3",
         "input_gltf": str(input_gltf),
         "scene_dsc": str(scene_dsc),
         "asset_source": str(asset_source),
@@ -443,7 +463,8 @@ def restore_layers(
         "materials": report_materials,
         "notes": [
             "DSC relation code 401 is preserved in source order and may occur multiple times per material.",
-            "TXMP +6 and the confirmed source-pixel crop rectangle are composed into KHR_texture_transform for portable base textures when the result is non-identity.",
+            "TXMP +2/+4 are recovered SI_Texture2D URepeat/VRepeat factors and are applied before the confirmed +6 scale/offset placement.",
+            "TXMP repeats, +6 placement and the confirmed source-pixel crop rectangle are composed into KHR_texture_transform for portable base textures when the result is non-identity.",
             "TXMP +24 is preserved as projection/operator state; generated projection UVs are handled by the Blender asset-fidelity stage rather than being guessed into glTF TEXCOORD_0.",
             "TXMP +26..+57 is preserved as an aligned eight-float raw scalar block so remaining placement/effect semantics can be solved without losing source state.",
             "TXMP +80/+82/+84 are also retained as aligned raw u16 words; all are zero in the current 664-record archival validation set but future source packages may vary.",
