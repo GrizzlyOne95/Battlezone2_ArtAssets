@@ -1,5 +1,5 @@
 {
-  "schema": "bz2-txmp-layer-mode-validation-v1",
+  "schema": "bz2-txmp-layer-mode-validation-v2",
   "source_policy": "Derived statistics only; original Softimage assets are not committed.",
   "generic_archival_txmp_records": 664,
   "plus24_counts": {
@@ -72,6 +72,7 @@
       },
       "identity_matrix_count": 14,
       "identity_uv_scale_offset_count": 14,
+      "unit_repeat_count": 14,
       "representative_material_usage": [
         "ISDF/walker METALS-PLATINUM -> chrome3",
         "alien commnest materials -> reflection2/reflection3"
@@ -83,10 +84,11 @@
       "image_stems": {"cavern": 21},
       "identity_matrix_count": 21,
       "identity_uv_scale_offset_count": 21,
+      "unit_repeat_count": 21,
       "representative_material_usage": [
         "ISDF/walker GLASS materials -> cavern"
       ]
     }
   },
-  "special_mode_policy": "Codes 7 and 8 occur only on material-level relation-code-401 edges in the resolved archival scenes and carry identity +6/+90 in those linked examples. Code 7 is associated with chrome/reflection picture families and code 8 with cavern on glass materials. Preserve them as special material texture modes rather than forcing them through geometric UV generation until the exact legacy enum names/semantics are authoritative."
+  "special_mode_policy": "Codes 7 and 8 occur only on material-level relation-code-401 edges in the resolved archival scenes and carry unit repeats plus identity +6/+90 in those linked examples. Code 7 is associated with chrome/reflection picture families and code 8 with cavern on glass materials. Preserve them as special material texture modes rather than forcing them through geometric UV generation until the exact legacy enum names/semantics are authoritative."
 }
