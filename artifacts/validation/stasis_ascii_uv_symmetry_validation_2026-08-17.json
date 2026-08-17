@@ -1,0 +1,49 @@
+{
+  "schema": "bz2-stasis-ascii-uv-symmetry-validation-v1",
+  "date": "2026-08-17",
+  "source": {
+    "archive": "bz2_art.7z",
+    "sha256": "d5afa754837b1a3d1217f558d1e3d110d951c0e753e6fafb15d7726e3eff96bd",
+    "ascii_xsi": "ISDF_vehicles/PICTURES/ivstas00.xsi"
+  },
+  "pairs": [
+    {
+      "right_frame": "frm-rlink",
+      "right_mesh": "rlink",
+      "right_texture_matrix": "Y rotation pi / diag(-1,1,-1,1)",
+      "left_frame": "frm-llink",
+      "left_mesh": "llink",
+      "left_texture_matrix": "identity",
+      "vertex_count": 10,
+      "face_count": 8,
+      "corner_count": 32,
+      "geometry_relation": "same vertex indices under X reflection",
+      "x_reflection_max_abs_error": 0.000001,
+      "all_faces_reverse_winding": true,
+      "corresponding_corner_uv_max_abs_error": 0.0,
+      "all_corresponding_corner_uvs_equal": true
+    },
+    {
+      "right_frame": "frm-rnacelle",
+      "right_mesh": "rnacelle",
+      "right_texture_matrix": "Y rotation pi / diag(-1,1,-1,1)",
+      "left_frame": "frm-lnacelle",
+      "left_mesh": "lnacelle",
+      "left_texture_matrix": "identity",
+      "vertex_count": 12,
+      "face_count": 10,
+      "corner_count": 40,
+      "geometry_relation": "same vertex indices under X reflection",
+      "x_reflection_max_abs_error": 0.0000011,
+      "all_faces_reverse_winding": true,
+      "corresponding_corner_uv_max_abs_error": 0.0,
+      "all_corresponding_corner_uvs_equal": true
+    }
+  ],
+  "conclusion": "The right and left meshes already serialize identical raw UV coordinates at corresponding mirrored polygon corners, while only the right-side SI_Texture2D blocks retain the pi-Y matrix. Therefore the SI_Texture2D matrix is additional live texture/projection state and is not merely an alternate encoding of the serialized SI_MeshTextureCoords.",
+  "interpretive_boundary": [
+    "The pi-Y matrix is self-inverse, so this pair cannot distinguish direct from inverse application.",
+    "The right-side pi-Y operation is consistent with a live U/UVW mirror that can compensate the visual reflection of mirrored geometry, but that rendering interpretation remains a hypothesis until an asymmetric transform is independently validated.",
+    "Official Softimage documentation independently states that projection UVW transformations remain live until Freeze bakes them into UV coordinates."
+  ]
+}
