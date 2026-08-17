@@ -1,0 +1,49 @@
+{
+  "schema": "bz2-code400-inverse-geometry-validation-v1",
+  "date": "2026-08-17",
+  "source": {
+    "archive": "bz2_art.7z",
+    "sha256": "d5afa754837b1a3d1217f558d1e3d110d951c0e753e6fafb15d7726e3eff96bd"
+  },
+  "target": {
+    "primary_scene": "movieAssets/soft_soldier/SCENES/SLODIER_S2g-helmet_V1.1-0.dsc",
+    "model": "helmet_V1-face39.1-0",
+    "txmp": "movieAssets/soft_soldier/TEXTURES2D/helmet_V1-t2d26.1-0.txt",
+    "projection_code": 2,
+    "projection_interpretation": "planar XZ; support/projection normal is local Y",
+    "rotation_xyz_radians": [-0.5000020265579224, 0.0, -0.6780027747154236],
+    "scale_xyz": [1.0, 1.0, 1.0],
+    "translation_xyz": [0.0, 0.0, 0.0]
+  },
+  "geometry": {
+    "class_id": 4,
+    "vertex_normal_count": 324,
+    "normalized_average_normal": [-0.7183021974407146, 0.6008504122768953, 0.350743118561898]
+  },
+  "matrix_test": {
+    "candidate_euler_family": "Rz * Ry * Rx for column-vector support pose",
+    "direct_support_y_axis": [0.550453, 0.683484, -0.479427],
+    "inverse_support_y_axis": [-0.627239, 0.683484, 0.373391],
+    "average_normal_abs_dot_direct": 0.1528757,
+    "average_normal_abs_dot_inverse": 0.9921831,
+    "per_vertex_normal_mean_abs_dot_direct": 0.3252217,
+    "per_vertex_normal_mean_abs_dot_inverse": 0.8646446,
+    "per_vertex_normal_median_abs_dot_inverse": 0.8891132,
+    "alternate_order_inverse_average_normal_abs_dot": 0.974219,
+    "interpretation": "The stored rotation behaves like the pose/orientation of the planar projection support. Geometry must be transformed by the inverse rotation into projection-local coordinates. Direct application makes the projection axis nearly perpendicular to the textured face."
+  },
+  "cross_revision": {
+    "scene": "movieAssets/movie_hires/SCENES/SOLDIER_S2g-ALL_V33_Skel.1-0.dsc",
+    "model": "ALL_V33_Skel-face39.1-0",
+    "txmp": "movieAssets/movie_hires/TEXTURES2D/FACE_V19-t2d26.1-0.txt",
+    "same_rotation": true,
+    "same_normalized_average_normal": true,
+    "inverse_average_normal_abs_dot": 0.9921831,
+    "direct_average_normal_abs_dot": 0.1528757
+  },
+  "evidence_boundary": [
+    "This strongly distinguishes inverse versus direct application for code-400 planar support orientation.",
+    "Because the target has Y rotation exactly zero, it does not uniquely distinguish all six possible three-axis Euler orders; it supports the existing Rz*Ry*Rx family but a full three-axis geometric oracle is still desirable before declaring Euler order complete.",
+    "The test concerns model-local relation code 400. Relation code 401 is a separate material-level path and is not assumed to share every application-stage detail without validation."
+  ]
+}
