@@ -1,0 +1,60 @@
+{
+  "schema": "bz2-class1-bspline-root-validation-v1",
+  "date": "2026-08-17",
+  "source": {
+    "archive": "bz2_art.7z",
+    "size_bytes": 515756693,
+    "sha256": "d5afa754837b1a3d1217f558d1e3d110d951c0e753e6fafb15d7726e3eff96bd"
+  },
+  "target": {
+    "scene": "movieAssets/movie_hires/SCENES/SOLDIER_S2g-ALL_V33_Skel.1-0.dsc",
+    "root_model": "ALL_V12-sphere1.1-0",
+    "root_hrc": "movieAssets/movie_hires/MODELS/ALL_V12-sphere1.1-0.hrc",
+    "class_id": 1,
+    "surface_type_code": 3,
+    "control_lattice": [5, 4],
+    "closed": [false, false],
+    "tension": [0.5, 0.5],
+    "step": [3, 3]
+  },
+  "evaluator": {
+    "kind": "uniform_cubic_bspline_tensor_product",
+    "open_span_count": [2, 1],
+    "sample_lattice": [7, 4],
+    "vertex_count": 28,
+    "triangle_count": 36,
+    "zero_area_triangle_count": 0,
+    "bounds": {
+      "min": [-0.9647272905877187, -0.801260083913803, 0.1485938239428732],
+      "max": [0.964750721566638, 1.8609166236387358, 0.5527122213194767]
+    },
+    "notes": [
+      "The evaluator uses the standard uniform cubic B-spline four-control-point basis independently in U and V.",
+      "Source Step is treated as the number of straight subdivisions per patch span; 5x4 controls therefore produce 2x1 cubic spans and a 7x4 sample lattice at Step 3.",
+      "Closed type-3 directions remain unsupported because no type-3 closed-direction record exists in the supplied corpus."
+    ]
+  },
+  "transform_validation": {
+    "dsc_environment_srt": [1.0, 1.0, 1.0, 1.412841, -2.406721e-7, 1.370063e-5, 2.373796e-6, 5.453346, 0.3514666],
+    "binary_class1_local_srt_matches_dsc": true,
+    "dsc_instance_transform_applied": true
+  },
+  "full_scene_result": {
+    "status": "ok",
+    "hierarchy_parent_mismatch_count": 0,
+    "hierarchy_parent_unmapped_count": 0,
+    "nodes": 797,
+    "meshes": 201,
+    "primitives": 201,
+    "materials": 143,
+    "images": 1,
+    "source_warning_count": 65,
+    "completed_stages": ["multi_root", "special_root_geometry", "materials", "texture_layers", "mtr", "camera_lights", "model_projections", "uv_provenance", "fx_director"]
+  },
+  "evidence_boundary": {
+    "corpus": "All three class-1 surface-type-code-3 records are 5x4 open/open records with tension 0.5 and Step 3. The 183-record class-1 census independently validates the common binary envelope.",
+    "historical_softimage_behavior": "Softimage documentation describes B-splines as best-fit curves that do not pass through edit points and describes Step as the subdivisions used to tessellate each UV patch section.",
+    "enum_correspondence": "Autodesk MotionBuilder FBSurfaceType orders Cardinal as 2 and Bspline as 3. This is supporting correspondence, not asserted as direct proof that every legacy Softimage-3D binary enum shares the same implementation.",
+    "production_policy": "Type 3 is now evaluated as open uniform cubic B-spline. Type 2 remains the existing control-cage approximation until Cardinal interpolation and closed-boundary semantics are independently validated."
+  }
+}
