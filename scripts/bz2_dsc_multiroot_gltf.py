@@ -30,6 +30,7 @@ from pathlib import Path
 import bz2_dsc_material_gltf as dscmat
 import bz2_hrc_gltf as assembled
 import bz2_hrc_gltf_parametric as parametric
+import bz2_hrc_tree_probe as hrc_tree
 
 VERSION_RE = re.compile(r"\.\d+-\d+$")
 MODEL_PARENT_CODE = 110
@@ -146,6 +147,11 @@ def _append_root_document(
     return node_base
 
 
+def _model_matches_hrc_name(model_name: str, hrc_name: str) -> bool:
+    stem = _strip_version(model_name)
+    return stem == hrc_name or stem.endswith("-" + hrc_name)
+
+
 def _subtree_members(models: list[dict], parents: dict[int, int], root_index: int) -> set[int]:
     result = {root_index}
     changed = True
@@ -190,8 +196,7 @@ def _map_nodes_to_dsc(
             for candidate in sorted(remaining):
                 if candidate in model_to_node:
                     continue
-                stem = _strip_version(models[candidate]["name"])
-                if stem == node_name or stem.endswith("-" + node_name):
+                if _model_matches_hrc_name(models[candidate]["name"], node_name):
                     candidates.append(candidate)
             if len(candidates) == 1:
                 candidate = candidates[0]
@@ -217,6 +222,159 @@ def _actual_parent_nodes(gltf: dict) -> dict[int, int]:
         for child_index in node.get("children", []):
             result[int(child_index)] = parent_index
     return result
+
+
+
+def _score_hrc_tree_against_dsc(
+    tree_report: dict,
+    models: list[dict],
+    parents: dict[int, int],
+    root_index: int,
+) -> dict:
+    """Score one HRC hierarchy baseline against authoritative DSC code-110 edges.
+
+    HRC zero-run encoding can admit multiple mathematically valid baselines. DSC
+    relation code 110 independently serializes the scene-model parent graph, so
+    scene reconstruction can use it to disambiguate only HRC nodes that map
+    uniquely into this root's DSC subtree.
+    """
+    subtree = _subtree_members(models, parents, root_index)
+    remaining = set(subtree) - {root_index}
+    mapped_by_depth: dict[int, int | None] = {0: root_index}
+    mapped_model_count = 1
+    matches = mismatches = unresolved = constraints = 0
+    details = []
+
+    for item in tree_report.get("tree", []):
+        depth = int(item.get("depth", 0))
+        name = str(item.get("name") or "")
+        candidates = [
+            index
+            for index in sorted(remaining)
+            if _model_matches_hrc_name(models[index]["name"], name)
+        ]
+        model_index = candidates[0] if len(candidates) == 1 else None
+        if model_index is not None:
+            remaining.remove(model_index)
+            mapped_model_count += 1
+
+        # Replace the stack at this depth so a previous branch can never become
+        # the observed parent of a later sibling/deeper branch.
+        for stale_depth in [value for value in mapped_by_depth if value >= depth]:
+            mapped_by_depth.pop(stale_depth, None)
+        observed_parent_model = mapped_by_depth.get(depth - 1)
+        mapped_by_depth[depth] = model_index
+
+        if model_index is None or model_index not in parents:
+            continue
+        constraints += 1
+        expected_parent_model = parents[model_index]
+        if observed_parent_model is None:
+            unresolved += 1
+            status = "unresolved_hrc_parent"
+        elif observed_parent_model == expected_parent_model:
+            matches += 1
+            status = "match"
+        else:
+            mismatches += 1
+            status = "mismatch"
+        details.append(
+            {
+                "child": models[model_index]["name"],
+                "expected_parent": models[expected_parent_model]["name"],
+                "observed_parent": (
+                    models[observed_parent_model]["name"]
+                    if observed_parent_model is not None
+                    else None
+                ),
+                "status": status,
+            }
+        )
+
+    return {
+        "baseline": tree_report.get("chosen_baseline"),
+        "max_depth": max(
+            (int(item.get("depth", 0)) for item in tree_report.get("tree", [])),
+            default=0,
+        ),
+        "mapped_model_count": mapped_model_count,
+        "constraint_count": constraints,
+        "match_count": matches,
+        "mismatch_count": mismatches,
+        "unresolved_parent_count": unresolved,
+        "violation_count": mismatches + unresolved,
+        "details": details,
+    }
+
+
+def _choose_scored_baseline(
+    scores: list[dict], default_baseline: int | None
+) -> tuple[int | None, str]:
+    """Choose only a unique DSC-backed improvement; otherwise retain default."""
+    if not scores or default_baseline is None:
+        return default_baseline, "no_baseline_candidates"
+    by_baseline = {
+        int(item["baseline"]): item
+        for item in scores
+        if item.get("baseline") is not None
+    }
+    default = by_baseline.get(int(default_baseline))
+    if default is None:
+        return default_baseline, "default_baseline_unscored"
+
+    def rank(item: dict) -> tuple[int, int, int, int]:
+        return (
+            int(item["violation_count"]),
+            -int(item["match_count"]),
+            -int(item["constraint_count"]),
+            -int(item["mapped_model_count"]),
+        )
+
+    best_rank = min(rank(item) for item in scores)
+    best = [item for item in scores if rank(item) == best_rank]
+    if len(best) != 1:
+        return default_baseline, "ambiguous_dsc_score_keep_default"
+    chosen = int(best[0]["baseline"])
+    if rank(best[0]) < rank(default):
+        return chosen, "dsc_code110_unique_improvement"
+    return default_baseline, "default_already_best"
+
+
+def _select_hierarchy_baseline(
+    source_hrc: Path,
+    models: list[dict],
+    parents: dict[int, int],
+    root_index: int,
+) -> tuple[int | None, dict]:
+    # Decode the HRC record stream once, then replay only the inexpensive depth
+    # walk for each valid candidate. This avoids re-decoding geometry per baseline.
+    data = source_hrc.read_bytes()
+    outer = hrc_tree.outer_model(data)
+    records = hrc_tree.discover_records(data)
+    candidates = [
+        int(item["baseline_zero_run"])
+        for item in hrc_tree.infer_baselines(records)
+    ]
+    default = candidates[0] if candidates else None
+    scores = []
+    if outer is not None:
+        for baseline in candidates:
+            tree = hrc_tree.apply_tree(records, str(outer["name"]), baseline)
+            scores.append(
+                _score_hrc_tree_against_dsc(
+                    {"chosen_baseline": baseline, "tree": tree},
+                    models,
+                    parents,
+                    root_index,
+                )
+            )
+    chosen, status = _choose_scored_baseline(scores, default)
+    return chosen, {
+        "status": status,
+        "default_baseline": default,
+        "chosen_baseline": chosen,
+        "candidate_scores": scores,
+    }
 
 
 def assemble_scene(
@@ -281,10 +439,14 @@ def assemble_scene(
             source_hrc.write_bytes(store.read(member))
             root_gltf = temp_dir / (model_name + ".gltf")
             try:
+                hierarchy_baseline, hierarchy_selection = _select_hierarchy_baseline(
+                    source_hrc, models, parents, model_index
+                )
                 if include_parametric:
                     root_summary = parametric.export_parametric(
                         source_hrc,
                         root_gltf,
+                        baseline=hierarchy_baseline,
                         curve_steps=max(2, curve_steps),
                         surface_steps_u=max(2, surface_steps_u),
                         surface_steps_v=max(2, surface_steps_v),
@@ -293,7 +455,9 @@ def assemble_scene(
                     parametric_exported = int(root_summary["parametric_exported_count"])
                     parametric_failures = list(root_summary["parametric_failures"])
                 else:
-                    base_summary = assembled.export_hrc(source_hrc, root_gltf)
+                    base_summary = assembled.export_hrc(
+                        source_hrc, root_gltf, baseline=hierarchy_baseline
+                    )
                     parametric_exported = 0
                     parametric_failures = []
                 source_doc = json.loads(root_gltf.read_text(encoding="utf-8"))
@@ -321,6 +485,8 @@ def assemble_scene(
                         "model_name": model_name,
                         "source_hrc": member,
                         "gltf_root_node": root_node,
+                        "hierarchy_baseline": hierarchy_baseline,
+                        "hierarchy_baseline_selection": hierarchy_selection,
                         "node_count": int(base_summary["node_count"]),
                         "class4_mesh_count": int(base_summary["mesh_count"]),
                         "parametric_exported_count": parametric_exported,
@@ -413,7 +579,8 @@ def assemble_scene(
         "notes": [
             "DSC MODELS entries marked ROOT are instantiated as scene roots; non-root model entries map to internal nodes of those HRC trees.",
             "Explicit DSC ENVIRONMENT SRT overrides the HRC root matrix exactly once; it is not multiplied on top of the HRC root transform.",
-            "DSC relation code 110 is the hierarchy oracle used to regression-check the merged HRC trees.",
+            "When an HRC admits multiple zero-run hierarchy baselines, DSC relation code 110 is used only as a context-specific tie-breaker; ambiguous/equivalent scores retain the standalone HRC default.",
+            "DSC relation code 110 remains the hierarchy oracle used to regression-check the merged HRC trees after baseline selection.",
             "The output intentionally retains one unbound placeholder material; source material/texture binding is a separate reconstruction layer.",
         ],
     }

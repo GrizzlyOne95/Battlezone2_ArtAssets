@@ -298,11 +298,12 @@ def export_parametric(
     source: Path,
     output: Path,
     *,
+    baseline: int | None = None,
     curve_steps: int = 64,
     surface_steps_u: int = 32,
     surface_steps_v: int = 32,
 ) -> dict:
-    base_summary = assembled.export_hrc(source, output)
+    base_summary = assembled.export_hrc(source, output, baseline=baseline)
     if base_summary["class4_decode_failures"] or base_summary["unresolved_class4_srt_count"]:
         raise RuntimeError("base class-4 HRC export is incomplete; refusing to layer NURBS geometry onto it")
 
@@ -310,7 +311,7 @@ def export_parametric(
     bin_path = output.with_suffix(".bin")
     buffer = bytearray(bin_path.read_bytes())
     data = source.read_bytes()
-    tree_report = hrc_tree.probe(source)
+    tree_report = hrc_tree.probe(source, baseline)
 
     source_items = []
     outer = tree_report.get("outer_model") or {}
@@ -416,6 +417,7 @@ def export_parametric(
         "bin": str(bin_path),
         "base": base_summary,
         "settings": {
+            "hierarchy_baseline": tree_report.get("chosen_baseline"),
             "curve_steps": curve_steps,
             "surface_steps_u": surface_steps_u,
             "surface_steps_v": surface_steps_v,

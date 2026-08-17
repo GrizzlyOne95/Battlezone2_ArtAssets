@@ -424,9 +424,9 @@ def _emit_mesh(gltf: dict, buffer: bytearray, name: str, mesh: dict) -> int | No
     return len(gltf["meshes"]) - 1
 
 
-def export_hrc(source: Path, output: Path) -> dict:
+def export_hrc(source: Path, output: Path, *, baseline: int | None = None) -> dict:
     data = source.read_bytes()
-    report = hrc_tree.probe(source)
+    report = hrc_tree.probe(source, baseline)
     outer = dict(report.get("outer_model") or {})
     records = [dict(item) for item in report.get("tree", [])]
     if not outer:
@@ -541,6 +541,8 @@ def export_hrc(source: Path, output: Path) -> dict:
         "gltf": str(output),
         "bin": str(bin_path),
         "node_count": len(nodes),
+        "hierarchy_baseline": report.get("chosen_baseline"),
+        "hierarchy_baseline_candidates": report.get("baseline_candidates", []),
         "class4_node_count": sum(1 for item in nodes if item.get("class_id") == 4),
         "mesh_count": mesh_count,
         "multicontour_polygons_tessellated": multicontour_tessellated,
