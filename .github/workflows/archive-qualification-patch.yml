@@ -2,10 +2,8 @@ name: Apply archive qualification patch
 
 on:
   push:
-    branches:
-      - agent/full-extraction-pipeline-v1
-    paths:
-      - .github/workflows/archive-qualification-patch.yml
+    branches: [agent/full-extraction-pipeline-v1]
+    paths: [.github/workflows/archive-qualification-patch.yml]
 
 permissions:
   contents: write
@@ -23,238 +21,73 @@ jobs:
         with:
           python-version: '3.12'
       - name: Apply corpus-backed patches
-        shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
 
-          def replace_once(path, old, new):
+          def repl(path, old, new):
               p = Path(path)
-              text = p.read_text(encoding='utf-8')
-              if old not in text:
-                  raise SystemExit(f'patch anchor missing in {path}: {old[:80]!r}')
-              p.write_text(text.replace(old, new, 1), encoding='utf-8')
+              s = p.read_text(encoding='utf-8')
+              if old not in s:
+                  raise SystemExit(f'anchor missing in {path}: {old[:100]!r}')
+              p.write_text(s.replace(old, new, 1), encoding='utf-8')
 
-          # Recover two additional exact high-frequency class-4 post-mesh tail variants.
-          replace_once(
-              'scripts/bz2_hrc_tree_probe.py',
-              '''MESH_STANDARD_TAIL = bytes.fromhex(
-              "0000000000000000000000000000000000000000000000000007000000003f800000000000000004"
-          )
-          ''',
-              '''MESH_STANDARD_TAIL = bytes.fromhex(
-              "0000000000000000000000000000000000000000000000000007000000003f800000000000000004"
-          )
-          MESH_STANDARD_TAIL_VARIANT_5 = bytes.fromhex(
-              "0000000000000000000000050000000000000000000000000007000000003f800000000000000004"
-          )
-          MESH_STANDARD_TAIL_VARIANT_6 = bytes.fromhex(
-              "0000000000000000000000060000000000000000000000000007000000003f800000000000000004"
-          )
-          ''',
-          )
-          replace_once(
-              'scripts/bz2_hrc_tree_probe.py',
-              '''    decoded = srt_before_zero_padded_tail(
-              MESH_STANDARD_TAIL, "pre_mesh_standard_tail"
-          )
-          if decoded:
-              return decoded
+          p='scripts/bz2_hrc_tree_probe.py'
+          old='MESH_STANDARD_TAIL = bytes.fromhex(\n    "0000000000000000000000000000000000000000000000000007000000003f800000000000000004"\n)\n'
+          new=old+'MESH_STANDARD_TAIL_VARIANT_5 = bytes.fromhex(\n    "0000000000000000000000050000000000000000000000000007000000003f800000000000000004"\n)\nMESH_STANDARD_TAIL_VARIANT_6 = bytes.fromhex(\n    "0000000000000000000000060000000000000000000000000007000000003f800000000000000004"\n)\n'
+          repl(p,old,new)
+          old='    decoded = srt_before_zero_padded_tail(\n        MESH_STANDARD_TAIL, "pre_mesh_standard_tail"\n    )\n    if decoded:\n        return decoded\n\n    decoded = srt_before_zero_padded_tail(\n        MESH_SHORT_TAIL, "pre_mesh_short_tail"\n    )\n    if decoded:\n        return decoded\n'
+          new='    for marker, source in (\n        (MESH_STANDARD_TAIL, "pre_mesh_standard_tail"),\n        (MESH_STANDARD_TAIL_VARIANT_5, "pre_mesh_standard_tail_variant_5"),\n        (MESH_STANDARD_TAIL_VARIANT_6, "pre_mesh_standard_tail_variant_6"),\n        (MESH_SHORT_TAIL, "pre_mesh_short_tail"),\n    ):\n        decoded = srt_before_zero_padded_tail(marker, source)\n        if decoded:\n            return decoded\n'
+          repl(p,old,new)
 
-          decoded = srt_before_zero_padded_tail(
-              MESH_SHORT_TAIL, "pre_mesh_short_tail"
-          )
-          if decoded:
-              return decoded
-          ''',
-              '''    for marker, source in (
-              (MESH_STANDARD_TAIL, "pre_mesh_standard_tail"),
-              (MESH_STANDARD_TAIL_VARIANT_5, "pre_mesh_standard_tail_variant_5"),
-              (MESH_STANDARD_TAIL_VARIANT_6, "pre_mesh_standard_tail_variant_6"),
-              (MESH_SHORT_TAIL, "pre_mesh_short_tail"),
-          ):
-              decoded = srt_before_zero_padded_tail(marker, source)
-              if decoded:
-                  return decoded
-          ''',
-          )
-          replace_once(
-              'tests/test_hrc_tree_probe.py',
-              '''    def test_nonzero_bytes_after_tail_are_not_accepted(self):
-          ''',
-              '''    def test_standard_tail_variant_6_recovers_srt(self):
-              values = (1.0, 1.0, 1.0, 0.0, 0.0, 0.0, -0.25, -0.75, 1.8)
-              data = struct.pack(">9f", *values) + probe.MESH_STANDARD_TAIL_VARIANT_6
-              decoded = probe._decode_mesh_srt_between(data, 0, len(data), 0)
-              self.assertIsNotNone(decoded)
-              self.assertEqual(decoded["source"], "pre_mesh_standard_tail_variant_6")
-              self.assertAlmostEqual(decoded["translation_xyz"][2], 1.8)
+          p='tests/test_hrc_tree_probe.py'
+          old='    def test_nonzero_bytes_after_tail_are_not_accepted(self):\n'
+          new='    def test_standard_tail_variant_6_recovers_srt(self):\n        values = (1.0, 1.0, 1.0, 0.0, 0.0, 0.0, -0.25, -0.75, 1.8)\n        data = struct.pack(">9f", *values) + probe.MESH_STANDARD_TAIL_VARIANT_6\n        decoded = probe._decode_mesh_srt_between(data, 0, len(data), 0)\n        self.assertIsNotNone(decoded)\n        self.assertEqual(decoded["source"], "pre_mesh_standard_tail_variant_6")\n        self.assertAlmostEqual(decoded["translation_xyz"][2], 1.8)\n\n    def test_nonzero_bytes_after_tail_are_not_accepted(self):\n'
+          repl(p,old,new)
 
-              def test_nonzero_bytes_after_tail_are_not_accepted(self):
-          ''',
-          )
+          p='scripts/bz2_reconstruct_scene.py'
+          old='def _summary_error(name: str, summary: dict, fields: tuple[str, ...]) -> None:\n    problems = {field: summary.get(field) for field in fields if summary.get(field)}\n    if problems:\n        raise ReconstructionError(f"{name} failed validation: {problems}")\n'
+          helper='\n\ndef _source_picture_warnings(layers: dict, projections: dict) -> list[dict]:\n    """Promote absent source images to explicit archival warnings."""\n    warnings = []\n    for kind, summary in (("missing_material_picture_sources", layers), ("missing_model_projection_picture_sources", projections)):\n        count = int(summary.get("unresolved_picture_count") or 0)\n        if count:\n            warnings.append({"kind": kind, "count": count, "details": summary.get("unresolved_pictures", [])})\n    return warnings\n'
+          repl(p,old,old+helper)
+          repl(p,'    _summary_error(\n        "ordered texture layers",\n        layers,\n        ("unresolved_picture_count", "missing_gltf_material_count"),\n    )\n','    # Missing picture bytes are corpus-completeness warnings; TXMP state remains preserved.\n    _summary_error(\n        "ordered texture layers",\n        layers,\n        ("missing_gltf_material_count",),\n    )\n')
+          repl(p,'    _summary_error("model-local projections", projections, ("unresolved_picture_count",))\n','    # Missing code-400 picture bytes are likewise preserved as source warnings.\n')
+          repl(p,'    final_doc = json.loads(final_gltf.read_text(encoding="utf-8"))\n    manifest = {\n','    final_doc = json.loads(final_gltf.read_text(encoding="utf-8"))\n    source_warnings = _source_picture_warnings(layers, projections)\n    manifest = {\n')
+          repl(p,'        "zero_uv_with_model_projection_count": uv.get("zero_uv_with_model_projection_count"),\n        "copied_stage_reports": copied_reports,\n','        "zero_uv_with_model_projection_count": uv.get("zero_uv_with_model_projection_count"),\n        "source_warning_count": sum(int(item["count"]) for item in source_warnings),\n        "source_warnings": source_warnings,\n        "copied_stage_reports": copied_reports,\n')
+          repl(p,'            "renderer-specific Mental Ray and FxDirector semantics remain metadata unless an explicit reconstruction stage has been proven",\n','            "missing source picture files are preserved as explicit source warnings rather than guessed, substituted, or treated as decoder failures",\n            "renderer-specific Mental Ray and FxDirector semantics remain metadata unless an explicit reconstruction stage has been proven",\n')
 
-          # Missing picture bytes are an archival-source warning, not a TXMP decoder failure.
-          replace_once(
-              'scripts/bz2_reconstruct_scene.py',
-              '''def _summary_error(name: str, summary: dict, fields: tuple[str, ...]) -> None:
-              problems = {field: summary.get(field) for field in fields if summary.get(field)}
-              if problems:
-                  raise ReconstructionError(f"{name} failed validation: {problems}")
-          ''',
-              '''def _summary_error(name: str, summary: dict, fields: tuple[str, ...]) -> None:
-              problems = {field: summary.get(field) for field in fields if summary.get(field)}
-              if problems:
-                  raise ReconstructionError(f"{name} failed validation: {problems}")
+          p='scripts/bz2_full_extract.py'
+          old='            item.update({"status": "ok", "reconstruction_manifest": str((out / "reconstruction.json").resolve()), "counts": {"nodes": manifest.get("final_node_count"), "meshes": manifest.get("final_mesh_count"), "primitives": manifest.get("final_primitive_count"), "materials": manifest.get("final_material_count"), "images": manifest.get("final_image_count")}})\n'
+          new='            item.update({"status": "ok", "reconstruction_manifest": str((out / "reconstruction.json").resolve()), "source_warning_count": int(manifest.get("source_warning_count") or 0), "source_warnings": manifest.get("source_warnings") or [], "counts": {"nodes": manifest.get("final_node_count"), "meshes": manifest.get("final_mesh_count"), "primitives": manifest.get("final_primitive_count"), "materials": manifest.get("final_material_count"), "images": manifest.get("final_image_count")}})\n'
+          repl(p,old,new)
 
+          p='tests/test_full_extract.py'
+          repl(p,'                    return {"final_node_count": 1, "final_mesh_count": 2, "final_primitive_count": 3, "final_material_count": 4, "final_image_count": 5}\n','                    return {"final_node_count": 1, "final_mesh_count": 2, "final_primitive_count": 3, "final_material_count": 4, "final_image_count": 5, "source_warning_count": 2, "source_warnings": [{"kind": "missing_material_picture_sources", "count": 2, "details": []}]}\n')
+          repl(p,'            self.assertEqual(batch["success_count"], 1)\n            self.assertEqual(calls[0], (asset, "A"))\n','            self.assertEqual(batch["success_count"], 1)\n            self.assertEqual(batch["results"][0]["source_warning_count"], 2)\n            self.assertEqual(batch["results"][0]["source_warnings"][0]["kind"], "missing_material_picture_sources")\n            self.assertEqual(calls[0], (asset, "A"))\n')
 
-          def _source_picture_warnings(layers: dict, projections: dict) -> list[dict]:
-              """Promote absent source images to explicit archival warnings.
-
-              TXMP decoding and projection/material relationships remain useful even when
-              the historical picture file itself is not present in the supplied corpus.
-              Missing pictures therefore must not be mistaken for decoder failures.
-              """
-              warnings = []
-              for kind, summary in (
-                  ("missing_material_picture_sources", layers),
-                  ("missing_model_projection_picture_sources", projections),
-              ):
-                  count = int(summary.get("unresolved_picture_count") or 0)
-                  if count:
-                      warnings.append(
-                          {
-                              "kind": kind,
-                              "count": count,
-                              "details": summary.get("unresolved_pictures", []),
-                          }
-                      )
-              return warnings
-          ''',
-          )
-          replace_once(
-              'scripts/bz2_reconstruct_scene.py',
-              '''    _summary_error(
-              "ordered texture layers",
-              layers,
-              ("unresolved_picture_count", "missing_gltf_material_count"),
-          )
-          ''',
-              '''    # Missing source pictures are a corpus-completeness warning, not a decoder
-              # failure. The original Softimage TXMP path and placement state are still
-              # preserved in the sidecar, so reconstruction can continue without inventing
-              # image data. A missing glTF material remains structural and therefore fatal.
-              _summary_error(
-                  "ordered texture layers",
-                  layers,
-                  ("missing_gltf_material_count",),
-              )
-          ''',
-          )
-          replace_once(
-              'scripts/bz2_reconstruct_scene.py',
-              '''    _summary_error("model-local projections", projections, ("unresolved_picture_count",))
-          ''',
-              '''    # As above, an absent picture file does not invalidate recovered code-400
-              # projection state. Keep the unresolved source reference explicit and proceed.
-          ''',
-          )
-          replace_once(
-              'scripts/bz2_reconstruct_scene.py',
-              '''    final_doc = json.loads(final_gltf.read_text(encoding="utf-8"))
-              manifest = {
-          ''',
-              '''    final_doc = json.loads(final_gltf.read_text(encoding="utf-8"))
-              source_warnings = _source_picture_warnings(layers, projections)
-              manifest = {
-          ''',
-          )
-          replace_once(
-              'scripts/bz2_reconstruct_scene.py',
-              '''        "zero_uv_with_model_projection_count": uv.get("zero_uv_with_model_projection_count"),
-              "copied_stage_reports": copied_reports,
-          ''',
-              '''        "zero_uv_with_model_projection_count": uv.get("zero_uv_with_model_projection_count"),
-              "source_warning_count": sum(int(item["count"]) for item in source_warnings),
-              "source_warnings": source_warnings,
-              "copied_stage_reports": copied_reports,
-          ''',
-          )
-          replace_once(
-              'scripts/bz2_reconstruct_scene.py',
-              '''            "renderer-specific Mental Ray and FxDirector semantics remain metadata unless an explicit reconstruction stage has been proven",
-          ''',
-              '''            "missing source picture files are preserved as explicit source warnings rather than guessed, substituted, or treated as decoder failures",
-              "renderer-specific Mental Ray and FxDirector semantics remain metadata unless an explicit reconstruction stage has been proven",
-          ''',
-          )
-
-          replace_once(
-              'scripts/bz2_full_extract.py',
-              '''            item.update({"status": "ok", "reconstruction_manifest": str((out / "reconstruction.json").resolve()), "counts": {"nodes": manifest.get("final_node_count"), "meshes": manifest.get("final_mesh_count"), "primitives": manifest.get("final_primitive_count"), "materials": manifest.get("final_material_count"), "images": manifest.get("final_image_count")}})
-          ''',
-              '''            item.update({"status": "ok", "reconstruction_manifest": str((out / "reconstruction.json").resolve()), "source_warning_count": int(manifest.get("source_warning_count") or 0), "source_warnings": manifest.get("source_warnings") or [], "counts": {"nodes": manifest.get("final_node_count"), "meshes": manifest.get("final_mesh_count"), "primitives": manifest.get("final_primitive_count"), "materials": manifest.get("final_material_count"), "images": manifest.get("final_image_count")}})
-          ''',
-          )
-          replace_once(
-              'tests/test_full_extract.py',
-              '''                    return {"final_node_count": 1, "final_mesh_count": 2, "final_primitive_count": 3, "final_material_count": 4, "final_image_count": 5}
-          ''',
-              '''                    return {"final_node_count": 1, "final_mesh_count": 2, "final_primitive_count": 3, "final_material_count": 4, "final_image_count": 5, "source_warning_count": 2, "source_warnings": [{"kind": "missing_material_picture_sources", "count": 2, "details": []}]}
-          ''',
-          )
-          replace_once(
-              'tests/test_full_extract.py',
-              '''            self.assertEqual(batch["success_count"], 1)
-              self.assertEqual(calls[0], (asset, "A"))
-          ''',
-              '''            self.assertEqual(batch["success_count"], 1)
-              self.assertEqual(batch["results"][0]["source_warning_count"], 2)
-              self.assertEqual(batch["results"][0]["source_warnings"][0]["kind"], "missing_material_picture_sources")
-              self.assertEqual(calls[0], (asset, "A"))
-          ''',
-          )
-
-          Path('tests/test_reconstruct_scene.py').write_text('''from __future__ import annotations
+          Path('tests/test_reconstruct_scene.py').write_text("""from __future__ import annotations
 
           import sys
           import unittest
           from pathlib import Path
 
           ROOT = Path(__file__).resolve().parents[1]
-          sys.path.insert(0, str(ROOT / "scripts"))
+          sys.path.insert(0, str(ROOT / 'scripts'))
           import bz2_reconstruct_scene as reconstruct
-
 
           class SourcePictureWarningTests(unittest.TestCase):
               def test_missing_pictures_are_aggregated_as_source_warnings(self):
-                  layers = {
-                      "unresolved_picture_count": 2,
-                      "unresolved_pictures": [{"raw_source_path": "//server/a"}, {"raw_source_path": "//server/b"}],
-                  }
-                  projections = {
-                      "unresolved_picture_count": 1,
-                      "unresolved_pictures": [{"raw_source_path": "//server/c"}],
-                  }
+                  layers = {'unresolved_picture_count': 2, 'unresolved_pictures': [{'raw_source_path': '//server/a'}, {'raw_source_path': '//server/b'}]}
+                  projections = {'unresolved_picture_count': 1, 'unresolved_pictures': [{'raw_source_path': '//server/c'}]}
                   warnings = reconstruct._source_picture_warnings(layers, projections)
-                  self.assertEqual(sum(item["count"] for item in warnings), 3)
-                  self.assertEqual(
-                      [item["kind"] for item in warnings],
-                      ["missing_material_picture_sources", "missing_model_projection_picture_sources"],
-                  )
+                  self.assertEqual(sum(item['count'] for item in warnings), 3)
+                  self.assertEqual([item['kind'] for item in warnings], ['missing_material_picture_sources', 'missing_model_projection_picture_sources'])
 
               def test_no_missing_pictures_produces_no_warning(self):
-                  self.assertEqual(
-                      reconstruct._source_picture_warnings(
-                          {"unresolved_picture_count": 0}, {"unresolved_picture_count": 0}
-                      ),
-                      [],
-                  )
+                  self.assertEqual(reconstruct._source_picture_warnings({'unresolved_picture_count': 0}, {'unresolved_picture_count': 0}), [])
 
-
-          if __name__ == "__main__":
+          if __name__ == '__main__':
               unittest.main()
-          ''', encoding='utf-8')
+          """.replace('\n          ','\n').lstrip(), encoding='utf-8')
           PY
       - name: Verify patches
         run: |
