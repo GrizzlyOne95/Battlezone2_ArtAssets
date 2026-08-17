@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -46,6 +47,21 @@ class DscHierarchyBaselineTests(unittest.TestCase):
         )
         self.assertEqual(chosen, 26)
         self.assertEqual(status, "dsc_code110_unique_improvement")
+
+    def test_environment_srt_accepts_with_and_without_mprflg(self):
+        text = """ENVIRONMENT
+CHAPTER MODELS
+0 SCHEM 1 0 0 SRT 1 1 1 0 0 0 1.25 2.5 -3.75 ;
+1 SCHEM 1 0 0 SRT 2 2 2 0.1 0.2 0.3 4 5 6 MPRFLG 0 ;
+EndOfCHAPTER
+EndOfENVIRONMENT
+"""
+        with tempfile.TemporaryDirectory() as tmp:
+            scene = Path(tmp) / "scene.dsc"
+            scene.write_text(text, encoding="latin-1")
+            srts = multiroot._parse_environment_srts(scene)
+        self.assertEqual(srts[0], [1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.25, 2.5, -3.75])
+        self.assertEqual(srts[1], [2.0, 2.0, 2.0, 0.1, 0.2, 0.3, 4.0, 5.0, 6.0])
 
     def test_equal_scores_keep_standalone_default(self):
         a = {

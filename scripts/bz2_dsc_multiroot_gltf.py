@@ -68,12 +68,21 @@ def _parse_environment_srts(scene_dsc: Path) -> dict[int, list[float]]:
         return {}
     result = {}
     for line in chapter.group(1).splitlines():
-        match = re.match(r"\s*(\d+)\s+.*?\bSRT\s+([^;]+?)\s+MPRFLG", line)
+        # Archive qualification found two valid ENVIRONMENT forms: some roots
+        # append MPRFLG after the nine SRT floats, while 439/3,815 roots end the
+        # line immediately after SRT. Parse the first nine SRT values rather than
+        # making an unrelated trailing field part of the transform grammar.
+        match = re.match(r"\s*(\d+)\s+.*?\bSRT\s+([^;]+)", line)
         if not match:
             continue
-        values = [float(value) for value in match.group(2).split()]
-        if len(values) >= 9:
-            result[int(match.group(1))] = values[:9]
+        tokens = match.group(2).split()
+        if len(tokens) < 9:
+            continue
+        try:
+            values = [float(value) for value in tokens[:9]]
+        except ValueError:
+            continue
+        result[int(match.group(1))] = values
     return result
 
 
