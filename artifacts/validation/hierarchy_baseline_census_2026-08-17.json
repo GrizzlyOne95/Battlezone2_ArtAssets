@@ -1,0 +1,64 @@
+{
+  "schema": "bz2-hierarchy-baseline-census-v1",
+  "date": "2026-08-17",
+  "source": {
+    "archive": "bz2_art.7z",
+    "size_bytes": 515756693,
+    "sha256": "d5afa754837b1a3d1217f558d1e3d110d951c0e753e6fafb15d7726e3eff96bd",
+    "extracted_modelsdirectory_files": 57546,
+    "extracted_modelsdirectory_bytes": 1471037637
+  },
+  "coverage": {
+    "scene_count": 1180,
+    "declared_root_count": 3815,
+    "unique_root_hrc_member_count": 3496,
+    "unique_dsc_backed_baseline_improvement_count": 123,
+    "remaining_mapped_parent_mismatch_count": 0,
+    "remaining_unresolved_hrc_parent_root_count": 2
+  },
+  "conclusion": {
+    "zero_run_rule": "The HRC zero-run preorder representation can admit multiple mathematically valid global baselines. Choosing the smallest valid baseline can flatten genuine parent/child chains.",
+    "dsc_code110_policy": "Use DSC MODELS->MODELS relation code 110 only to score/select among already-valid HRC baselines. Change the standalone default only for a unique strict improvement; never post-hoc reparent individual nodes from code 110.",
+    "result": "After baseline disambiguation there are no known cases where a mapped HRC parent disagrees with DSC code 110. The two residual roots are mapping-continuity cases caused by non-model class-0/nonzero helper records in the HRC stream."
+  },
+  "known_baseline_corrections": [
+    {"family": "Pluto", "default": 20, "selected": 22},
+    {"family": "archived Mire", "default": 20, "selected": 22},
+    {"family": "Power_Ups spawnpoint", "default": 24, "selected": 26},
+    {"family": "Multiplayer streetlight", "default": 24, "selected": 26}
+  ],
+  "residual_roots": [
+    {
+      "selector": "movieAssets/movie_hires/SCENES/SOLDIER_S2g-ALL_V33_Skel.1-0.dsc",
+      "root": "ALL_V33_Skel-null2_1_1.1-0",
+      "hrc": "movieAssets/movie_hires/MODELS/ALL_V33_Skel-null2_1_1.1-0.hrc",
+      "baseline": 22,
+      "constraint_count": 356,
+      "match_count": 355,
+      "mismatch_count": 0,
+      "unresolved_parent_count": 1,
+      "unresolved_child": "ALL_V33_Skel-torus9.2-0",
+      "dsc_expected_parent": "ALL_V33_Skel-smerge44.2-0",
+      "hrc_intermediate_record": {"name": "Face", "class_id": 0, "subtype": 80},
+      "post_class0_filter_result": "torus9 naturally becomes depth-14 child of smerge44; hierarchy mapping reaches 356/356 matching constraints"
+    },
+    {
+      "selector": "movieAssets/movie_hires/SCENES/SemiFinal-RocketTank.1-0.dsc",
+      "root": "rocket_tank_t-DUMMYROOT_3_2.1-0",
+      "hrc": "movieAssets/movie_hires/MODELS/rocket_tank_t-DUMMYROOT_3_2.1-0.hrc",
+      "baseline": 22,
+      "constraint_count": 19,
+      "match_count": 17,
+      "mismatch_count": 0,
+      "unresolved_parent_count": 2,
+      "unresolved_children": ["rocket_tank_t-LCANTILEVER_4.1-0", "rocket_tank_t-LCANTILEVER_3.1-0"],
+      "dsc_expected_parents": ["rocket_tank_t-lfin_1.1-0", "rocket_tank_t-lfin_2.1-0"],
+      "hrc_intermediate_record": {"name": "cls0", "class_id": 0, "subtype": 1},
+      "post_class0_filter_result": "both cantilevers naturally become children of their preceding lfin model; full scene reconstruction succeeds at reduced tessellation with 64 nodes, 20 meshes, 20 primitives, 6 materials, 3 images"
+    }
+  ],
+  "reproducibility": {
+    "tool": "scripts/bz2_hierarchy_census.py",
+    "note": "The committed census tool caches HRC parsing by source/member while keeping DSC scoring scene-specific."
+  }
+}
