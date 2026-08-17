@@ -1,0 +1,41 @@
+{
+  "schema": "bz2-code400-polygon-projection-complete-v1",
+  "date": "2026-08-17",
+  "source": {
+    "archive": "bz2_art.7z",
+    "sha256": "d5afa754837b1a3d1217f558d1e3d110d951c0e753e6fafb15d7726e3eff96bd"
+  },
+  "scope": {
+    "primary_code400_edge_count": 283,
+    "nonidentity_matrix_edge_count": 54,
+    "nonidentity_class4_polygon_edge_count": 21,
+    "validated_nonidentity_class4_polygon_edge_count": 21,
+    "finite_projection_result_count": 21,
+    "failure_count": 0,
+    "projection_codes_present": [2, 3, 4, 5]
+  },
+  "production_contract": {
+    "euler_order": "Softimage default siXYZ",
+    "rotation_matrix": "R = Rz * Ry * Rx",
+    "coordinate_direction": "object to projection: q = R * p",
+    "fitted_support": "transform every actual mesh vertex first and derive bounds in projection space; do not rotate the pre-transform AABB",
+    "post_projection_effects": "apply recovered U/V repeat, +6 scale/offset and crop after base projection",
+    "matrix_scale_translation_policy": "all 21 nonidentity class4 polygon cases have unit +90 matrix scale and zero +90 matrix translation; unobserved polygon scale/translation remain explicit new-format cases"
+  },
+  "independent_oracles": [
+    "face39 planar-XZ geometry maps its object-space face normal to approximately projection +Y only under q=R*p",
+    "Stasis right/left mirrored source meshes retain identical raw UV topology while only the right-side source SI_Texture2D blocks carry the pi-Y transform",
+    "official Softimage documentation establishes siXYZ as the default Euler order and live projection transformations as state separate from unfrozen UV coordinates"
+  ],
+  "corpus_validation": {
+    "all_21_results_finite": true,
+    "largest_pre_fix_aabb_bound_error": 0.3188944702742298,
+    "aabb_error_artifact": "artifacts/validation/code400_projection_bounds_validation_2026-08-17.json",
+    "direction_artifact": "artifacts/validation/code400_projection_direction_validation_2026-08-17.json"
+  },
+  "remaining_code400_work": [
+    "class-10/NURBS projection binding, including the corpus's sole non-unit +90 support scale",
+    "projection codes 6 and 8",
+    "class-0/helper code400 bindings if they have renderable semantics"
+  ]
+}
