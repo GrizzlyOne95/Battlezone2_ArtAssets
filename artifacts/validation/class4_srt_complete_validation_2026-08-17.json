@@ -1,0 +1,90 @@
+{
+  "schema": "bz2-class4-srt-complete-validation-v1",
+  "date": "2026-08-17",
+  "source": {
+    "archive": "bz2_art.7z",
+    "size_bytes": 515756693,
+    "sha256": "d5afa754837b1a3d1217f558d1e3d110d951c0e753e6fafb15d7726e3eff96bd",
+    "extracted_modelsdirectory_files": 57546,
+    "extracted_modelsdirectory_bytes": 1471037637,
+    "primary_hrc_count": 7665
+  },
+  "census": {
+    "class4_node_count": 34308,
+    "resolved_count": 34308,
+    "unresolved_count": 0,
+    "identity_substitution_count": 0,
+    "historical_milestones": {
+      "before_archive_fixes_unresolved": 3122,
+      "after_zero_padded_tails_unresolved": 1179,
+      "after_tail_variants_5_6_probe_unresolved": 698,
+      "exporter_slot_fallback_resolved_from_that_698": 694,
+      "true_production_unresolved_before_final_four_rules": 4
+    },
+    "final_source_counts": {
+      "pre_mesh_material_block": 20157,
+      "pre_mesh_material_slot_block": 2477,
+      "pre_mesh_standard_tail": 8681,
+      "pre_mesh_standard_tail_zero_padded": 1939,
+      "pre_mesh_short_tail": 565,
+      "pre_mesh_standard_tail_variant_6": 399,
+      "pre_mesh_standard_tail_variant_5": 81,
+      "pre_mesh_short_tail_zero_padded": 4,
+      "pre_mesh_mire_grid_extended_tail_zero_padded": 2,
+      "pre_mesh_standard_tail_zero_unit": 1,
+      "pre_mesh_standard_tail_variant_6_zero_padded": 1,
+      "pre_custom_attribute_cusa": 1
+    }
+  },
+  "consolidation": {
+    "material_slot_rule": "The shared tree probe now enumerates overlapping material-slot signatures for authored slots 1..255. Slot 1 retains the historical source label; non-unit slots use pre_mesh_material_slot_block. This subsumes the exporter-only fallback that previously recovered 694 of the probe-only 698 remainder.",
+    "overlap_reason": "A consuming regex can skip the genuine slot marker when bytes in the final SRT float resemble a shorter slot signature; zero-width lookahead preserves overlapping candidates while SRT plausibility selects the valid transform."
+  },
+  "final_four": [
+    {
+      "path": "ISDF_vehicles/MODELS/Artillery-DUMMYROOT.3-0.hrc",
+      "node": "RIGHT_GUN",
+      "source": "pre_mesh_standard_tail_zero_unit",
+      "srt": {"scale": [1,1,1], "rotation_xyz": [0,0,0], "translation_xyz": [-1.3975679874420166,1.378649115562439,-2.7274885177612305]},
+      "evidence": "The same HRC LEFT_GUN is already decoded at +1.3975679874420166 X with identical Y/Z, so RIGHT_GUN is the exact mirrored transform. Its 40-byte post-SRT tail is the standard envelope with the usual unit field serialized as zero."
+    },
+    {
+      "path": "MIRE_BUILDINGS/MODELS/mbruin4-grid3.3-0.hrc",
+      "node": "grid3",
+      "source": "pre_mesh_mire_grid_extended_tail_zero_padded",
+      "srt": {"scale": [1,1,1], "rotation_xyz": [0,0,0], "translation_xyz": [0,0,0]},
+      "evidence": "Versions .3 and .5 carry the identical extended post-SRT envelope and identity SRT; versions .1 and .2 of the same model family carry the ordinary zero-padded standard envelope with the same identity SRT."
+    },
+    {
+      "path": "MIRE_BUILDINGS/MODELS/mbruin4-grid3.5-0.hrc",
+      "node": "grid3",
+      "source": "pre_mesh_mire_grid_extended_tail_zero_padded",
+      "srt": {"scale": [1,1,1], "rotation_xyz": [0,0,0], "translation_xyz": [0,0,0]},
+      "evidence": "Exact duplicate of the validated .3 extended envelope/SRT form."
+    },
+    {
+      "path": "movieAssets/animatics/MODELS/scene3_shot12-explode1.1-0.hrc",
+      "node": "explode1",
+      "source": "pre_custom_attribute_cusa",
+      "srt": {"scale": [0.9960000514984131,0.9960000514984131,0.9960000514984131], "rotation_xyz": [0,0,0], "translation_xyz": [0,0.6020126342773438,0]},
+      "evidence": "The binary SRT exactly matches model 32 in pluto-scene3_shot12.3-0.dsc. Across all 40 CUSA blocks in the corpus, a plausible nine-float SRT occurs exactly 24 bytes before CUSA; 39 are class-2 effect records and this is the sole class-4 case. The observed 24-byte preamble has byte 9 = 0x0d and terminal tag 2 or 3."
+    }
+  ],
+  "validation": {
+    "direct_hrc_exports": [
+      {"path": "MIRE_BUILDINGS/MODELS/mbruin4-grid3.3-0.hrc", "status": "ok", "unresolved_class4_srt_count": 0},
+      {"path": "MIRE_BUILDINGS/MODELS/mbruin4-grid3.5-0.hrc", "status": "ok", "unresolved_class4_srt_count": 0}
+    ],
+    "end_to_end_scenes": [
+      {"selector": "ISDF_vehicles/SCENES/DEFEND-Artillery.3-0.dsc", "status": "ok", "nodes": 26, "meshes": 24, "primitives": 24, "materials": 1, "images": 0, "source_warning_count": 0},
+      {"selector": "movieAssets/animatics/SCENES/pluto-scene3_shot12.3-0.dsc", "status": "ok", "nodes": 54, "meshes": 42, "primitives": 73, "materials": 44, "images": 47, "source_warning_count": 0}
+    ],
+    "local_regression_tests": 26,
+    "local_regression_failures": 0
+  },
+  "production_policy": [
+    "Class-4 local SRT resolution is complete for all 34,308 class-4 nodes in the supplied primary corpus.",
+    "Every accepted transform is recovered from serialized source bytes behind a structurally/corpus-validated anchor; no unresolved transform is replaced with identity.",
+    "The exporter slot fallback remains harmlessly redundant for compatibility, but the shared tree probe now resolves the same slot forms itself."
+  ]
+}

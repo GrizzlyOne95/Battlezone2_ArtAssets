@@ -27,7 +27,7 @@ from pathlib import Path
 
 NAME_RE = re.compile(rb"\x00\x01([ -~]{1,80})\x00")
 KNOWN_CLASSES = {0, 1, 2, 4, 5, 6, 9, 10}
-MESH_MATERIAL_RE = re.compile(rb"\x00\x01\x00\x00([ -~]{1,80})\x00")
+MESH_MATERIAL_RE = re.compile(rb"(?=\x00([\x01-\xff])\x00\x00([ -~]{1,80})\x00)")
 MESH_SHORT_TAIL = bytes.fromhex("3f800000000000000004")
 MESH_STANDARD_TAIL = bytes.fromhex(
     "0000000000000000000000000000000000000000000000000007000000003f800000000000000004"
@@ -38,6 +38,14 @@ MESH_STANDARD_TAIL_VARIANT_5 = bytes.fromhex(
 MESH_STANDARD_TAIL_VARIANT_6 = bytes.fromhex(
     "0000000000000000000000060000000000000000000000000007000000003f800000000000000004"
 )
+MESH_STANDARD_TAIL_ZERO_UNIT = bytes.fromhex(
+    "00000000000000000000000000000000000000000000000000070000000000000000000000000004"
+)
+MESH_MIRE_GRID_EXTENDED_TAIL = bytes.fromhex(
+    "000000000000000100003e4ccccd3f6666663f19999a3f800000000000003e99999afffffffe"
+    "000000000000000100014270000041700000417000000000000000000007000000003f800000000000000004"
+)
+CUSA_PREAMBLE_PREFIX = bytes.fromhex("0000000000000000000d00000000000000000000000000")
 
 
 def _load_nurbs_probe():
@@ -158,7 +166,12 @@ def _decode_mesh_srt_between(
         return None
     tail_end = end - next_zero_run
 
-    material_candidates: list[tuple[int, str, tuple[float, ...]]] = []
+    # All authored material-slot tags (not only slot 1) use the same SRT-before-
+    # slot envelope. Zero-width lookahead is required because bytes in the final
+    # SRT float can themselves resemble a shorter slot signature and would make a
+    # consuming regex skip the genuine marker one byte later. This consolidates
+    # the exporter's archive-proven slot fallback into the shared tree probe.
+    material_candidates: list[tuple[int, int, str, tuple[float, ...]]] = []
     for match in MESH_MATERIAL_RE.finditer(data, start, tail_end):
         srt_offset = match.start() - 36
         if srt_offset < start:
@@ -168,7 +181,8 @@ def _decode_mesh_srt_between(
             material_candidates.append(
                 (
                     srt_offset,
-                    match.group(1).decode("latin-1", errors="replace"),
+                    match.group(1)[0],
+                    match.group(2).decode("latin-1", errors="replace"),
                     values,
                 )
             )
@@ -179,10 +193,44 @@ def _decode_mesh_srt_between(
         chosen = min(trailing, key=lambda item: item[0]) if trailing else max(
             material_candidates, key=lambda item: item[0]
         )
-        offset, material_name, values = chosen
-        decoded = _srt(values, "pre_mesh_material_block", offset)
+        offset, slot, material_name, values = chosen
+        source = "pre_mesh_material_block" if slot == 1 else "pre_mesh_material_slot_block"
+        decoded = _srt(values, source, offset)
         if decoded:
+            decoded["anchor_slot"] = slot
             decoded["anchor_name"] = material_name
+            return decoded
+
+    # Softimage custom-attribute blocks begin with a 24-byte preamble followed by
+    # the ASCII CUSA tag. Across all 40 CUSA records in the supplied corpus the
+    # model SRT is exactly 36 bytes immediately before that preamble. Thirty-nine
+    # are class-2 effect records; the sole class-4 occurrence is the movie
+    # explode1 ROOT, whose recovered SRT independently matches its DSC ENVIRONMENT
+    # SRT. Accept only the two observed preamble terminal tags (2/3).
+    cursor = start
+    cusa_candidates: list[tuple[int, tuple[float, ...]]] = []
+    while True:
+        cusa_offset = data.find(b"CUSA", cursor, tail_end)
+        if cusa_offset < 0:
+            break
+        preamble_offset = cusa_offset - 24
+        srt_offset = preamble_offset - 36
+        if srt_offset >= start and preamble_offset >= start:
+            preamble = data[preamble_offset:cusa_offset]
+            if (
+                len(preamble) == 24
+                and preamble[:23] == CUSA_PREAMBLE_PREFIX
+                and preamble[23] in {2, 3}
+            ):
+                values = struct.unpack_from(">9f", data, srt_offset)
+                if _plausible_mesh_srt(values):
+                    cusa_candidates.append((srt_offset, values))
+        cursor = cusa_offset + 4
+    if cusa_candidates:
+        offset, values = max(cusa_candidates, key=lambda item: item[0])
+        decoded = _srt(values, "pre_custom_attribute_cusa", offset)
+        if decoded:
+            decoded["anchor_name"] = "CUSA"
             return decoded
 
     # PATCH: a large class-4 corpus variant appends even-length zero padding
@@ -213,6 +261,8 @@ def _decode_mesh_srt_between(
         (MESH_STANDARD_TAIL, "pre_mesh_standard_tail"),
         (MESH_STANDARD_TAIL_VARIANT_5, "pre_mesh_standard_tail_variant_5"),
         (MESH_STANDARD_TAIL_VARIANT_6, "pre_mesh_standard_tail_variant_6"),
+        (MESH_STANDARD_TAIL_ZERO_UNIT, "pre_mesh_standard_tail_zero_unit"),
+        (MESH_MIRE_GRID_EXTENDED_TAIL, "pre_mesh_mire_grid_extended_tail"),
         (MESH_SHORT_TAIL, "pre_mesh_short_tail"),
     ):
         decoded = srt_before_zero_padded_tail(marker, source)
