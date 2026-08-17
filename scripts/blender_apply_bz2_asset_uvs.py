@@ -344,6 +344,13 @@ def apply_asset_uvs(gltf_path: Path, model_sidecar_path: Path, layer_sidecar_pat
             continue
 
         source_uv = _existing_source_uv_status(obj)
+        gltf_mesh = (
+            gltf.get("meshes", [])[int(node["mesh"])]
+            if isinstance(node.get("mesh"), int) and 0 <= int(node["mesh"]) < len(gltf.get("meshes", []))
+            else {}
+        )
+        mesh_uv_provenance = str((gltf_mesh.get("extras") or {}).get("uv_source") or "")
+        source_uv_is_parametric_placeholder = mesh_uv_provenance == "normalized_parameter_space"
         projections = [dict(item) for item in record.get("local_texture_projections") or []]
         source_material_names = {
             index: (_source_material_name(slot.material, known_material_names) if slot.material else None)
@@ -412,6 +419,7 @@ def apply_asset_uvs(gltf_path: Path, model_sidecar_path: Path, layer_sidecar_pat
                 source_uv_usable = (
                     source_uv.get("uv_map_count", 0) > 0
                     and source_uv.get("active_uv_all_zero") is False
+                    and not source_uv_is_parametric_placeholder
                 )
                 can_generate_missing_projection = (
                     not source_uv_usable
@@ -465,6 +473,8 @@ def apply_asset_uvs(gltf_path: Path, model_sidecar_path: Path, layer_sidecar_pat
         object_records.append({
             "object": obj.name,
             "source_uv": source_uv,
+            "mesh_uv_provenance": mesh_uv_provenance or None,
+            "source_uv_is_parametric_placeholder": source_uv_is_parametric_placeholder,
             "generated_model_uvs": object_generated,
             "model_texture_nodes": model_nodes,
         })
