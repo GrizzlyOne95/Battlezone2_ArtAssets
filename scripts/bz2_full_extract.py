@@ -119,11 +119,33 @@ def prepared_scene_sources(primary: Path, *, include_embedded_zips: bool = True)
         yield roots, scenes, sources
         return
     with tempfile.TemporaryDirectory(prefix="bz2-embedded-zips-") as temp:
-        for i, archive in enumerate(archives):
+        scene_archive_index = 0
+        for archive in archives:
             label = _norm_relative(archive.relative_to(primary))
-            out = Path(temp) / f"{i:04d}_{_safe_output_name(label)}"
-            out.mkdir(parents=True, exist_ok=True)
             try:
+                # PATCH: the source corpus also contains ordinary picture/render ZIPs.
+                # Only archives that actually contain DSCs beneath a SCENES folder
+                # are historical scene roots; treating every ZIP as one produced
+                # false source errors and needlessly unpacked large render archives.
+                with zipfile.ZipFile(archive, "r") as probe:
+                    has_scene = any(
+                        not info.is_dir()
+                        and info.filename.replace("\\", "/").lower().endswith(".dsc")
+                        and "/scenes/" in ("/" + info.filename.replace("\\", "/").lower())
+                        for info in probe.infolist()
+                    )
+                if not has_scene:
+                    sources.append({
+                        "label": label,
+                        "archive": str(archive.resolve()),
+                        "scene_count": 0,
+                        "status": "ignored_non_scene_archive",
+                    })
+                    continue
+
+                out = Path(temp) / f"{scene_archive_index:04d}_{_safe_output_name(label)}"
+                scene_archive_index += 1
+                out.mkdir(parents=True, exist_ok=True)
                 _extract_zip(archive, out)
                 root = _find_modelsdirectory(out)
                 found = discover_scenes(root, source_label=label)

@@ -25,6 +25,18 @@ import bz2_hrc_gltf as assembled
 import bz2_hrc_tree_probe as hrc_tree
 
 
+def _is_explicitly_unbound_source_mesh(definitions: list[dict], used_slots: list[int]) -> bool:
+    """Recognize a class-4 mesh for which the DSC authors no material binding.
+
+    Slot zero is the class-4 default polygon slot. If the reconstructed DSC
+    model has no direct or inherited code-300 material definitions at all, a
+    slot-zero-only mesh is explicitly unbound in the source scene. Preserve the
+    glTF placeholder and record that fact instead of fabricating a material or
+    aborting. Nonzero slots and partial authored mappings remain fatal.
+    """
+    return not definitions and bool(used_slots) and set(used_slots) == {0}
+
+
 def _parent_map(gltf: dict) -> dict[int, int]:
     result = {}
     for parent_index, node in enumerate(gltf.get("nodes", [])):
@@ -129,6 +141,7 @@ def bind_scene_materials(
     class4_rebound = []
     class4_decode_failures = []
     slot_errors = []
+    unbound_source_materials = []
     inherited_materials = []
 
     for node_index, node in enumerate(gltf.get("nodes", [])):
@@ -186,6 +199,26 @@ def bind_scene_materials(
             unresolved_slots = [
                 slot for slot in used_slots if slot >= len(material_indices)
             ]
+            explicitly_unbound_source = _is_explicitly_unbound_source_mesh(
+                definitions, used_slots
+            )
+            if unresolved_slots and explicitly_unbound_source:
+                # PATCH: slot-zero-only class-4 meshes with no direct or inherited
+                # DSC code-300 relationship are explicitly unbound in the source.
+                # Keep the HRC placeholder rather than fabricating a material or
+                # aborting; nonzero slots and partial authored mappings still fail.
+                if mesh_index is not None and gltf.get("materials"):
+                    for primitive in gltf["meshes"][mesh_index].get("primitives", []):
+                        primitive["material"] = 0
+                unbound_source_materials.append(
+                    {
+                        "node": node.get("name"),
+                        "root_model": root_model,
+                        "used_slots": used_slots,
+                        "reason": "class4_without_authored_dsc_material",
+                    }
+                )
+                unresolved_slots = []
             if unresolved_slots:
                 slot_errors.append(
                     {
@@ -199,7 +232,9 @@ def bind_scene_materials(
             if mesh_index is not None:
                 node["mesh"] = mesh_index
                 node.setdefault("extras", {})["source_material_binding"] = (
-                    "inherited" if inherited_model_index is not None else "direct"
+                    "unbound_source"
+                    if explicitly_unbound_source
+                    else ("inherited" if inherited_model_index is not None else "direct")
                 )
                 class4_rebound.append(str(node.get("name") or item.get("name")))
                 if inherited_model_index is not None:
@@ -313,6 +348,8 @@ def bind_scene_materials(
         "class4_decode_failures": class4_decode_failures,
         "slot_error_count": len(slot_errors),
         "slot_errors": slot_errors,
+        "unbound_source_material_count": len(unbound_source_materials),
+        "unbound_source_materials": unbound_source_materials,
         "inherited_material_count": len(inherited_materials),
         "inherited_materials": inherited_materials,
         "class1_object_material_count": len(class1_object_materials),
@@ -331,6 +368,7 @@ def bind_scene_materials(
             "complete-scene nodes use authoritative bz2_dsc_model_index extras; material binding does not rely on global name-suffix guessing",
             "class-4 polygon metadata upper 16 bits select ordered DSC relation-code-300 material slots",
             "nodes without direct code-300 materials inherit the nearest material-bearing parent in the reconstructed scene graph",
+            "slot-zero-only class-4 meshes with no authored direct or inherited DSC material retain the explicit HRC unbound placeholder instead of fabricating a source material",
             "ROOT class-1 grids receive their first object material but retain projection-driven texturing separately",
             "parametric meshes receive a source object material only when the DSC material has no code-401 texture relation; textured NURBS projection remains intentionally deferred",
             "ordered multi-texture code-401 restoration and corrected MTR semantics remain subsequent non-destructive stages",

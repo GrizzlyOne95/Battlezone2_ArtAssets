@@ -84,11 +84,18 @@ class FullExtractTests(unittest.TestCase):
             archive = models / "Archive.zip"
             with zipfile.ZipFile(archive, "w") as zf:
                 zf.writestr("ISDF_WALKER/SCENES/walker.1-0.dsc", "ELEMENTS\nEndOfELEMENTS\nRELATIONS\nEndOfRELATIONS\n")
+            pictures = models / "Pictures.zip"
+            with zipfile.ZipFile(pictures, "w") as zf:
+                zf.writestr("RENDER_PICTURES/frame.001.pic", b"not-a-scene")
             with full.prepared_scene_sources(models) as (_roots, scenes, sources):
                 embedded = [s for s in scenes if s.source_label == "Archive.zip"]
                 self.assertEqual(embedded[0].selector, "Archive.zip::ISDF_WALKER/SCENES/walker.1-0.dsc")
                 self.assertNotEqual(embedded[0].asset_source, models.resolve())
                 self.assertTrue(any(s.get("label") == "Archive.zip" for s in sources))
+                picture_source = next(s for s in sources if s.get("label") == "Pictures.zip")
+                self.assertEqual(picture_source["status"], "ignored_non_scene_archive")
+                self.assertEqual(picture_source["scene_count"], 0)
+                self.assertFalse(any(s.source_label == "Pictures.zip" for s in scenes))
                 with self.assertRaises(full.PipelineError):
                     full._select_scenes(scenes, ["walker.1-0.dsc"], [], False)
                 chosen = full._select_scenes(scenes, [embedded[0].selector], [], False)

@@ -179,19 +179,41 @@ def _decode_mesh_srt_between(
             decoded["anchor_name"] = material_name
             return decoded
 
-    if tail_end >= 40 and data[tail_end - 40 : tail_end] == MESH_STANDARD_TAIL:
-        offset = tail_end - 76
-        if offset >= start:
-            values = struct.unpack_from(">9f", data, offset)
-            if _plausible_mesh_srt(values):
-                return _srt(values, "pre_mesh_standard_tail", offset)
+    # PATCH: a large class-4 corpus variant appends even-length zero padding
+    # after the otherwise standard/short post-mesh tail. The older decoder
+    # required the tail marker to end exactly at ``tail_end``, leaving valid
+    # SRTs unresolved (hardpoints, collision helpers, Walker dork__h, etc.).
+    # Accept the last tail marker near the record end only when every following
+    # byte is zero, then decode the nine floats immediately before the marker.
+    # This preserves the exact-tail case and avoids scanning arbitrary mesh data.
+    def srt_before_zero_padded_tail(marker: bytes, source: str) -> dict | None:
+        search_start = max(start, tail_end - 512)
+        marker_offset = data.rfind(marker, search_start, tail_end)
+        if marker_offset < 0:
+            return None
+        suffix = data[marker_offset + len(marker) : tail_end]
+        if any(suffix):
+            return None
+        offset = marker_offset - 36
+        if offset < start:
+            return None
+        values = struct.unpack_from(">9f", data, offset)
+        if not _plausible_mesh_srt(values):
+            return None
+        decoded_source = source if not suffix else source + "_zero_padded"
+        return _srt(values, decoded_source, offset)
 
-    if tail_end >= 10 and data[tail_end - 10 : tail_end] == MESH_SHORT_TAIL:
-        offset = tail_end - 46
-        if offset >= start:
-            values = struct.unpack_from(">9f", data, offset)
-            if _plausible_mesh_srt(values):
-                return _srt(values, "pre_mesh_short_tail", offset)
+    decoded = srt_before_zero_padded_tail(
+        MESH_STANDARD_TAIL, "pre_mesh_standard_tail"
+    )
+    if decoded:
+        return decoded
+
+    decoded = srt_before_zero_padded_tail(
+        MESH_SHORT_TAIL, "pre_mesh_short_tail"
+    )
+    if decoded:
+        return decoded
 
     texture_candidates: list[tuple[int, str, tuple[float, ...]]] = []
     cursor = start
