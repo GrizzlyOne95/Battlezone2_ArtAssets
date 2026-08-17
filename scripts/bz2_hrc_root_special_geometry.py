@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Append renderable specialized ROOT-HRC geometry to a multi-root DSC glTF.
 
-Proven ROOT handling currently covers class-1 surface type 2 as the historical
-control-cage approximation plus class-1 surface type 3 as a uniform cubic B-spline
+Proven ROOT handling covers class-1 surface type 2 as the corpus-zero-tension
+Cardinal tensor surface plus class-1 surface type 3 as a uniform cubic B-spline
 tensor surface. Type-3 evaluation is archive-backed by the 5x4 open/open movie
 soldier patch, source Step fields, 183-record class-1 envelope census, and complete
 downstream scene reconstruction. This is intentionally ROOT-only: nested class-1
@@ -49,6 +49,79 @@ def _cubic_bspline_basis(t: float) -> tuple[float, float, float, float]:
     )
 
 
+def _cardinal_basis(t: float) -> tuple[float, float, float, float]:
+    """Zero-tension cubic Cardinal basis (Catmull-Rom form)."""
+    t2 = t * t
+    t3 = t2 * t
+    return (
+        -0.5 * t3 + t2 - 0.5 * t,
+        1.5 * t3 - 2.5 * t2 + 1.0,
+        -1.5 * t3 + 2.0 * t2 + 0.5 * t,
+        0.5 * t3 - 0.5 * t2,
+    )
+
+
+def _sample_axis(count: int, step: int, closed: bool) -> list[tuple[int, float]]:
+    """Return (span, local_t) samples for cubic Cardinal/B-spline-style windows.
+
+    Open Cardinal directions use N-3 spans, where the first and last controls
+    supply endpoint tangents. Closed Cardinal directions are periodic and use N
+    spans without duplicating the seam vertex. Type-3 B-splines use only the open
+    branch today because no closed code-3 corpus record exists.
+    """
+    if step < 1:
+        raise ValueError("surface Step must be positive")
+    spans = count if closed else count - 3
+    if spans < 1:
+        raise ValueError("not enough controls for cubic surface")
+    samples: list[tuple[int, float]] = []
+    for span in range(spans):
+        for sub in range(step):
+            samples.append((span, sub / step))
+    if not closed:
+        samples.append((spans - 1, 1.0))
+    return samples
+
+
+def _tensor_surface(
+    controls: list[tuple[float, float, float]],
+    u_count: int,
+    v_count: int,
+    u_samples: list[tuple[int, float]],
+    v_samples: list[tuple[int, float]],
+    *,
+    u_closed: bool,
+    v_closed: bool,
+    basis_fn,
+) -> list[tuple[float, float, float]]:
+    vertices: list[tuple[float, float, float]] = []
+    for u_span, tu in u_samples:
+        basis_u = basis_fn(tu)
+        # Cardinal open span i evaluates controls i..i+3 and interpolates i+1->i+2.
+        # Periodic Cardinal span i evaluates [i-1, i, i+1, i+2] and interpolates i->i+1.
+        u_indices = (
+            [((u_span - 1 + i) % u_count) for i in range(4)]
+            if u_closed
+            else [u_span + i for i in range(4)]
+        )
+        for v_span, tv in v_samples:
+            basis_v = basis_fn(tv)
+            v_indices = (
+                [((v_span - 1 + i) % v_count) for i in range(4)]
+                if v_closed
+                else [v_span + i for i in range(4)]
+            )
+            xyz = [0.0, 0.0, 0.0]
+            for local_u, control_u in enumerate(u_indices):
+                for local_v, control_v in enumerate(v_indices):
+                    weight = basis_u[local_u] * basis_v[local_v]
+                    point = controls[control_u * v_count + control_v]
+                    for axis in range(3):
+                        xyz[axis] += weight * point[axis]
+            vertices.append(tuple(xyz))
+    return vertices
+
+
 def _decode_class1_grid(data: bytes, outer: dict) -> dict | None:
     if outer.get("class_id") != 1:
         return None
@@ -58,71 +131,67 @@ def _decode_class1_grid(data: bytes, outer: dict) -> dict | None:
     primitive_kind, u_count, v_count = struct.unpack_from(">HHH", data, offset)
     if primitive_kind not in {2, 3}:
         return None
-    minimum_count = 4 if primitive_kind == 3 else 2
-    if not (minimum_count <= u_count <= 4096 and minimum_count <= v_count <= 4096):
+    if not (4 <= u_count <= 4096 and 4 <= v_count <= 4096):
         return None
     control_count = u_count * v_count
     control_end = offset + 6 + control_count * 12
-    if control_count > 2_000_000 or control_end > len(data):
+    if control_count > 2_000_000 or control_end + 20 > len(data):
         return None
     values = struct.unpack_from(f">{control_count * 3}f", data, offset + 6)
     controls = [tuple(values[index : index + 3]) for index in range(0, len(values), 3)]
     if not all(math.isfinite(value) and abs(value) < 1.0e9 for point in controls for value in point):
         return None
 
+    u_closed_raw, v_closed_raw = struct.unpack_from(">HH", data, control_end)
+    u_tension, v_tension = struct.unpack_from(">ff", data, control_end + 4)
+    u_step, v_step = struct.unpack_from(">HH", data, control_end + 12)
+    if u_closed_raw not in {0, 1} or v_closed_raw not in {0, 1} or u_step < 1 or v_step < 1:
+        return None
+    u_closed, v_closed = bool(u_closed_raw), bool(v_closed_raw)
+
     if primitive_kind == 2:
-        # Preserve the existing type-2 behavior until Cardinal interpolation and
-        # closed-boundary semantics are independently validated. This remains an
-        # explicit control-cage approximation rather than an exact patch claim.
-        vertices = controls
-        sample_u_count, sample_v_count = u_count, v_count
-        u_step = v_step = None
-        evaluator = "control_cage"
+        # Every code-2 record in the supplied corpus has tension 0.0 in both
+        # directions. Do not extrapolate a legacy Softimage tension convention
+        # that the source data cannot validate.
+        if abs(u_tension) > 1.0e-7 or abs(v_tension) > 1.0e-7:
+            return None
+        u_samples = _sample_axis(u_count, u_step, u_closed)
+        v_samples = _sample_axis(v_count, v_step, v_closed)
+        vertices = _tensor_surface(
+            controls,
+            u_count,
+            v_count,
+            u_samples,
+            v_samples,
+            u_closed=u_closed,
+            v_closed=v_closed,
+            basis_fn=_cardinal_basis,
+        )
+        evaluator = "zero_tension_cardinal"
     else:
         # All three type-3 corpus records are 5x4, open/open, tension 0.5, Step 3.
-        # The decoded source structure and surface-type correspondence support a
-        # uniform cubic B-spline tensor evaluator. Closed type-3 directions are
-        # deliberately rejected because no archive example establishes them.
-        if control_end + 20 > len(data):
-            return None
-        u_closed, v_closed = struct.unpack_from(">HH", data, control_end)
-        _u_tension, _v_tension = struct.unpack_from(">ff", data, control_end + 4)
-        u_step, v_step = struct.unpack_from(">HH", data, control_end + 12)
+        # Closed type-3 directions remain deliberately unsupported because no
+        # source record establishes their periodic/knot behavior.
         if u_closed or v_closed or u_step < 1 or v_step < 1:
             return None
-        u_spans = u_count - 3
-        v_spans = v_count - 3
-        if u_spans < 1 or v_spans < 1:
+        if abs(u_tension - 0.5) > 1.0e-6 or abs(v_tension - 0.5) > 1.0e-6:
             return None
-        sample_u_count = u_spans * u_step + 1
-        sample_v_count = v_spans * v_step + 1
-        vertices = []
-        for sample_u in range(sample_u_count):
-            if sample_u == sample_u_count - 1:
-                u_span, tu = u_spans - 1, 1.0
-            else:
-                position = sample_u / u_step
-                u_span = int(position)
-                tu = position - u_span
-            basis_u = _cubic_bspline_basis(tu)
-            for sample_v in range(sample_v_count):
-                if sample_v == sample_v_count - 1:
-                    v_span, tv = v_spans - 1, 1.0
-                else:
-                    position = sample_v / v_step
-                    v_span = int(position)
-                    tv = position - v_span
-                basis_v = _cubic_bspline_basis(tv)
-                xyz = [0.0, 0.0, 0.0]
-                for local_u in range(4):
-                    for local_v in range(4):
-                        weight = basis_u[local_u] * basis_v[local_v]
-                        point = controls[(u_span + local_u) * v_count + (v_span + local_v)]
-                        for axis in range(3):
-                            xyz[axis] += weight * point[axis]
-                vertices.append(tuple(xyz))
+        u_samples = _sample_axis(u_count, u_step, False)
+        v_samples = _sample_axis(v_count, v_step, False)
+        vertices = _tensor_surface(
+            controls,
+            u_count,
+            v_count,
+            u_samples,
+            v_samples,
+            u_closed=False,
+            v_closed=False,
+            basis_fn=_cubic_bspline_basis,
+        )
         evaluator = "uniform_cubic_bspline"
 
+    sample_u_count = len(u_samples)
+    sample_v_count = len(v_samples)
     indices: list[int] = []
     normal_accum = [[0.0, 0.0, 0.0] for _ in vertices]
 
@@ -133,13 +202,16 @@ def _decode_class1_grid(data: bytes, outer: dict) -> dict | None:
             a[0] * b[1] - a[1] * b[0],
         )
 
-    # Row-major sampled lattice. This winding matches the prior type-2 output.
-    for u in range(sample_u_count - 1):
-        for v in range(sample_v_count - 1):
+    u_cell_count = sample_u_count if u_closed else sample_u_count - 1
+    v_cell_count = sample_v_count if v_closed else sample_v_count - 1
+    for u in range(u_cell_count):
+        un = (u + 1) % sample_u_count
+        for v in range(v_cell_count):
+            vn = (v + 1) % sample_v_count
             a = u * sample_v_count + v
-            b = (u + 1) * sample_v_count + v
-            c = (u + 1) * sample_v_count + v + 1
-            d = u * sample_v_count + v + 1
+            b = un * sample_v_count + v
+            c = un * sample_v_count + vn
+            d = u * sample_v_count + vn
             for triangle in ((a, d, c), (a, c, b)):
                 indices.extend(triangle)
                 p0, p1, p2 = [vertices[index] for index in triangle]
@@ -163,6 +235,10 @@ def _decode_class1_grid(data: bytes, outer: dict) -> dict | None:
         "v_count": v_count,
         "sample_u_count": sample_u_count,
         "sample_v_count": sample_v_count,
+        "u_closed": u_closed,
+        "v_closed": v_closed,
+        "u_tension": float(u_tension),
+        "v_tension": float(v_tension),
         "u_step": u_step,
         "v_step": v_step,
         "evaluator": evaluator,
@@ -170,7 +246,6 @@ def _decode_class1_grid(data: bytes, outer: dict) -> dict | None:
         "normals": normals,
         "indices": indices,
     }
-
 
 def _append_chunk(buffer: bytearray, payload: bytes) -> tuple[int, int]:
     while len(buffer) % 4:
@@ -351,7 +426,7 @@ def append_root_geometry(
         "unsupported_class1_roots": unsupported_class1_roots,
         "final_mesh_count": len(gltf.get("meshes", [])),
         "notes": [
-            "outer/ROOT class-1 surface type 2 retains the historical control-cage approximation pending exact Cardinal/closure validation",
+            "outer/ROOT class-1 surface type 2 is evaluated as zero-tension cubic Cardinal with open tangent-control boundaries and periodic closed directions",
             "outer/ROOT class-1 surface type 3 is evaluated as an open uniform cubic B-spline using the serialized U/V Step values",
             "nested class-1 construction/history nodes remain non-rendering hierarchy objects",
             "no TEXCOORD_0 is fabricated; class-1 source texture coordinates remain projection-dependent unless independently recovered",
