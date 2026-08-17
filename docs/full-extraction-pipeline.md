@@ -1,101 +1,53 @@
 # Full extraction pipeline
 
-`bz2_full_extract.py` is the production-oriented wrapper around the scene reconstruction stack. Its job is not to replace the individual format decoders; it makes the existing proven stages safe and repeatable from the original archive through a portable glTF bundle and, optionally, a native Blender scene.
+`bz2_full_extract.py` is the production-oriented wrapper around the BZ2 Softimage reconstruction stack. It accepts the original source archive or an extracted tree, discovers scenes and their source scope, runs the proven reconstruction stages, records failures/warnings, and can optionally finish the result in Blender.
 
-## Goals
-
-The full driver is designed around several failure modes that are easy to miss when running the lower-level scripts manually:
-
-- the raw archive may have one or more wrapper directories around `modelsdirectory`;
-- a DSC needs the correct scene-local prefix for HRC/MTR/TXMP/PIC lookup;
-- historical ZIPs inside the dump can contain same-named assets from different revisions;
-- a batch should record one bad scene without losing the results from every good scene;
-- stale output from an earlier run must not make a partial reconstruction appear complete;
-- scenes do not necessarily author `SETUP_SOFT`, but Blender finishing still needs a total input contract;
-- repeatedly unpacking the source archive is expensive, but a cache must never silently destroy unrelated files.
+The driver does not replace the format decoders. Its purpose is to make the complete archive-to-scene path safe, repeatable, and auditable.
 
 ## Source preparation
 
-The driver accepts a directory, ZIP, or 7z source.
+The driver accepts:
 
-For directories it searches for the effective `modelsdirectory` root. If the supplied directory is itself `modelsdirectory`, it uses it directly. If no directory with that name exists but the supplied tree contains `SCENES/*.dsc`, that tree is accepted as the source root.
+- an extracted tree or `modelsdirectory`;
+- ZIP input;
+- the original `.7z` archive.
 
-ZIP input uses Python's standard `zipfile` module. Every member is checked before extraction and the run is rejected if a member would escape the destination directory.
+For directories it locates the effective `modelsdirectory`. ZIP extraction rejects path traversal. `.7z` extraction uses `py7zr` when installed or falls back to `7z`, `7zz`, or `7za`; normal Windows 7-Zip install paths are also checked.
 
-7z input uses `py7zr` when available. Otherwise it resolves an external `7z`, `7zz`, or `7za` executable; Windows' normal 7-Zip install paths are checked as a fallback. `--7zip` overrides automatic discovery.
+`--cache-dir` enables a persistent top-level extraction cache. The cache marker records source path, size, `mtime_ns`, and extraction method. A non-empty cache directory is cleared only when it already contains this tool's ownership marker, so an arbitrary directory can never be silently destroyed.
 
-## Persistent source cache
+## Scene discovery and source isolation
 
-`--cache-dir` avoids re-extracting the top-level source archive for every run.
-
-The cache marker stores:
-
-- absolute source path;
-- source size;
-- source `mtime_ns`;
-- extraction method.
-
-The source is re-extracted when the signature changes or `--refresh-cache` is supplied.
-
-Safety rule: a non-empty cache directory is cleared only if it already contains this tool's ownership marker. An arbitrary non-empty directory passed to `--cache-dir` is rejected rather than deleted.
-
-## Scene discovery and prefix inference
-
-The driver searches each prepared source root for:
+Scenes are discovered from:
 
 ```text
 **/SCENES/*.dsc
 ```
 
-For a scene such as:
+The scene prefix is inferred from the path before `SCENES`, removing a fragile manual argument while preserving prefix-scoped HRC/MTR/TXMP/PIC lookup.
+
+Historical ZIPs embedded in the source tree are isolated rather than flattened into the primary source. Only ZIPs that actually contain DSCs beneath a `SCENES` path are treated as historical scene archives; ordinary picture/render ZIPs are recorded as `ignored_non_scene_archive`.
+
+Historical scenes use qualified selectors such as:
 
 ```text
-walker_final/SCENES/ISDF-walker_final.20-0.dsc
+Archival.zip::walker_final/SCENES/ISDF-walker_final.20-0.dsc
 ```
 
-the inferred source prefix is:
+A short basename is accepted only when unique. Ambiguous revisions fail selection and print their qualified alternatives instead of cross-binding similarly named assets.
 
-```text
-walker_final
-```
-
-For deeper historical trees the complete path before `SCENES` is retained, for example:
-
-```text
-Archival/NewTank/NewTank
-```
-
-This removes a fragile manual argument from the normal reconstruction path while preserving the prefix-scoped lookup behavior used by the lower-level decoders.
-
-## Embedded historical ZIP isolation
-
-The original archive contains nested ZIPs with historical/revision assets. They are not simply unpacked into the primary tree.
-
-Each embedded ZIP is instead extracted to a separate temporary source root and its DSCs are reconstructed against that root. This prevents a scene from resolving a same-basename source object from the primary tree or another archived revision.
-
-An embedded scene therefore receives a qualified selector:
-
-```text
-relative/archive.zip::relative/scene/SCENES/example.1-0.dsc
-```
-
-A short basename is accepted only when unique. If multiple revisions contain the same DSC basename, the driver fails selection and prints the qualified alternatives instead of choosing one arbitrarily.
-
-Use `--no-embedded-zips` to restrict discovery to the primary tree.
+Use `--no-embedded-zips` when only the primary tree should be searched.
 
 ## Selection modes
 
-`--scene` selects an exact/unique scene and may be repeated.
-
-`--match` performs case-insensitive substring matching, or glob matching when the expression contains `*`, `?`, or `[]`.
-
-`--all` selects every discovered DSC.
-
-`--list-scenes` performs source preparation and discovery only, returning each selector, relative path, inferred prefix, and source label.
+- `--list-scenes` performs source preparation/discovery only.
+- repeated `--scene` selects exact or uniquely resolvable scenes.
+- repeated `--match` performs case-insensitive substring matching, or glob matching when the expression contains wildcard syntax.
+- `--all` selects every discovered DSC.
 
 ## Reconstruction stages
 
-For each selected DSC the driver invokes `bz2_reconstruct_scene.reconstruct()`. That pipeline currently composes the already validated stages for:
+For each selected scene the driver invokes `bz2_reconstruct_scene.reconstruct()`, which currently composes:
 
 1. complete DSC multi-root assembly;
 2. polygon and supported rational NURBS geometry;
@@ -104,27 +56,37 @@ For each selected DSC the driver invokes `bz2_reconstruct_scene.reconstruct()`. 
 5. ordered material texture layers;
 6. corrected MTR semantics;
 7. cameras and lights;
-8. model-local texture projections;
+8. model-local code-400 texture projections;
 9. UV provenance;
 10. FxDirector metadata;
 11. SETUP_SOFT/Mental Ray render state;
-12. the final Blender handoff sidecars.
+12. final Blender handoff sidecars.
 
-The asset-fidelity layer then provides the currently proven projection operators and texture repeat/placement/crop behavior without overwriting authored polygon UVs.
+### HRC hierarchy disambiguation
 
-## Clean output rule
+Some binary HRCs admit more than one mathematically valid zero-run hierarchy baseline. Standalone HRC probing remains conservative and keeps its existing default.
 
-Every requested scene maps to a deterministic sanitized output directory under the batch root.
+When a DSC scene is available, relation code 110 independently serializes the model-parent graph. Multi-root scene assembly scores each valid HRC baseline against those DSC parent edges and changes the baseline only when there is one unique, strictly better DSC-backed candidate. Equivalent/ambiguous scores keep the standalone default.
 
-Before reconstruction that generated scene directory is removed by default. This is intentional: a failed stage must not leave an old `scene.gltf`, sidecar, or `scene.blend` that looks like current output.
+This prevents the earlier failure mode where choosing the shallowest valid HRC tree could flatten genuine parent/child chains.
 
-`--preserve-output` disables this behavior for deliberate debugging only.
+### Explicitly unbound source meshes
 
-## Render-state totality
+A class-4 mesh that uses only slot 0 and has no direct or inherited DSC code-300 material relation is preserved as explicitly unbound source geometry. The placeholder is retained and recorded rather than inventing a material. Nonzero unresolved slots and partial authored mappings remain validation failures.
 
-The original one-scene pipeline writes `scene.render_state.json` only when it resolves a `SETUP_SOFT` record. The Blender finishing script, however, consumes a render-state sidecar as part of its normal argument contract.
+### Missing source pictures
 
-The full driver closes that gap. When a scene has no resolved render setup it writes a small explicit placeholder:
+A TXMP/material relation can be structurally valid even when the external picture bytes referenced by the historical source path are absent from the archive.
+
+Missing picture files therefore produce explicit source-completeness warnings rather than aborting an otherwise valid reconstruction. The raw source path and recovered TXMP/projection state remain in the sidecars; the pipeline does not guess, substitute, or cross-bind an image from another source group/revision.
+
+Structural texture failures, such as an unresolved glTF material relationship, remain fatal.
+
+## Clean output and render-state totality
+
+Each requested scene maps to a deterministic sanitized output directory. That generated directory is removed before reconstruction by default so stale sidecars cannot make a failed rebuild look complete. `--preserve-output` opts out for deliberate debugging.
+
+When a DSC contains no resolved `SETUP_SOFT`, the full driver creates:
 
 ```json
 {
@@ -134,79 +96,146 @@ The full driver closes that gap. When a scene has no resolved render setup it wr
 }
 ```
 
-This distinguishes "no render setup authored/resolved" from "pipeline forgot to create a required file" and keeps the archive-to-Blender path structurally complete.
+This keeps the Blender input contract total while distinguishing an unauthored render setup from a missing pipeline output.
 
-## Failure behavior
+## Batch behavior
 
-Without `--keep-going`, the batch stops after the first failed selected scene.
+Without `--keep-going`, processing stops after the first failed scene. With `--keep-going`, failures are recorded and later scenes continue; the command still exits nonzero if any scene failed.
 
-With `--keep-going`, each failed scene is recorded and later scenes continue. The process still returns a nonzero exit code if the final batch contains any failure.
-
-`batch_reconstruction.json` records:
-
-- requested and processed scene counts;
-- success and failure counts;
-- total elapsed time;
-- each scene selector and source root;
-- inferred prefix;
-- output directory;
-- elapsed scene time;
-- reconstruction counts for successful scenes;
-- error type/message for failed scenes;
-- optional Blender invocation result.
-
-This makes a corpus run auditable rather than dependent on terminal scrollback.
+`batch_reconstruction.json` records source provenance, selector/prefix, output path, elapsed time, reconstruction counts, source-warning details, optional Blender status, and any failure type/message.
 
 ## Blender mode
 
 `--blender` resolves Blender from `PATH`; `--blender <path>` uses an explicit executable.
 
-After a successful portable reconstruction the driver runs `blender_finish_reconstruction.py`, which:
-
-- imports the final glTF;
-- restores the recovered source camera and lights;
-- rebuilds the currently proven ordered texture stack;
-- applies additive projection UV maps where supported;
-- keeps source UVs intact;
-- retains source projection and material metadata as Blender custom properties;
-- preserves render-state provenance;
-- saves `scene.blend`.
+The Blender finisher imports the glTF, restores recovered camera/light state, rebuilds the currently proven ordered texture stack, adds supported projection UV maps without overwriting authored UVs, retains source projection/material metadata, preserves render-state provenance, and saves `scene.blend`.
 
 A nonzero Blender result converts that scene to a batch failure.
 
-## Validation layers
+## Source-independent CI
 
-There are two deliberately separate validation layers.
+GitHub Actions compiles `scripts/` and `tests/` under Python 3.12 and runs the unittest suite. Current coverage includes archive/source routing, selection/ambiguity, cache ownership, ZIP traversal protection, output cleanup, render-state placeholders, explicit unbound materials, class-4 SRT tail variants, missing-picture warning propagation, and DSC-backed HRC hierarchy-baseline selection.
 
-### Source-independent orchestration tests
+## Real `bz2_art.7z` qualification — August 17, 2026
 
-`tests/test_full_extract.py` tests the driver without proprietary assets. Coverage includes discovery, prefix inference, selection, ambiguity handling, embedded ZIP isolation, cache ownership/signature behavior, ZIP traversal rejection, clean-output behavior, per-scene source routing, and render-state placeholder generation.
+The original archive was supplied and exercised directly against this branch. The derived machine-readable record is committed as:
 
-These tests run in GitHub Actions along with Python bytecode compilation.
-
-### Real corpus validation
-
-Format fidelity still requires the original BZ2 source corpus. The individual reconstruction stages already contain derived fixtures and corpus evidence committed throughout the reconstruction stack, but a final archive-to-batch release check should be run locally against `bz2_art.7z` because the raw archive is intentionally excluded from Git.
-
-A useful final qualification sequence is:
-
-```powershell
-python .\scripts\bz2_full_extract.py .\bz2_art.7z --list-scenes --cache-dir .\.bz2-source-cache
-python .\scripts\bz2_full_extract.py .\bz2_art.7z --scene "ISDF-walker_final.20-0.dsc" --cache-dir .\.bz2-source-cache --blender
-python .\scripts\bz2_full_extract.py .\bz2_art.7z --match "tank" --keep-going --cache-dir .\.bz2-source-cache
+```text
+artifacts/validation/full_archive_qualification_2026-08-17.json
 ```
 
-Then expand to `--all --keep-going` once the representative walker/tank scenes are clean.
+### Archive/discovery preflight
+
+- source archive: 515,756,693 bytes;
+- extracted `modelsdirectory`: 57,546 files, approximately 1.6 GB;
+- discovered scenes: **1,180** total;
+  - 1,139 primary scenes;
+  - 41 isolated historical scenes from `Archival.zip`;
+- **1,180/1,180 DSCs parsed successfully**;
+- no scene lacked a declared root;
+- no ambiguous root match was found during the structural preflight.
+
+The primary source has one known completeness boundary: 14 `ISDF_outro` scenes contain 100 root-model references for which the matching HRC is not present in that source group. Those references are deliberately not rebound to similarly named assets from other groups/revisions.
+
+### Class-4 SRT census
+
+Across 7,665 HRCs there are 34,308 class-4 nodes.
+
+Archive-backed decoder fixes reduced unresolved class-4 local SRTs from:
+
+```text
+3,122 -> 1,179 -> 698
+```
+
+The first reduction came from recognizing standard/short post-mesh tails followed only by zero padding. Additional exact tail variants recovered another 481 transforms. These changes recover serialized source SRT values; they do not replace missing transforms with identity.
+
+### Texture-source census
+
+All **14,486/14,486** primary `TEXTURES2D` TXMP records decoded successfully. **2,370** reference picture basenames whose image bytes are absent from the supplied corpus. Those are now represented as source warnings, not decoder failures.
+
+### Exact reference scenes
+
+The historical final Walker reconstructs end-to-end:
+
+```text
+Archival.zip::walker_final/SCENES/ISDF-walker_final.20-0.dsc
+115 nodes / 78 meshes / 116 primitives / 52 materials / 34 images
+```
+
+The historical high-resolution ISDF tank also reconstructs end-to-end:
+
+```text
+Archival.zip::adconcept/SCENES/hi_res-ISDF_tank.1-0.dsc
+31 nodes / 18 meshes / 25 primitives / 28 materials / 15 images
+```
+
+### Stratified full reconstruction
+
+A 22-scene cross-section was run through the complete Python reconstruction path at reduced NURBS tessellation (`curve_steps=8`, `surface_steps_u=6`, `surface_steps_v=6`). It covers ISDF/Scion vehicles, creatures, buildings, power-ups, multiplayer props, HUD/interface assets, planets, movie assets, outro cinematics, wormhole sequences, foliage, and sky domes.
+
+Result:
+
+```text
+22 / 22 successful
+0 reconstruction failures
+26 source-picture warnings
+```
+
+The source-picture warnings are concentrated in five scenes and correspond to historical picture files absent from the archive; no substitute image data was invented.
+
+Three initially failing hierarchy cases were specifically repaired by DSC-backed baseline selection:
+
+- `Power_Ups/SCENES/spawnpoint_network-pspwn_1.1-0.dsc` — baseline 24 -> 26;
+- `Multiplayer/SCENES/loot-streetlight.7-0.dsc` — baseline 24 -> 26;
+- `movieAssets/movie_terrain/SCENES/pluto-scene3_shot7_2.6-0.dsc` — two roots, baseline 20 -> 22.
+
+All three then completed the remaining reconstruction stages successfully.
+
+### Qualification limits
+
+This qualification does **not** claim that all 1,180 scenes have received full glTF reconstruction. Every DSC received structural/source preflight, while the full reconstruction pass was stratified across 22 representative scenes plus the exact Walker/tank references.
+
+Blender is not installed in the qualification sandbox, so `.blend` finishing was not exercised here. The portable glTF/sidecar path is qualified; Blender finishing remains a local-user release check.
+
+## Recommended local commands
+
+List exact selectors once and reuse the persistent extraction cache:
+
+```powershell
+python .\scripts\bz2_full_extract.py .\bz2_art.7z `
+  --cache-dir .\.bz2-source-cache `
+  --list-scenes
+```
+
+Run a selected scene through Blender:
+
+```powershell
+python .\scripts\bz2_full_extract.py .\bz2_art.7z `
+  --cache-dir .\.bz2-source-cache `
+  --scene "<selector copied from --list-scenes>" `
+  --blender
+```
+
+For a local full-corpus attempt:
+
+```powershell
+python .\scripts\bz2_full_extract.py .\bz2_art.7z `
+  --cache-dir .\.bz2-source-cache `
+  --all `
+  --keep-going `
+  --output .\artifacts\reconstructed
+```
 
 ## Remaining fidelity frontier
 
-The full pipeline is intended to make extraction/reconstruction operational even while a few source-renderer semantics remain under active reversal. The largest known fidelity items are currently:
+The pipeline is operational without claiming every original Softimage/Mental Ray behavior is solved. The largest remaining fidelity items are:
 
 - material-level non-identity texture-matrix direction/composition;
-- exact interaction between simultaneous model-local and material-level texture projections;
+- exact interaction between simultaneous code-400 and code-401 texture projections;
 - authoritative alternate/swap/wrap behavior where non-default;
 - exact equivalents for special material projection/environment modes 7 and 8;
 - textured NURBS projection binding;
+- the remaining 698 unresolved class-4 local-SRT envelopes;
 - renderer-specific Mental Ray, lens-shader, reflection and FxDirector effects.
 
-Those should continue as additive fidelity stages rather than blocking reliable geometry/material/texture extraction for already understood assets.
+These should continue as additive fidelity stages rather than blocking already understood geometry/material/texture extraction.
