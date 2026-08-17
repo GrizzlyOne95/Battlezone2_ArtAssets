@@ -1,0 +1,63 @@
+name: Apply code400 projection transform
+on:
+  push:
+    branches: [agent/full-extraction-pipeline-v1]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: agent/full-extraction-pipeline-v1
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Patch current source
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('scripts/bz2_projection_uv.py')
+          s=p.read_text()
+          anchor='def projection_type_name(code: int | None) -> str | None:\n'
+          helper='''def _rotation_matrix_xyz(rotation):\n    rx, ry, rz = (float(v) for v in rotation)\n    cx, sx = math.cos(rx), math.sin(rx)\n    cy, sy = math.cos(ry), math.sin(ry)\n    cz, sz = math.cos(rz), math.sin(rz)\n    # Softimage default siXYZ: apply X, then Y, then Z => Rz @ Ry @ Rx.\n    return (\n        (cz*cy, cz*sy*sx - sz*cx, cz*sy*cx + sz*sx),\n        (sz*cy, sz*sy*sx + cz*cx, sz*sy*cx - cz*sx),\n        (-sy, cy*sx, cy*cx),\n    )\n\ndef _transpose3(m):\n    return tuple(tuple(m[j][i] for j in range(3)) for i in range(3))\n\ndef _mul3(m, p):\n    x, y, z = (float(v) for v in p[:3])\n    return tuple(m[i][0]*x + m[i][1]*y + m[i][2]*z for i in range(3))\n\ndef code400_rotation_supported(projection: dict, tolerance: float = MATRIX_IDENTITY_TOLERANCE) -> bool:\n    if int(projection.get("relation_code") or 0) != 400:\n        return False\n    scale = projection.get("si_texture2d_matrix_scale_xyz") or [1.0, 1.0, 1.0]\n    translation = projection.get("si_texture2d_matrix_translation_xyz") or [0.0, 0.0, 0.0]\n    return (\n        all(abs(float(v)-1.0) <= tolerance for v in scale)\n        and all(abs(float(v)) <= tolerance for v in translation)\n    )\n\ndef projection_space_point(point, projection: dict):\n    rotation = projection.get("si_texture2d_matrix_rotation_xyz_radians") or [0.0, 0.0, 0.0]\n    if all(abs(float(v)) <= MATRIX_IDENTITY_TOLERANCE for v in rotation):\n        return tuple(float(v) for v in point[:3])\n    if not code400_rotation_supported(projection):\n        raise ValueError("non-identity SI_Texture2D matrix is not proven for this binding path")\n    # The stored matrix is the projection-support pose. Inverse rotation moves\n    # model coordinates into support-local UVW space; inverse(rotation)=transpose.\n    return _mul3(_transpose3(_rotation_matrix_xyz(rotation)), point)\n\ndef projection_space_bounds(bounds, projection: dict):\n    minimum, maximum = bounds\n    corners = [\n        (x, y, z)\n        for x in (minimum[0], maximum[0])\n        for y in (minimum[1], maximum[1])\n        for z in (minimum[2], maximum[2])\n    ]\n    return bounds_from_points(projection_space_point(point, projection) for point in corners)\n\n\n'''
+          if 'def code400_rotation_supported' not in s:
+              s=s.replace(anchor, helper+anchor)
+          old='''    if not matrix_srt_is_identity(projection):\n        raise ValueError("non-identity SI_Texture2D matrix SRT is not promoted in working projection UVs")\n\n    uvs = [base_projection_uv(point, bounds, code) for point in points]\n'''
+          new='''    if not matrix_srt_is_identity(projection):\n        if not code400_rotation_supported(projection):\n            raise ValueError("non-identity SI_Texture2D matrix SRT is not promoted for this binding path")\n        bounds = projection_space_bounds(bounds, projection)\n        points = [projection_space_point(point, projection) for point in points]\n\n    uvs = [base_projection_uv(point, bounds, code) for point in points]\n'''
+          if old not in s and new not in s:
+              raise SystemExit('projection_uv patch anchor not found')
+          s=s.replace(old,new)
+          p.write_text(s)
+
+          p=Path('scripts/blender_apply_bz2_asset_uvs.py')
+          s=p.read_text()
+          old='''            if not projection_uv.matrix_srt_is_identity(projection):\n                deferred.append({"object": obj.name, "texture": projection.get("texture_object"), "reason": "nonidentity_matrix_srt"})\n                continue\n'''
+          new='''            if (\n                not projection_uv.matrix_srt_is_identity(projection)\n                and not projection_uv.code400_rotation_supported(projection)\n            ):\n                deferred.append({"object": obj.name, "texture": projection.get("texture_object"), "reason": "unsupported_nonidentity_matrix_srt"})\n                continue\n'''
+          if old not in s and new not in s:
+              raise SystemExit('blender UV patch anchor not found')
+          s=s.replace(old,new)
+          s=s.replace(
+              '"Model-local code-400 projections use the working 1..5 projection table only when +90 matrix SRT is identity and now apply recovered URepeat/VRepeat before +6 scale/offset/crop.",',
+              '"Model-local code-400 projections use the working 1..5 table; rotation-only +90 support poses are applied inversely in projection space, while unproven support scale/translation remain deferred. Recovered URepeat/VRepeat and +6 scale/offset/crop are applied afterward.",'
+          )
+          p.write_text(s)
+
+          Path('tests/test_code400_projection_transform.py').write_text('''from __future__ import annotations\nimport sys\nimport unittest\nfrom pathlib import Path\nROOT=Path(__file__).resolve().parents[1]\nsys.path.insert(0,str(ROOT/'scripts'))\nimport bz2_projection_uv as uv\n\nclass Code400ProjectionTransformTests(unittest.TestCase):\n    def test_inverse_support_rotation_matches_face39_axis(self):\n        p={\n            "relation_code":400,\n            "projection_or_mapping_code_candidate":2,\n            "si_texture2d_matrix_rotation_xyz_radians":[-0.5000020265579224,0.0,-0.6780027747154236],\n            "si_texture2d_matrix_scale_xyz":[1,1,1],\n            "si_texture2d_matrix_translation_xyz":[0,0,0],\n        }\n        y=uv.projection_space_point((0,1,0),p)\n        expected=(-0.627239,0.683484,0.373391)\n        for actual,want in zip(y,expected):\n            self.assertAlmostEqual(actual,want,places=5)\n\n    def test_nonidentity_code401_remains_deferred(self):\n        p={"relation_code":401,"projection_or_mapping_code_candidate":2,\n           "si_texture2d_matrix_rotation_xyz_radians":[0,0.5,0],\n           "si_texture2d_matrix_scale_xyz":[1,1,1],\n           "si_texture2d_matrix_translation_xyz":[0,0,0]}\n        self.assertFalse(uv.code400_rotation_supported(p))\n        with self.assertRaises(ValueError):\n            uv.project_polygon([(0,0,0)],((-1,-1,-1),(1,1,1)),p)\n\n    def test_nonunit_code400_scale_remains_deferred(self):\n        p={"relation_code":400,"si_texture2d_matrix_rotation_xyz_radians":[0,0,0],\n           "si_texture2d_matrix_scale_xyz":[1.1,1,1],\n           "si_texture2d_matrix_translation_xyz":[0,0,0]}\n        self.assertFalse(uv.code400_rotation_supported(p))\n\nif __name__=='__main__': unittest.main()\n''')
+          PY
+      - name: Test
+        run: |
+          python -m compileall -q scripts tests
+          python -m unittest discover -s tests -p 'test_*.py' -v
+          python scripts/bz2_projection_uv.py
+      - name: Commit tested patch and remove workflow
+        run: |
+          rm .github/workflows/apply-code400-projection-transform.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add scripts/bz2_projection_uv.py scripts/blender_apply_bz2_asset_uvs.py tests/test_code400_projection_transform.py .github/workflows/apply-code400-projection-transform.yml
+          git commit -m 'Apply inverse Softimage code-400 support rotation'
+          git push origin HEAD:agent/full-extraction-pipeline-v1
