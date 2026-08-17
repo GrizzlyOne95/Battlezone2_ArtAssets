@@ -1,5 +1,5 @@
 {
-  "schema": "bz2-texture-matrix-census-v1",
+  "schema": "bz2-texture-matrix-census-v2",
   "date": "2026-08-17",
   "source": {
     "archive": "bz2_art.7z",
@@ -38,18 +38,34 @@
       "8":{"identity":4,"nonidentity":1}
     }
   },
-  "ascii_source_evidence": {
-    "file": "ISDF_vehicles/PICTURES/ivstas00.xsi",
-    "si_texture2d_block_count": 11,
-    "ivstas00_picture_block_count": 10,
-    "ivstas00_identity_matrix_block_count": 8,
-    "ivstas00_nonidentity_matrix_block_count": 2,
-    "nonidentity_matrix": "diag(-1,1,-1,1)",
-    "interpretation_status": "Field ordering/matrix presence is directly corroborated by source-era ASCII SI_Texture2D. Binary counterpart matching, direct-vs-inverse application, Euler order, and code-400/code-401 composition remain unresolved."
+  "stasis_truck_ascii_binary_correspondence": {
+    "ascii_file": "ISDF_vehicles/PICTURES/ivstas00.xsi",
+    "ascii_si_texture2d_block_count": 11,
+    "ascii_ivstas00_picture_block_count": 10,
+    "ascii_identity_matrix_block_count": 8,
+    "ascii_nonidentity_matrix_block_count": 2,
+    "ascii_nonidentity_matrix": "diag(-1,1,-1,1)",
+    "binary_ivstas00_txmp_record_count": 59,
+    "binary_nonidentity_txmp_record_count": 8,
+    "binary_nonidentity_projection_code": 4,
+    "binary_nonidentity_records": [
+      {"path":"ISDF_vehicles/TEXTURES2D/Stasis_Truck_t-t2d2.1-0.txt","rotation_xyz_radians":[0.0,-3.141592502593994,0.0]},
+      {"path":"ISDF_vehicles/TEXTURES2D/Stasis_Truck_t-t2d2.2-0.txt","rotation_xyz_radians":[0.0,-3.141592502593994,0.0]},
+      {"path":"ISDF_vehicles/TEXTURES2D/Stasis_Truck_t-t2d3.1-0.txt","rotation_xyz_radians":[0.0,-3.141592502593994,0.0]},
+      {"path":"ISDF_vehicles/TEXTURES2D/Stasis_Truck_t-t2d3.2-0.txt","rotation_xyz_radians":[0.0,-3.141592502593994,0.0]},
+      {"path":"ISDF_vehicles/TEXTURES2D/Stasis_Truck_t-t2d9.1-0.txt","rotation_xyz_radians":[0.0,3.141592264175415,0.0]},
+      {"path":"ISDF_vehicles/TEXTURES2D/Stasis_Truck_t-t2d9.2-0.txt","rotation_xyz_radians":[0.0,3.141592264175415,0.0]},
+      {"path":"ISDF_vehicles/TEXTURES2D/Stasis_Truck_t-t2d10.1-0.txt","rotation_xyz_radians":[0.0,3.141592264175415,0.0]},
+      {"path":"ISDF_vehicles/TEXTURES2D/Stasis_Truck_t-t2d10.2-0.txt","rotation_xyz_radians":[0.0,3.141592264175415,0.0]}
+    ],
+    "binary_nonidentity_scale_xyz": [1.0,1.0,1.0],
+    "binary_nonidentity_translation_xyz": [0.0,0.0,0.0],
+    "conclusion": "The source-era ASCII diag(-1,1,-1,1) transform and binary TXMP +90 Y rotations of approximately +/-pi are direct same-family corroboration that +90 encodes authored texture-object transform state. Exact block-to-TXMP member mapping and application convention remain unresolved."
   },
   "production_boundary": [
     "Do not apply non-identity +90 matrices to UV/projection output until direct-vs-inverse convention and code-400/code-401 composition order are proven.",
     "Primary corpus materially exceeds the earlier historical-subset census: code-401 has 1,884 non-identity edges and code-400 has 54.",
-    "ASCII dotXSI source evidence takes precedence over documentation-only inference when matching binary fields."
+    "ASCII dotXSI and binary Stasis Truck records independently agree on a 180-degree Y transform family, strengthening the +90 field interpretation.",
+    "Exact ASCII block-to-binary TXMP identity, vector convention, Euler order, and composition order remain explicit open questions."
   ]
 }
