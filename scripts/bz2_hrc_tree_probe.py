@@ -270,6 +270,12 @@ def discover_records(data: bytes) -> list[dict]:
         zeros = zero_run_before(data, match.start())
         if class_id not in KNOWN_CLASSES or zeros < 20 or zeros % 2:
             continue
+        # Archive census: class 0 is a hierarchy transform/null only for
+        # subtype 0. The 13 class-0/nonzero signatures across 7,665 HRCs
+        # are internal/helper payload records (cls0, Face, t); treating them
+        # as nodes creates garbage immediate SRTs and false parent scopes.
+        if class_id == 0 and subtype != 0:
+            continue
         item = {
             "name": match.group(1).decode("latin-1", errors="replace"),
             "offset": match.start(),
@@ -340,7 +346,7 @@ def apply_tree(records: list[dict], outer_name: str, baseline: int) -> list[dict
 def probe(path: Path, forced_baseline: int | None = None) -> dict:
     data = path.read_bytes()
     outer = outer_model(data)
-    if outer and outer["class_id"] in {0, 5}:
+    if outer and (outer["class_id"] == 5 or (outer["class_id"] == 0 and outer.get("subtype") == 0)):
         name_end = data.find(b"\0", outer["string_offset"])
         srt_offset = name_end + 5 if name_end >= 0 else -1
         if srt_offset >= 0 and srt_offset + 36 <= len(data):

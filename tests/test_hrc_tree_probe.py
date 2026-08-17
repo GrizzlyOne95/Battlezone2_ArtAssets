@@ -33,6 +33,16 @@ class MeshSrtTailTests(unittest.TestCase):
         data = struct.pack(">9f", *values) + probe.MESH_STANDARD_TAIL + b"\0\0\x01\0"
         self.assertIsNone(probe._decode_mesh_srt_between(data, 0, len(data), 0))
 
+    def test_class0_nonzero_subtype_is_not_a_hierarchy_record(self):
+        # Real archive regressions use class-0/nonzero internal records named
+        # cls0, Face, and t. Only subtype 0 is a transform/null model node.
+        real = (b"\0" * 20) + b"\0\x01real\0" + b"\x00\x00\x00\x00" + (b"\0" * 36)
+        helper = (b"\0" * 22) + b"\0\x01helper\0" + b"\x00\x00\x00\x01" + (b"\0" * 36)
+        records = probe.discover_records(real + helper)
+        self.assertEqual([item["name"] for item in records], ["real"])
+        self.assertEqual(records[0]["class_id"], 0)
+        self.assertEqual(records[0]["subtype"], 0)
+
 
 if __name__ == "__main__":
     unittest.main()
