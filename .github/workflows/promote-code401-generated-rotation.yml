@@ -1,0 +1,64 @@
+name: Promote rotated code401 generated projections
+on:
+  push:
+    branches: [agent/full-extraction-pipeline-v1]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: agent/full-extraction-pipeline-v1
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Patch common projection transform support
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('scripts/bz2_projection_uv.py')
+          s=p.read_text()
+          old='''def code400_rotation_supported(projection: dict, tolerance: float = MATRIX_IDENTITY_TOLERANCE) -> bool:\n    if int(projection.get("relation_code") or 0) != 400:\n        return False\n    scale = projection.get("si_texture2d_matrix_scale_xyz") or [1.0, 1.0, 1.0]\n    translation = projection.get("si_texture2d_matrix_translation_xyz") or [0.0, 0.0, 0.0]\n    return (\n        all(abs(float(v)-1.0) <= tolerance for v in scale)\n        and all(abs(float(v)) <= tolerance for v in translation)\n    )\n'''
+          new='''def projection_rotation_supported(projection: dict, tolerance: float = MATRIX_IDENTITY_TOLERANCE) -> bool:\n    """Allow corpus-observed rotation-only projection definitions.\n\n    Both DSC 400 and 401 reference the same TXMP projection-definition layout.\n    For 401 this helper is used only when geometry must generate a missing/all-zero\n    CurrentUV source; authored nonzero 401 UVs remain preserved separately.\n    """\n    if int(projection.get("relation_code") or 0) not in {400, 401}:\n        return False\n    scale = projection.get("si_texture2d_matrix_scale_xyz") or [1.0, 1.0, 1.0]\n    translation = projection.get("si_texture2d_matrix_translation_xyz") or [0.0, 0.0, 0.0]\n    return (\n        all(abs(float(v)-1.0) <= tolerance for v in scale)\n        and all(abs(float(v)) <= tolerance for v in translation)\n    )\n\ndef code400_rotation_supported(projection: dict, tolerance: float = MATRIX_IDENTITY_TOLERANCE) -> bool:\n    """Compatibility predicate for the model-local relation-400 path."""\n    return int(projection.get("relation_code") or 0) == 400 and projection_rotation_supported(projection, tolerance)\n'''
+          if old not in s:
+              raise SystemExit('projection rotation predicate anchor not found')
+          s=s.replace(old,new)
+          s=s.replace('if not code400_rotation_supported(projection):\n        raise ValueError("non-identity SI_Texture2D matrix is not proven for this binding path")',
+                      'if not projection_rotation_supported(projection):\n        raise ValueError("non-identity SI_Texture2D matrix is not proven for this projection-generation path")')
+          p.write_text(s)
+
+          p=Path('scripts/blender_apply_bz2_asset_uvs.py')
+          s=p.read_text()
+          old='''                can_generate_missing_projection = (\n                    not source_uv_usable\n                    and projection_uv.projection_type_name(code) is not None\n                    and projection_uv.matrix_srt_is_identity(layer)\n                )\n'''
+          new='''                can_generate_missing_projection = (\n                    not source_uv_usable\n                    and projection_uv.projection_type_name(code) is not None\n                    and (\n                        projection_uv.matrix_srt_is_identity(layer)\n                        or projection_uv.projection_rotation_supported(layer)\n                    )\n                )\n'''
+          if old not in s:
+              raise SystemExit('code401 generation policy anchor not found')
+          s=s.replace(old,new)
+          p.write_text(s)
+
+          p=Path('tests/test_code400_projection_transform.py')
+          s=p.read_text()
+          old='''    def test_nonidentity_code401_remains_deferred(self):\n        p={"relation_code":401,"projection_or_mapping_code_candidate":2,\n           "si_texture2d_matrix_rotation_xyz_radians":[0,0.5,0],\n           "si_texture2d_matrix_scale_xyz":[1,1,1],\n           "si_texture2d_matrix_translation_xyz":[0,0,0]}\n        self.assertFalse(uv.code400_rotation_supported(p))\n        with self.assertRaises(ValueError):\n            uv.project_polygon([(0,0,0)],((-1,-1,-1),(1,1,1)),p)\n'''
+          new='''    def test_rotation_only_code401_can_generate_missing_projection(self):\n        p={"relation_code":401,"projection_or_mapping_code_candidate":2,\n           "si_texture2d_matrix_rotation_xyz_radians":[0,0.5,0],\n           "si_texture2d_matrix_scale_xyz":[1,1,1],\n           "si_texture2d_matrix_translation_xyz":[0,0,0]}\n        self.assertFalse(uv.code400_rotation_supported(p))\n        self.assertTrue(uv.projection_rotation_supported(p))\n        prepared,bounds=uv.prepare_projection_points([(0,0,0),(1,0,1)],p)\n        self.assertEqual(len(prepared),2)\n        self.assertEqual(len(uv.project_prepared_polygon(prepared,bounds,p)),2)\n'''
+          if old not in s:
+              raise SystemExit('code401 projection regression anchor not found')
+          s=s.replace(old,new)
+          p.write_text(s)
+          PY
+      - name: Test
+        run: |
+          python -m compileall -q scripts tests
+          python -m unittest discover -s tests -p 'test_*.py' -v
+          python scripts/bz2_projection_uv.py
+      - name: Commit tested patch and remove workflow
+        run: |
+          rm .github/workflows/promote-code401-generated-rotation.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add scripts/bz2_projection_uv.py scripts/blender_apply_bz2_asset_uvs.py tests/test_code400_projection_transform.py .github/workflows/promote-code401-generated-rotation.yml
+          git commit -m 'Use TXMP rotation for generated code-401 projections'
+          git push origin HEAD:agent/full-extraction-pipeline-v1
