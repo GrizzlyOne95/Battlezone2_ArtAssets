@@ -1,0 +1,48 @@
+{
+  "schema": "bz2-texture-relation-matrix-research-v1",
+  "date": "2026-08-17",
+  "status": "research_in_progress",
+  "source": {
+    "archive": "bz2_art.7z",
+    "size_bytes": 515756693,
+    "sha256": "d5afa754837b1a3d1217f558d1e3d110d951c0e753e6fafb15d7726e3eff96bd",
+    "primary_scene_count": 1139
+  },
+  "primary_scene_relation_census": {
+    "code401_edge_count": 9985,
+    "code401_edges_with_meaningful_nonidentity_plus90_matrix": 1884,
+    "code400_edges_with_meaningful_nonidentity_plus90_matrix": 54,
+    "interpretation": "The earlier historical/reference-scene counts materially underrepresented production use. Both relation code 400 and code 401 carry real non-identity +90 transform state in primary assets, so an identity-only application policy defers authored projection behavior. Edge counts are not yet deduplicated to unique TXMP records in this research checkpoint."
+  },
+  "ascii_source_evidence": {
+    "path": "ISDF_vehicles/PICTURES/ivstas00.xsi",
+    "format": "ASCII dotXSI",
+    "si_texture2d_block_count": 11,
+    "ivstas00_pic_blocks_with_y_pi_matrix_count": 2,
+    "observed_matrix": [
+      [-1.0, 0.0, 0.0, 0.0],
+      [0.0, 1.0, 0.0, 0.0],
+      [0.0, 0.0, -1.0, 0.0],
+      [0.0, 0.0, 0.0, 1.0]
+    ],
+    "provisional_reading": "The two matching ivstas00.pic texture blocks encode a Y-axis rotation of pi, producing diag(-1,1,-1,1). This source-era ASCII representation is being used to resolve the binary TXMP +2/+4/+6/+90 field correspondence, Euler/matrix order, and direct-versus-inverse application convention.",
+    "binary_counterpart_status": "not_yet_matched",
+    "note": "The corresponding binary TXMP is not located under a STASIS-named path, so matching must use picture source plus mesh/material context rather than filename/path assumptions."
+  },
+  "known_binary_txmp_field_state": {
+    "offset_plus2_plus4": "URepeat/VRepeat fields already decoded",
+    "offset_plus6": "UV scale/offset state already decoded",
+    "offset_plus60_to_plus66": "crop state already decoded",
+    "offset_plus86_plus88": "layer/mode words already decoded",
+    "offset_plus90": "nine floats previously identified as rotation XYZ, scale XYZ, translation XYZ; exact application/composition convention remains under active validation"
+  },
+  "next_required_proofs": [
+    "deduplicate relation-edge census to unique TXMP records and enumerate +90 transform profiles",
+    "match ASCII ivstas00.xsi SI_Texture2D blocks to binary TXMP records by picture plus material/mesh context",
+    "prove Euler rotation construction order from source/binary pairs",
+    "prove whether the stored projection-support transform is applied directly or inversely",
+    "prove code-400 and code-401 composition order where both carry non-identity state",
+    "only after those proofs change production UV/projection transform application"
+  ],
+  "production_policy": "Do not guess matrix direction, Euler order, or code-400/code-401 composition. Preserve the decoded authored state and keep unsupported non-identity cases explicit until source-paired evidence establishes the transform contract."
+}
