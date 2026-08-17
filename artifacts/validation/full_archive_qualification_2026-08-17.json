@@ -1,0 +1,110 @@
+{
+  "schema": "bz2-full-archive-qualification-v1",
+  "date": "2026-08-17",
+  "source": {
+    "archive": "bz2_art.7z",
+    "size_bytes": 515756693,
+    "extracted_modelsdirectory_files": 57546,
+    "extracted_size_approx_bytes": 1600000000
+  },
+  "discovery": {
+    "scene_count": 1180,
+    "primary_scene_count": 1139,
+    "archival_zip_scene_count": 41,
+    "non_scene_embedded_zips_ignored": [
+      "ISDF_vehicles/PICTURES/isdf.zip",
+      "wormhole_seq/RENDER_PICTURES/wormhole_renders.zip"
+    ]
+  },
+  "dsc_preflight": {
+    "parsed_ok": 1180,
+    "parsed_failed": 0,
+    "no_root_scene_count": 0,
+    "ambiguous_root_count": 0,
+    "known_source_incomplete_group": "ISDF_outro",
+    "source_incomplete_scene_count": 14,
+    "source_incomplete_root_reference_count": 100
+  },
+  "class4_srt_census": {
+    "class4_node_count": 34308,
+    "unresolved_before_archive_fixes": 3122,
+    "unresolved_after_zero_padded_tails": 1179,
+    "unresolved_after_tail_variants_5_6": 698
+  },
+  "texture_source_census": {
+    "txmp_record_count": 14486,
+    "txmp_decode_success_count": 14486,
+    "txmp_decode_failure_count": 0,
+    "missing_picture_source_reference_count": 2370,
+    "policy": "preserve missing picture paths as source-completeness warnings; do not invent or cross-bind picture bytes"
+  },
+  "reference_scenes": [
+    {
+      "selector": "Archival.zip::walker_final/SCENES/ISDF-walker_final.20-0.dsc",
+      "status": "ok",
+      "nodes": 115,
+      "meshes": 78,
+      "primitives": 116,
+      "materials": 52,
+      "images": 34
+    },
+    {
+      "selector": "Archival.zip::adconcept/SCENES/hi_res-ISDF_tank.1-0.dsc",
+      "status": "ok",
+      "nodes": 31,
+      "meshes": 18,
+      "primitives": 25,
+      "materials": 28,
+      "images": 15
+    }
+  ],
+  "stratified_reconstruction": {
+    "settings": {
+      "curve_steps": 8,
+      "surface_steps_u": 6,
+      "surface_steps_v": 6
+    },
+    "scene_count": 22,
+    "success_count": 22,
+    "failure_count": 0,
+    "source_warning_count": 26,
+    "scenes": [
+      {"selector": "ISDF_TANK/SCENES/version1-cockpit.6-0.dsc", "status": "ok", "nodes": 5, "meshes": 4, "primitives": 4, "materials": 4, "images": 5, "source_warning_count": 0},
+      {"selector": "ISDF_WALKER/SCENES/LOD_1-Walker_skel4.2-0.dsc", "status": "ok", "nodes": 94, "meshes": 26, "primitives": 26, "materials": 23, "images": 24, "source_warning_count": 0},
+      {"selector": "ISDF_SCOUT/SCENES/ATTACK-Scout_t_steer.1-0.dsc", "status": "ok", "nodes": 23, "meshes": 20, "primitives": 20, "materials": 15, "images": 16, "source_warning_count": 0},
+      {"selector": "ISDF_vehicles/SCENES/Producer-Base_Recycler_t.6-0.dsc", "status": "ok", "nodes": 16, "meshes": 15, "primitives": 15, "materials": 12, "images": 13, "source_warning_count": 0},
+      {"selector": "SCION_TITAN/SCENES/FURY-ASSAULT_TANK_skel2_t.13-0.dsc", "status": "ok", "nodes": 18, "meshes": 14, "primitives": 16, "materials": 12, "images": 3, "source_warning_count": 9},
+      {"selector": "SCION_SCOUT/SCENES/FURY-SCOUT_morph_ASR.1-0.dsc", "status": "ok", "nodes": 28, "meshes": 8, "primitives": 8, "materials": 6, "images": 2, "source_warning_count": 4},
+      {"selector": "SCION_WARRIOR/SCENES/FURY-WARRIOR_T_skel.13-0.dsc", "status": "ok", "nodes": 44, "meshes": 9, "primitives": 9, "materials": 6, "images": 7, "source_warning_count": 0},
+      {"selector": "MIRE_CREATURES/SCENES/version2-wing_skel.1-0.dsc", "status": "ok", "nodes": 17, "meshes": 3, "primitives": 3, "materials": 2, "images": 2, "source_warning_count": 0},
+      {"selector": "MIRE_BUILDINGS/SCENES/version2-mbruin06.2-0.dsc", "status": "ok", "nodes": 6, "meshes": 4, "primitives": 5, "materials": 5, "images": 5, "source_warning_count": 0},
+      {"selector": "PLUTO_BUILDINGS/SCENES/building-service_bay_2_d01.5-0.dsc", "status": "ok", "nodes": 7, "meshes": 5, "primitives": 13, "materials": 13, "images": 23, "source_warning_count": 0},
+      {"selector": "REND_BUILDINGS/SCENES/version2-RBRUIN04.1-0.dsc", "status": "ok", "nodes": 5, "meshes": 4, "primitives": 11, "materials": 11, "images": 14, "source_warning_count": 0},
+      {"selector": "Power_Ups/SCENES/spawnpoint_network-pspwn_1.1-0.dsc", "status": "ok", "nodes": 4, "meshes": 3, "primitives": 3, "materials": 3, "images": 0, "source_warning_count": 0},
+      {"selector": "misceffects/effects/SCENES/WORLD-SKY_DOME_3.3-0.dsc", "status": "ok", "nodes": 3, "meshes": 2, "primitives": 2, "materials": 3, "images": 3, "source_warning_count": 0},
+      {"selector": "Multiplayer/SCENES/loot-streetlight.7-0.dsc", "status": "ok", "nodes": 8, "meshes": 7, "primitives": 9, "materials": 7, "images": 10, "source_warning_count": 0},
+      {"selector": "shell/interface/SCENES/_HUD-hud_parts3.2-0.dsc", "status": "ok", "nodes": 12, "meshes": 10, "primitives": 10, "materials": 11, "images": 0, "source_warning_count": 0},
+      {"selector": "movieAssets/movie_terrain/SCENES/pluto-scene3_shot7_2.6-0.dsc", "status": "ok", "nodes": 31, "meshes": 24, "primitives": 55, "materials": 35, "images": 37, "source_warning_count": 0},
+      {"selector": "PLANETS/SCENES/LORES-dark.6-0.dsc", "status": "ok", "nodes": 27, "meshes": 26, "primitives": 26, "materials": 7, "images": 12, "source_warning_count": 0},
+      {"selector": "Scion_outro/SCENES/mire_dt-seq1_anim.4-0.dsc", "status": "ok", "nodes": 50, "meshes": 42, "primitives": 54, "materials": 54, "images": 50, "source_warning_count": 8},
+      {"selector": "wormhole_seq/SCENES/setup-wormhole_anim.2-0.dsc", "status": "ok", "nodes": 56, "meshes": 43, "primitives": 47, "materials": 47, "images": 47, "source_warning_count": 3},
+      {"selector": "PLUTO/SCENES/building-service_bay_2.1-0.dsc", "status": "ok", "nodes": 7, "meshes": 5, "primitives": 13, "materials": 12, "images": 21, "source_warning_count": 0},
+      {"selector": "MIRE/SCENES/foliage-small_tree.3-0.dsc", "status": "ok", "nodes": 7, "meshes": 4, "primitives": 4, "materials": 5, "images": 4, "source_warning_count": 2},
+      {"selector": "REND/SCENES/rend-SKY_DOME_3.2-0.dsc", "status": "ok", "nodes": 3, "meshes": 2, "primitives": 2, "materials": 3, "images": 4, "source_warning_count": 0}
+    ]
+  },
+  "published_fixes": [
+    {"commit": "67c77b29ab5ee19ac133c48357fa66eef2805e07", "summary": "ignore non-scene ZIPs; preserve explicitly unbound class-4 materials; decode zero-padded class-4 SRT tails"},
+    {"commit": "154a31eb19a00409116080035197d817c38bdc94", "summary": "decode additional class-4 SRT tail variants; classify absent source pictures as warnings"},
+    {"commit": "920677c5c2d48e926bbf1a80ac00923d0651a979", "summary": "use DSC code-110 hierarchy only as a unique context-specific tie-breaker for ambiguous HRC zero-run baselines"}
+  ],
+  "limits": {
+    "full_1180_scene_reconstruction_completed": false,
+    "blender_finishing_exercised": false,
+    "notes": [
+      "All 1,180 DSCs received structural/source preflight; the 22-scene stratified sample received full Python reconstruction.",
+      "The sandbox did not have Blender installed, so scene.blend finishing remains a local-user qualification step.",
+      "Do not cross-bind the 100 ISDF_outro missing root HRC references to similarly named assets from other source groups/revisions."
+    ]
+  }
+}
