@@ -1,0 +1,123 @@
+{
+  "schema": "bz2-class1-patch-census-summary-v1",
+  "date": "2026-08-17",
+  "source": {
+    "archive": "bz2_art.7z",
+    "size_bytes": 515756693,
+    "sha256": "d5afa754837b1a3d1217f558d1e3d110d951c0e753e6fafb15d7726e3eff96bd"
+  },
+  "coverage": {
+    "class1_outer_hrc_count": 29,
+    "primary_count": 2,
+    "historical_count": 27,
+    "surface_type_code_counts": {"0": 1, "2": 27, "3": 1},
+    "nonzero_tag_record_count": 0
+  },
+  "binary_layout": {
+    "header": ["u16 surface_type_code", "u16 u_count", "u16 v_count"],
+    "control_points": "u_count*v_count big-endian XYZ float32 triples",
+    "post_control_fields": [
+      {"offset": 0, "field": "u_closed", "type": "u16"},
+      {"offset": 2, "field": "v_closed", "type": "u16"},
+      {"offset": 4, "field": "u_tension", "type": "f32"},
+      {"offset": 8, "field": "v_tension", "type": "f32"},
+      {"offset": 12, "field": "u_step", "type": "u16"},
+      {"offset": 14, "field": "v_step", "type": "u16"},
+      {"offset": 16, "field": "u_curve", "type": "u16"},
+      {"offset": 18, "field": "v_curve", "type": "u16"},
+      {"offset": 20, "field": "reserved8", "type": "8 bytes"},
+      {"offset": 28, "field": "approx_type", "type": "u32"},
+      {"offset": 32, "field": "view_dep", "type": "u16"},
+      {"offset": 34, "field": "spatial", "type": "f32"},
+      {"offset": 38, "field": "curv_u", "type": "f32"},
+      {"offset": 42, "field": "curv_v", "type": "f32"},
+      {"offset": 46, "field": "rec_min", "type": "u16"},
+      {"offset": 48, "field": "rec_max", "type": "u16"},
+      {"offset": 50, "field": "recursion", "type": "u32"},
+      {"offset": 54, "field": "tagged_points", "type": "u_count*v_count u16 values"},
+      {"offset": "54 + 2*u_count*v_count", "field": "local_srt", "type": "9 big-endian f32"}
+    ],
+    "corpus_invariants": {
+      "reserved8_hex": "0000000000000000",
+      "approx_type": 1,
+      "view_dep": 0,
+      "spatial": 5.0,
+      "curv_u": 0.10000000149011612,
+      "curv_v": 45.0,
+      "rec_min": 1,
+      "rec_max": 10,
+      "recursion": 0,
+      "all_tagged_point_values_zero": true,
+      "all_29_predicted_srt_offsets_plausible": true
+    }
+  },
+  "profiles": [
+    {"count": 15, "surface_type_code": 2, "outer_subtype": 2, "u_count": 13, "v_count": 13, "u_closed": false, "v_closed": false, "u_tension": 0.0, "v_tension": 0.0, "u_step": 3, "v_step": 3, "u_curve": 1, "v_curve": 1},
+    {"count": 1, "surface_type_code": 2, "outer_subtype": 2, "u_count": 5, "v_count": 8, "u_closed": false, "v_closed": true, "u_tension": 0.0, "v_tension": 0.0, "u_step": 10, "v_step": 10, "u_curve": 1, "v_curve": 1},
+    {"count": 2, "surface_type_code": 2, "outer_subtype": 2, "u_count": 11, "v_count": 8, "u_closed": false, "v_closed": true, "u_tension": 0.0, "v_tension": 0.0, "u_step": 10, "v_step": 10, "u_curve": 1, "v_curve": 1},
+    {"count": 1, "surface_type_code": 2, "outer_subtype": 2, "u_count": 8, "v_count": 8, "u_closed": false, "v_closed": true, "u_tension": 0.0, "v_tension": 0.0, "u_step": 10, "v_step": 10, "u_curve": 1, "v_curve": 1},
+    {"count": 3, "surface_type_code": 2, "outer_subtype": 2, "u_count": 7, "v_count": 8, "u_closed": false, "v_closed": true, "u_tension": 0.0, "v_tension": 0.0, "u_step": 10, "v_step": 10, "u_curve": 1, "v_curve": 1},
+    {"count": 5, "surface_type_code": 2, "outer_subtype": 2, "u_count": 9, "v_count": 8, "u_closed": false, "v_closed": true, "u_tension": 0.0, "v_tension": 0.0, "u_step": 10, "v_step": 10, "u_curve": 1, "v_curve": 1},
+    {"count": 1, "surface_type_code": 3, "outer_subtype": 3, "u_count": 5, "v_count": 4, "u_closed": false, "v_closed": false, "u_tension": 0.5, "v_tension": 0.5, "u_step": 3, "v_step": 3, "u_curve": 1, "v_curve": 1},
+    {"count": 1, "surface_type_code": 0, "outer_subtype": 2, "u_count": 8, "v_count": 22, "u_closed": true, "v_closed": false, "u_tension": 0.0, "v_tension": 0.0, "u_step": 3, "v_step": 1, "u_curve": 1, "v_curve": 1}
+  ],
+  "primary_examples": [
+    {
+      "path": "movieAssets/movie_hires/MODELS/rr2-extru3_3.1-0.hrc",
+      "surface_type_code": 2,
+      "outer_subtype": 2,
+      "dimensions": [5, 8],
+      "closed": [false, true],
+      "tension": [0.0, 0.0],
+      "step": [10, 10],
+      "local_srt": [0.3719999, 0.3719999, 0.3719999, 0.0, -0.3099997, 0.0, 0.9194992, 0.8746692, -3.32411],
+      "cross_check": "binary local SRT matches the DSC ENVIRONMENT root SRT once SRT lines without MPRFLG are parsed"
+    },
+    {
+      "path": "movieAssets/movie_hires/MODELS/ALL_V12-sphere1.1-0.hrc",
+      "surface_type_code": 3,
+      "outer_subtype": 3,
+      "dimensions": [5, 4],
+      "closed": [false, false],
+      "tension": [0.5, 0.5],
+      "step": [3, 3],
+      "local_srt": [1.0, 1.0, 1.0, 1.4128409624, -2.4067e-7, 1.370063e-5, 2.373796e-6, 5.4533457756, 0.3514665961],
+      "cross_check": "binary local SRT matches the DSC ENVIRONMENT root SRT once SRT lines without MPRFLG are parsed"
+    }
+  ],
+  "historical_inventory": [
+    "adconcept/MODELS/tank2-grid1.1-0.hrc",
+    "adconcept/MODELS/ISDF_walker-grid1.1-0.hrc",
+    "walker_final/MODELS/walker_final-extru57.1-0.hrc",
+    "walker_final/MODELS/walker_final-extru63.1-0.hrc",
+    "walker_final/MODELS/walker_final-extru65.1-0.hrc",
+    "walker_final/MODELS/walker_final_carey-grid1.2-0.hrc",
+    "walker_final/MODELS/walker_final-extru54.1-0.hrc",
+    "walker_final/MODELS/walker_final-extru52.1-0.hrc",
+    "walker_final/MODELS/walker_final-grid1.6-0.hrc",
+    "walker_final/MODELS/walker_final-grid1.1-0.hrc",
+    "walker_final/MODELS/walker_final-grid1.3-0.hrc",
+    "walker_final/MODELS/walker_final_carey-grid1.1-0.hrc",
+    "walker_final/MODELS/walker_final-extru54_1.1-0.hrc",
+    "walker_final/MODELS/walker_final-extru56.1-0.hrc",
+    "walker_final/MODELS/walker_final-extru66.1-0.hrc",
+    "walker_final/MODELS/walker_final-revol4.1-0.hrc",
+    "walker_final/MODELS/walker_final-grid1.2-0.hrc",
+    "walker_final/MODELS/walker_final-extru52_1.1-0.hrc",
+    "walker_final/MODELS/walker_final-grid1.5-0.hrc",
+    "walker_final/MODELS/walker_final-grid1.7-0.hrc",
+    "walker_final/MODELS/walker_final-extru53.1-0.hrc",
+    "walker_final/MODELS/walker_final-grid1.4-0.hrc",
+    "walker_final/MODELS/walker_final-extru67.1-0.hrc",
+    "NewTank/NewTank/MODELS/tank2-grid1.1-0.hrc",
+    "NewTank/NewTank/MODELS/tank2-grid1.4-0.hrc",
+    "NewTank/NewTank/MODELS/tank2-grid1.3-0.hrc",
+    "NewTank/NewTank/MODELS/tank2-grid1.2-0.hrc"
+  ],
+  "interpretation_boundary": {
+    "proven": "the binary field layout, closure flags, tensions, steps, approximation fields, tags and SRT offsets above are corpus-derived and consistent across all 29 roots",
+    "not_yet_proven": "the exact numeric surface-type enum mapping and exact spline evaluator/boundary behavior",
+    "current_renderer_limitation": "production type-code-2 emission triangulates neighboring control points directly and therefore does not yet honor source closure or spline interpolation; type-code 3 remains intentionally unsupported pending evaluator validation"
+  },
+  "reproducibility": {"tool": "scripts/bz2_class1_patch_census.py"}
+}
