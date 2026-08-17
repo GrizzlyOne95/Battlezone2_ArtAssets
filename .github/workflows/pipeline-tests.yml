@@ -1,0 +1,21 @@
+name: Pipeline tests
+
+on:
+  push:
+    branches:
+      - main
+      - "agent/**"
+  pull_request:
+
+jobs:
+  python-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile Python scripts
+        run: python -m compileall -q scripts tests
+      - name: Run source-independent tests
+        run: python -m unittest discover -s tests -p "test_*.py" -v
