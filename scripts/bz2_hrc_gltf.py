@@ -33,7 +33,12 @@ except Exception:  # pragma: no cover - optional runtime dependency
 
 
 CONTOUR_SEPARATOR = 0xFFFFFFFF
-SLOT_MATERIAL_RE = re.compile(rb"\x00([\x01-\xff])\x00\x00([ -~]{1,80})\x00")
+# Qualification fix: enumerate overlapping slot signatures. A byte sequence inside
+# the final SRT float can itself resemble a short slot record and a consuming
+# regex then skips the genuine marker one byte later. Zero-width lookahead keeps
+# both candidates visible while the existing SRT plausibility checks select the
+# real 36-byte-preceding transform.
+SLOT_MATERIAL_RE = re.compile(rb"(?=\x00([\x01-\xff])\x00\x00([ -~]{1,80})\x00)")
 
 
 def _identity() -> list[list[float]]:

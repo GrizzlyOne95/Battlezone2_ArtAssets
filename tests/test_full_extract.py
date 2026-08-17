@@ -137,6 +137,11 @@ class FullExtractTests(unittest.TestCase):
             out = Path(batch["results"][0]["output_dir"])
             self.assertFalse((out / "stale.txt").exists())
             self.assertEqual(json.loads((out / "scene.render_state.json").read_text(encoding="utf-8"))["status"], "not_authored")
+            # Long corpus runs checkpoint after each processed scene so an external
+            # timeout/cancellation does not discard all batch diagnostics.
+            checkpoint = json.loads((output / "batch_reconstruction.json").read_text(encoding="utf-8"))
+            self.assertEqual(checkpoint["processed_scene_count"], 1)
+            self.assertEqual(checkpoint["success_count"], 1)
 
 
 if __name__ == "__main__":

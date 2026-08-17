@@ -327,6 +327,15 @@ def run_batch(modelsdirectory: Path, scenes: Sequence[SceneCandidate], output_ro
     output_root.mkdir(parents=True, exist_ok=True)
     results = []
     batch_started = time.time()
+
+    def snapshot() -> dict:
+        # Qualification fix: persist progress after every scene so a long corpus
+        # run remains diagnosable if interrupted by CI, sandbox limits, or user cancellation.
+        return {"schema": "bz2-full-extraction-batch-v1", "modelsdirectory": str(modelsdirectory.resolve()), "output_root": str(output_root.resolve()), "requested_scene_count": len(scenes), "processed_scene_count": len(results), "success_count": sum(r.get("status") == "ok" for r in results), "failure_count": sum(r.get("status") == "error" for r in results), "seconds": round(time.time() - batch_started, 3), "results": results}
+
+    def checkpoint() -> None:
+        (output_root / "batch_reconstruction.json").write_text(json.dumps(snapshot(), indent=2), encoding="utf-8")
+
     for i, scene in enumerate(scenes, 1):
         out = output_root / _safe_output_name(scene.selector)
         if clean_output and out.exists():
@@ -348,12 +357,14 @@ def run_batch(modelsdirectory: Path, scenes: Sequence[SceneCandidate], output_ro
             item.update({"status": "error", "error": f"{type(exc).__name__}: {exc}"})
             results.append(item)
             item["seconds"] = round(time.time() - started, 3)
+            checkpoint()
             if not keep_going:
                 break
             continue
         item["seconds"] = round(time.time() - started, 3)
         results.append(item)
-    return {"schema": "bz2-full-extraction-batch-v1", "modelsdirectory": str(modelsdirectory.resolve()), "output_root": str(output_root.resolve()), "requested_scene_count": len(scenes), "processed_scene_count": len(results), "success_count": sum(r.get("status") == "ok" for r in results), "failure_count": sum(r.get("status") == "error" for r in results), "seconds": round(time.time() - batch_started, 3), "results": results}
+        checkpoint()
+    return snapshot()
 
 
 def _parser() -> argparse.ArgumentParser:
