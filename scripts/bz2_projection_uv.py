@@ -37,6 +37,56 @@ EPSILON = 1.0e-9
 MATRIX_IDENTITY_TOLERANCE = 1.0e-5
 
 
+def _rotation_matrix_xyz(rotation):
+    rx, ry, rz = (float(v) for v in rotation)
+    cx, sx = math.cos(rx), math.sin(rx)
+    cy, sy = math.cos(ry), math.sin(ry)
+    cz, sz = math.cos(rz), math.sin(rz)
+    # Softimage default siXYZ: apply X, then Y, then Z => Rz @ Ry @ Rx.
+    return (
+        (cz*cy, cz*sy*sx - sz*cx, cz*sy*cx + sz*sx),
+        (sz*cy, sz*sy*sx + cz*cx, sz*sy*cx - cz*sx),
+        (-sy, cy*sx, cy*cx),
+    )
+
+def _transpose3(m):
+    return tuple(tuple(m[j][i] for j in range(3)) for i in range(3))
+
+def _mul3(m, p):
+    x, y, z = (float(v) for v in p[:3])
+    return tuple(m[i][0]*x + m[i][1]*y + m[i][2]*z for i in range(3))
+
+def code400_rotation_supported(projection: dict, tolerance: float = MATRIX_IDENTITY_TOLERANCE) -> bool:
+    if int(projection.get("relation_code") or 0) != 400:
+        return False
+    scale = projection.get("si_texture2d_matrix_scale_xyz") or [1.0, 1.0, 1.0]
+    translation = projection.get("si_texture2d_matrix_translation_xyz") or [0.0, 0.0, 0.0]
+    return (
+        all(abs(float(v)-1.0) <= tolerance for v in scale)
+        and all(abs(float(v)) <= tolerance for v in translation)
+    )
+
+def projection_space_point(point, projection: dict):
+    rotation = projection.get("si_texture2d_matrix_rotation_xyz_radians") or [0.0, 0.0, 0.0]
+    if all(abs(float(v)) <= MATRIX_IDENTITY_TOLERANCE for v in rotation):
+        return tuple(float(v) for v in point[:3])
+    if not code400_rotation_supported(projection):
+        raise ValueError("non-identity SI_Texture2D matrix is not proven for this binding path")
+    # The stored matrix is the projection-support pose. Inverse rotation moves
+    # model coordinates into support-local UVW space; inverse(rotation)=transpose.
+    return _mul3(_transpose3(_rotation_matrix_xyz(rotation)), point)
+
+def projection_space_bounds(bounds, projection: dict):
+    minimum, maximum = bounds
+    corners = [
+        (x, y, z)
+        for x in (minimum[0], maximum[0])
+        for y in (minimum[1], maximum[1])
+        for z in (minimum[2], maximum[2])
+    ]
+    return bounds_from_points(projection_space_point(point, projection) for point in corners)
+
+
 def projection_type_name(code: int | None) -> str | None:
     return WORKING_PROJECTION_TYPES.get(int(code)) if code is not None else None
 
@@ -183,7 +233,10 @@ def project_polygon(points: Sequence[Sequence[float]], bounds, projection: dict)
     if code not in WORKING_PROJECTION_TYPES:
         raise ValueError(f"unsupported working projection code {code}")
     if not matrix_srt_is_identity(projection):
-        raise ValueError("non-identity SI_Texture2D matrix SRT is not promoted in working projection UVs")
+        if not code400_rotation_supported(projection):
+            raise ValueError("non-identity SI_Texture2D matrix SRT is not promoted for this binding path")
+        bounds = projection_space_bounds(bounds, projection)
+        points = [projection_space_point(point, projection) for point in points]
 
     uvs = [base_projection_uv(point, bounds, code) for point in points]
     if code in {4, 5}:

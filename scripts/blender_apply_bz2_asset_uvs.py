@@ -333,8 +333,11 @@ def apply_asset_uvs(gltf_path: Path, model_sidecar_path: Path, layer_sidecar_pat
             if projection_uv.projection_type_name(code) is None:
                 deferred.append({"object": obj.name, "texture": projection.get("texture_object"), "reason": f"unsupported_projection_code_{code}"})
                 continue
-            if not projection_uv.matrix_srt_is_identity(projection):
-                deferred.append({"object": obj.name, "texture": projection.get("texture_object"), "reason": "nonidentity_matrix_srt"})
+            if (
+                not projection_uv.matrix_srt_is_identity(projection)
+                and not projection_uv.code400_rotation_supported(projection)
+            ):
+                deferred.append({"object": obj.name, "texture": projection.get("texture_object"), "reason": "unsupported_nonidentity_matrix_srt"})
                 continue
             uv_name = _safe_name(f"P{code}_{projection.get('texture_object', order)}", "BZ2")
             try:
@@ -427,7 +430,7 @@ def apply_asset_uvs(gltf_path: Path, model_sidecar_path: Path, layer_sidecar_pat
         "objects": object_records,
         "notes": [
             "Imported source UV maps are never overwritten; generated projection maps are additive named UV layers.",
-            "Model-local code-400 projections use the working 1..5 projection table only when +90 matrix SRT is identity and now apply recovered URepeat/VRepeat before +6 scale/offset/crop.",
+            "Model-local code-400 projections use the working 1..5 table; rotation-only +90 support poses are applied inversely in projection space, while unproven support scale/translation remain deferred. Recovered URepeat/VRepeat and +6 scale/offset/crop are applied afterward.",
             "Material-level unresolved matrix transforms retain source UVs but receive recovered repeat plus confirmed +6 scale/offset and crop transforms.",
             "Material-level special modes 7/8 are preserved and labeled explicitly; the existing imported UV connection remains only as provisional visualization rather than being promoted as the recovered special mapping.",
             "Model-local texture image nodes are exposed per object; base color is auto-connected only when the material had no existing base-color texture stack.",
