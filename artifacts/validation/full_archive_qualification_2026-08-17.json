@@ -1,11 +1,12 @@
 {
-  "schema": "bz2-full-archive-qualification-v1",
+  "schema": "bz2-full-archive-qualification-v2",
   "date": "2026-08-17",
   "source": {
     "archive": "bz2_art.7z",
     "size_bytes": 515756693,
+    "sha256": "d5afa754837b1a3d1217f558d1e3d110d951c0e753e6fafb15d7726e3eff96bd",
     "extracted_modelsdirectory_files": 57546,
-    "extracted_size_approx_bytes": 1600000000
+    "extracted_modelsdirectory_bytes": 1471037637
   },
   "discovery": {
     "scene_count": 1180,
@@ -19,17 +20,47 @@
   "dsc_preflight": {
     "parsed_ok": 1180,
     "parsed_failed": 0,
+    "declared_root_count": 3815,
     "no_root_scene_count": 0,
     "ambiguous_root_count": 0,
     "known_source_incomplete_group": "ISDF_outro",
     "source_incomplete_scene_count": 14,
     "source_incomplete_root_reference_count": 100
   },
+  "hierarchy_census": {
+    "unique_root_hrc_member_count": 3496,
+    "dsc_code110_unique_baseline_improvement_count": 123,
+    "mapped_parent_mismatch_count_after_fixes": 0,
+    "unresolved_hrc_parent_count_after_fixes": 0,
+    "remaining_violation_root_count": 0,
+    "rules": [
+      "choose among already-valid HRC zero-run baselines using DSC code 110 only when one alternative is a unique strict improvement",
+      "never post-hoc reparent individual HRC nodes from code 110",
+      "class-0 records participate in the model hierarchy only when subtype is zero"
+    ]
+  },
+  "class0_census": {
+    "primary_hrc_count": 7665,
+    "record_count_before_filter": 76578,
+    "class0_subtype0_count": 33769,
+    "class0_nonzero_total": 13,
+    "class0_nonzero_by_subtype": {"1": 4, "18": 4, "20": 4, "80": 1},
+    "policy": "class-0/nonzero signatures are internal/helper payload records, not transform/null model nodes"
+  },
+  "environment_srt_census": {
+    "declared_root_srt_count": 3815,
+    "previous_parser_recovered": 3376,
+    "previous_parser_missed": 439,
+    "scene_count_with_missed_root_srt": 118,
+    "missed_non_identity_count": 331,
+    "fix": "parse the first nine numeric values following SRT up to the semicolon; MPRFLG is optional trailing syntax"
+  },
   "class4_srt_census": {
     "class4_node_count": 34308,
     "unresolved_before_archive_fixes": 3122,
     "unresolved_after_zero_padded_tails": 1179,
-    "unresolved_after_tail_variants_5_6": 698
+    "unresolved_after_tail_variants_5_6": 698,
+    "overlapping_slot_anchor_regression": "a zero-width material-slot signature scan recovers serialized SRTs that a consuming regex can skip when signatures overlap inside the final float"
   },
   "texture_source_census": {
     "txmp_record_count": 14486,
@@ -37,6 +68,16 @@
     "txmp_decode_failure_count": 0,
     "missing_picture_source_reference_count": 2370,
     "policy": "preserve missing picture paths as source-completeness warnings; do not invent or cross-bind picture bytes"
+  },
+  "class1_patch_census": {
+    "record_count": 183,
+    "outer_count": 29,
+    "nested_count": 154,
+    "nested_layout_decode_failure_count": 0,
+    "surface_type_code_counts": {"0": 13, "2": 167, "3": 3},
+    "common_envelope": "header + XYZ control lattice + closure/tension/step/curve + approximation fields + u16 recursion + N tagged-point u16 flags + zero u16 tag terminator + nine-float local SRT",
+    "type3_policy": "open code-3 roots are evaluated as tensor-product uniform cubic B-splines using source U/V Step; closed code-3 remains unsupported because the corpus has no such example",
+    "type2_policy": "retain control-cage approximation until Cardinal interpolation and closed-boundary semantics are independently validated"
   },
   "reference_scenes": [
     {
@@ -46,7 +87,10 @@
       "meshes": 78,
       "primitives": 116,
       "materials": 52,
-      "images": 34
+      "images": 34,
+      "source_warning_count": 0,
+      "root_count": 7,
+      "roots_with_explicit_environment_srt_after_fix": 7
     },
     {
       "selector": "Archival.zip::adconcept/SCENES/hi_res-ISDF_tank.1-0.dsc",
@@ -55,56 +99,89 @@
       "meshes": 18,
       "primitives": 25,
       "materials": 28,
-      "images": 15
+      "images": 15,
+      "source_warning_count": 0,
+      "root_count": 6,
+      "roots_with_explicit_environment_srt_after_fix": 6
+    },
+    {
+      "selector": "movieAssets/movie_hires/SCENES/SemiFinal-RocketTank.1-0.dsc",
+      "status": "ok",
+      "nodes": 64,
+      "meshes": 20,
+      "primitives": 20,
+      "materials": 6,
+      "images": 3,
+      "qualification_role": "class-0 helper filtering and root-SRT alternate-line-form validation"
+    },
+    {
+      "selector": "movieAssets/movie_hires/SCENES/SOLDIER_S2g-ALL_V33_Skel.1-0.dsc",
+      "status": "ok",
+      "nodes": 797,
+      "meshes": 201,
+      "primitives": 201,
+      "materials": 143,
+      "images": 1,
+      "source_warning_count": 65,
+      "qualification_role": "zero-residual hierarchy plus class-1 type-3 open B-spline ROOT validation",
+      "type3_root": {
+        "model": "ALL_V12-sphere1.1-0",
+        "controls": [5, 4],
+        "step": [3, 3],
+        "samples": [7, 4],
+        "vertices": 28,
+        "triangles": 36,
+        "zero_area_triangles": 0
+      }
     }
   ],
   "stratified_reconstruction": {
-    "settings": {
-      "curve_steps": 8,
-      "surface_steps_u": 6,
-      "surface_steps_v": 6
-    },
+    "settings": {"curve_steps": 8, "surface_steps_u": 6, "surface_steps_v": 6},
     "scene_count": 22,
     "success_count": 22,
     "failure_count": 0,
     "source_warning_count": 26,
-    "scenes": [
-      {"selector": "ISDF_TANK/SCENES/version1-cockpit.6-0.dsc", "status": "ok", "nodes": 5, "meshes": 4, "primitives": 4, "materials": 4, "images": 5, "source_warning_count": 0},
-      {"selector": "ISDF_WALKER/SCENES/LOD_1-Walker_skel4.2-0.dsc", "status": "ok", "nodes": 94, "meshes": 26, "primitives": 26, "materials": 23, "images": 24, "source_warning_count": 0},
-      {"selector": "ISDF_SCOUT/SCENES/ATTACK-Scout_t_steer.1-0.dsc", "status": "ok", "nodes": 23, "meshes": 20, "primitives": 20, "materials": 15, "images": 16, "source_warning_count": 0},
-      {"selector": "ISDF_vehicles/SCENES/Producer-Base_Recycler_t.6-0.dsc", "status": "ok", "nodes": 16, "meshes": 15, "primitives": 15, "materials": 12, "images": 13, "source_warning_count": 0},
-      {"selector": "SCION_TITAN/SCENES/FURY-ASSAULT_TANK_skel2_t.13-0.dsc", "status": "ok", "nodes": 18, "meshes": 14, "primitives": 16, "materials": 12, "images": 3, "source_warning_count": 9},
-      {"selector": "SCION_SCOUT/SCENES/FURY-SCOUT_morph_ASR.1-0.dsc", "status": "ok", "nodes": 28, "meshes": 8, "primitives": 8, "materials": 6, "images": 2, "source_warning_count": 4},
-      {"selector": "SCION_WARRIOR/SCENES/FURY-WARRIOR_T_skel.13-0.dsc", "status": "ok", "nodes": 44, "meshes": 9, "primitives": 9, "materials": 6, "images": 7, "source_warning_count": 0},
-      {"selector": "MIRE_CREATURES/SCENES/version2-wing_skel.1-0.dsc", "status": "ok", "nodes": 17, "meshes": 3, "primitives": 3, "materials": 2, "images": 2, "source_warning_count": 0},
-      {"selector": "MIRE_BUILDINGS/SCENES/version2-mbruin06.2-0.dsc", "status": "ok", "nodes": 6, "meshes": 4, "primitives": 5, "materials": 5, "images": 5, "source_warning_count": 0},
-      {"selector": "PLUTO_BUILDINGS/SCENES/building-service_bay_2_d01.5-0.dsc", "status": "ok", "nodes": 7, "meshes": 5, "primitives": 13, "materials": 13, "images": 23, "source_warning_count": 0},
-      {"selector": "REND_BUILDINGS/SCENES/version2-RBRUIN04.1-0.dsc", "status": "ok", "nodes": 5, "meshes": 4, "primitives": 11, "materials": 11, "images": 14, "source_warning_count": 0},
-      {"selector": "Power_Ups/SCENES/spawnpoint_network-pspwn_1.1-0.dsc", "status": "ok", "nodes": 4, "meshes": 3, "primitives": 3, "materials": 3, "images": 0, "source_warning_count": 0},
-      {"selector": "misceffects/effects/SCENES/WORLD-SKY_DOME_3.3-0.dsc", "status": "ok", "nodes": 3, "meshes": 2, "primitives": 2, "materials": 3, "images": 3, "source_warning_count": 0},
-      {"selector": "Multiplayer/SCENES/loot-streetlight.7-0.dsc", "status": "ok", "nodes": 8, "meshes": 7, "primitives": 9, "materials": 7, "images": 10, "source_warning_count": 0},
-      {"selector": "shell/interface/SCENES/_HUD-hud_parts3.2-0.dsc", "status": "ok", "nodes": 12, "meshes": 10, "primitives": 10, "materials": 11, "images": 0, "source_warning_count": 0},
-      {"selector": "movieAssets/movie_terrain/SCENES/pluto-scene3_shot7_2.6-0.dsc", "status": "ok", "nodes": 31, "meshes": 24, "primitives": 55, "materials": 35, "images": 37, "source_warning_count": 0},
-      {"selector": "PLANETS/SCENES/LORES-dark.6-0.dsc", "status": "ok", "nodes": 27, "meshes": 26, "primitives": 26, "materials": 7, "images": 12, "source_warning_count": 0},
-      {"selector": "Scion_outro/SCENES/mire_dt-seq1_anim.4-0.dsc", "status": "ok", "nodes": 50, "meshes": 42, "primitives": 54, "materials": 54, "images": 50, "source_warning_count": 8},
-      {"selector": "wormhole_seq/SCENES/setup-wormhole_anim.2-0.dsc", "status": "ok", "nodes": 56, "meshes": 43, "primitives": 47, "materials": 47, "images": 47, "source_warning_count": 3},
-      {"selector": "PLUTO/SCENES/building-service_bay_2.1-0.dsc", "status": "ok", "nodes": 7, "meshes": 5, "primitives": 13, "materials": 12, "images": 21, "source_warning_count": 0},
-      {"selector": "MIRE/SCENES/foliage-small_tree.3-0.dsc", "status": "ok", "nodes": 7, "meshes": 4, "primitives": 4, "materials": 5, "images": 4, "source_warning_count": 2},
-      {"selector": "REND/SCENES/rend-SKY_DOME_3.2-0.dsc", "status": "ok", "nodes": 3, "meshes": 2, "primitives": 2, "materials": 3, "images": 4, "source_warning_count": 0}
+    "coverage": [
+      "ISDF vehicles", "Scion vehicles", "creatures", "Mire/Pluto/Rend buildings", "power-ups",
+      "multiplayer props", "HUD/interface", "planet assets", "movie terrain", "outro cinematic",
+      "wormhole sequence", "foliage", "sky domes"
     ]
   },
-  "published_fixes": [
-    {"commit": "67c77b29ab5ee19ac133c48357fa66eef2805e07", "summary": "ignore non-scene ZIPs; preserve explicitly unbound class-4 materials; decode zero-padded class-4 SRT tails"},
-    {"commit": "154a31eb19a00409116080035197d817c38bdc94", "summary": "decode additional class-4 SRT tail variants; classify absent source pictures as warnings"},
-    {"commit": "920677c5c2d48e926bbf1a80ac00923d0651a979", "summary": "use DSC code-110 hierarchy only as a unique context-specific tie-breaker for ambiguous HRC zero-run baselines"}
+  "orchestration_qualification": {
+    "rolling_batch_checkpoint": true,
+    "checkpoint_behavior": "batch_reconstruction.json is written after each processed scene, including failures",
+    "clean_per_scene_output_default": true,
+    "historical_zip_source_isolation": true,
+    "non_scene_zip_classification": true,
+    "render_state_placeholder_for_unresolved_setup_soft": true
+  },
+  "durable_evidence": [
+    "artifacts/validation/hierarchy_baseline_census_2026-08-17.json",
+    "artifacts/validation/class0_subtype_census_2026-08-17.json",
+    "artifacts/validation/environment_srt_census_2026-08-17.json",
+    "artifacts/validation/class1_patch_census_2026-08-17.json",
+    "artifacts/validation/class1_bspline_root_validation_2026-08-17.json",
+    "docs/archive-qualification-research-log-2026-08-17.md",
+    "scripts/bz2_hierarchy_census.py",
+    "scripts/bz2_class1_patch_census.py"
   ],
+  "ci": {
+    "production_source_commit": "93b16cd68e2083c2ebe1295dd0ef5da5705b013d",
+    "pipeline_run_id": 32046612973,
+    "python_test_count": 21,
+    "python_test_failures": 0,
+    "runtime_artifact_id": 9293108804,
+    "runtime_artifact_sha256": "d9dc32f1a6f5e268b6a407b42513dc24d3f3ad3bede3ae600151e29d9ed89727"
+  },
   "limits": {
     "full_1180_scene_reconstruction_completed": false,
     "blender_finishing_exercised": false,
+    "remaining_class4_unresolved_srt_count": 698,
     "notes": [
-      "All 1,180 DSCs received structural/source preflight; the 22-scene stratified sample received full Python reconstruction.",
-      "The sandbox did not have Blender installed, so scene.blend finishing remains a local-user qualification step.",
-      "Do not cross-bind the 100 ISDF_outro missing root HRC references to similarly named assets from other source groups/revisions."
+      "Every DSC received structural/source preflight and every declared root participated in hierarchy/SRT census work; full glTF reconstruction was exercised on exact references, a 22-scene cross-family set, and additional blocker-focused movie scenes.",
+      "Blender was unavailable in the qualification sandbox, so scene.blend finishing remains a local-user release check.",
+      "Do not cross-bind the 100 ISDF_outro missing root HRC references to similarly named assets from other source groups/revisions.",
+      "Class-1 type 2 remains an explicitly documented control-cage approximation pending exact Cardinal/closure validation."
     ]
   }
 }
