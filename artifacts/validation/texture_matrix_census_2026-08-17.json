@@ -1,0 +1,55 @@
+{
+  "schema": "bz2-texture-matrix-census-v1",
+  "date": "2026-08-17",
+  "source": {
+    "archive": "bz2_art.7z",
+    "sha256": "d5afa754837b1a3d1217f558d1e3d110d951c0e753e6fafb15d7726e3eff96bd",
+    "primary_scene_count": 1139,
+    "txmp_record_count": 14486
+  },
+  "relation_code_400": {
+    "edge_count": 283,
+    "unresolved_edge_count": 0,
+    "projection_code_counts": {"1":18,"2":11,"3":5,"4":172,"5":9,"6":65,"8":3},
+    "matrix_identity_counts": {"identity":229,"nonidentity":54},
+    "matrix_by_projection_code": {
+      "1":{"identity":17,"nonidentity":1},
+      "2":{"identity":9,"nonidentity":2},
+      "3":{"identity":3,"nonidentity":2},
+      "4":{"identity":130,"nonidentity":42},
+      "5":{"identity":2,"nonidentity":7},
+      "6":{"identity":65},
+      "8":{"identity":3}
+    }
+  },
+  "relation_code_401": {
+    "edge_count": 9985,
+    "unresolved_edge_count": 0,
+    "projection_code_counts": {"1":318,"2":1487,"3":343,"4":7425,"5":160,"6":154,"7":93,"8":5},
+    "matrix_identity_counts": {"identity":8101,"nonidentity":1884},
+    "matrix_by_projection_code": {
+      "1":{"identity":232,"nonidentity":86},
+      "2":{"identity":1212,"nonidentity":275},
+      "3":{"identity":264,"nonidentity":79},
+      "4":{"identity":6062,"nonidentity":1363},
+      "5":{"identity":152,"nonidentity":8},
+      "6":{"identity":82,"nonidentity":72},
+      "7":{"identity":93},
+      "8":{"identity":4,"nonidentity":1}
+    }
+  },
+  "ascii_source_evidence": {
+    "file": "ISDF_vehicles/PICTURES/ivstas00.xsi",
+    "si_texture2d_block_count": 11,
+    "ivstas00_picture_block_count": 10,
+    "ivstas00_identity_matrix_block_count": 8,
+    "ivstas00_nonidentity_matrix_block_count": 2,
+    "nonidentity_matrix": "diag(-1,1,-1,1)",
+    "interpretation_status": "Field ordering/matrix presence is directly corroborated by source-era ASCII SI_Texture2D. Binary counterpart matching, direct-vs-inverse application, Euler order, and code-400/code-401 composition remain unresolved."
+  },
+  "production_boundary": [
+    "Do not apply non-identity +90 matrices to UV/projection output until direct-vs-inverse convention and code-400/code-401 composition order are proven.",
+    "Primary corpus materially exceeds the earlier historical-subset census: code-401 has 1,884 non-identity edges and code-400 has 54.",
+    "ASCII dotXSI source evidence takes precedence over documentation-only inference when matching binary fields."
+  ]
+}
