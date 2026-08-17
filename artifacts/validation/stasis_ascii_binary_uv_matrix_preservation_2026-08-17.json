@@ -1,0 +1,48 @@
+{
+  "schema": "bz2-stasis-ascii-binary-uv-matrix-preservation-v1",
+  "date": "2026-08-17",
+  "source": {
+    "archive": "bz2_art.7z",
+    "sha256": "d5afa754837b1a3d1217f558d1e3d110d951c0e753e6fafb15d7726e3eff96bd",
+    "ascii_xsi": "ISDF_vehicles/PICTURES/ivstas00.xsi"
+  },
+  "comparison": [
+    {
+      "mesh": "rlink",
+      "ascii_uv_corner_count": 32,
+      "binary_hrc_variants_checked": [
+        "ISDF_vehicles/MODELS/Stasis_Truck_t-MAIN_BODY.4-0.hrc",
+        "ISDF_vehicles/MODELS/Stasis_Truck_t-MAIN_BODY.5-0.hrc",
+        "ISDF_vehicles/MODELS/Stasis_Truck_t-main_body.1-0.hrc"
+      ],
+      "binary_uv_corner_count_each": 32,
+      "max_abs_ascii_vs_binary_uv_error": 0.00000044582939146,
+      "ascii_si_texture2d_matrix": "diag(-1,1,-1,1) / pi-Y rotation"
+    },
+    {
+      "mesh": "rnacelle",
+      "ascii_uv_corner_count": 40,
+      "binary_hrc_variants_checked": [
+        "ISDF_vehicles/MODELS/Stasis_Truck_t-MAIN_BODY.4-0.hrc",
+        "ISDF_vehicles/MODELS/Stasis_Truck_t-MAIN_BODY.5-0.hrc",
+        "ISDF_vehicles/MODELS/Stasis_Truck_t-main_body.1-0.hrc"
+      ],
+      "binary_uv_corner_count_each": 40,
+      "max_abs_ascii_vs_binary_uv_error": 0.00000047167205808,
+      "ascii_si_texture2d_matrix": "diag(-1,1,-1,1) / pi-Y rotation"
+    }
+  ],
+  "binary_txmp_family": {
+    "picture": "ivstas00",
+    "nonidentity_records": ["Stasis_Truck_t-t2d2", "Stasis_Truck_t-t2d3", "Stasis_Truck_t-t2d9", "Stasis_Truck_t-t2d10"],
+    "matrix_state": "unit scale, zero translation, +/-pi Y rotation across two source revisions",
+    "mapping_note": "The absent matching old DSC prevents a unique t2d-number-to-mesh assignment, but the transformed ASCII mesh family, matching HRC geometry/UVs and old TXMP pi-Y family are from the same Stasis source lineage."
+  },
+  "conclusion": "The Softimage-to-binary conversion preserves the source SI_MeshTextureCoords in HRC essentially verbatim while retaining non-identity SI_Texture2D transform state separately in TXMP. The live texture matrix is therefore not baked into the binary HRC polygon UVs and must remain an additional reconstruction/runtime texture effect.",
+  "production_implications": [
+    "Do not discard non-identity TXMP state merely because a class-4 HRC contains nonzero TEXCOORD_0.",
+    "For code401/nonzero-UV paths, HRC UVs are a valid pre-effect/current-UV source candidate; live SI_Texture2D effects remain separately required.",
+    "For code401/all-zero HRC UV paths, the live projection generator itself must be reconstructed before those texture effects can be applied.",
+    "The pi-Y example is self-inverse and cannot alone establish the general 3D UVW matrix direction; code400 face39 supplies the asymmetric object-to-projection direction oracle for model-local projection generation."
+  ]
+}
