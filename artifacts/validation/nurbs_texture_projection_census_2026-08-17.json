@@ -1,0 +1,24 @@
+{
+  "schema": "bz2-nurbs-texture-projection-census-v1",
+  "date": "2026-08-17",
+  "source": {
+    "archive": "bz2_art.7z",
+    "sha256": "d5afa754837b1a3d1217f558d1e3d110d951c0e753e6fafb15d7726e3eff96bd"
+  },
+  "class10_attachment_projection_codes": {
+    "relation400": {"1":11,"2":1,"3":1,"4":132,"5":0,"6":5,"8":3},
+    "relation401": {"1":9,"2":66,"3":5,"4":60,"5":58,"6":63}
+  },
+  "ordinary_modes_1_through_5": {
+    "relation400_count": 145,
+    "relation401_count": 198,
+    "status": "The existing tessellated class-10 mesh geometry is sufficient to generate the recovered planar/spherical/cylindrical projections for these bindings."
+  },
+  "important_provenance_rule": "bz2_hrc_gltf_parametric.py emits TEXCOORD_0 with mesh.extras.uv_source='normalized_parameter_space'. That layer is a reconstruction aid for the NURBS surface parameter domain, not recovered source texture-projection data. It must not be treated as authored Material.CurrentUV merely because it is nonzero.",
+  "production_policy": [
+    "For tessellated NURBS meshes whose glTF mesh extras report uv_source=normalized_parameter_space, code401 modes1..5 should generate the texture projection from tessellated geometry rather than preserve the placeholder TEXCOORD_0.",
+    "Model-local code400 modes1..5 already operate on tessellated geometry through the common Blender projection stage.",
+    "Code6 and code8 remain outside the ordinary 1..5 generator and require their own projection semantics.",
+    "The sole non-unit TXMP matrix scale in the archive is relation400 code1 on a class10/NURBS model and remains deferred until scale direction is independently proven."
+  ]
+}
