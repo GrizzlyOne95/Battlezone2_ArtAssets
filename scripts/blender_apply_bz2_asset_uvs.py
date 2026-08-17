@@ -352,8 +352,8 @@ def apply_asset_uvs(gltf_path: Path, model_sidecar_path: Path, layer_sidecar_pat
             generated += 1
             object_generated.append({"texture": projection.get("texture_object"), **uv_result})
 
-        # Rewire material-level texture layers. Supported identity-matrix
-        # projections get dedicated generated UV maps. Special modes 7/8 are
+        # Rewire material-level texture layers. Authored nonzero CurrentUV
+        # is preserved; fitted UV generation is reserved for missing/all-zero source UVs. Special modes 7/8 are
         # explicitly preserved as special material mappings instead of being
         # mislabeled as geometric UV projections. Other unresolved transforms
         # retain confirmed repeat/+6/crop on the source-UV fallback path.
@@ -385,11 +385,30 @@ def apply_asset_uvs(gltf_path: Path, model_sidecar_path: Path, layer_sidecar_pat
                         }
                     )
                     continue
-                safe_projection = (
-                    projection_uv.projection_type_name(code) is not None
+                source_uv_usable = (
+                    source_uv.get("uv_map_count", 0) > 0
+                    and source_uv.get("active_uv_all_zero") is False
+                )
+                can_generate_missing_projection = (
+                    not source_uv_usable
+                    and projection_uv.projection_type_name(code) is not None
                     and projection_uv.matrix_srt_is_identity(layer)
                 )
-                if safe_projection:
+                if source_uv_usable:
+                    # Archive qualification: 6,230 mapped class-4 code401 models
+                    # carry nonzero authored HRC UVs, and regenerating them from
+                    # fitted geometry diverges materially for most source assets.
+                    # Preserve CurrentUV and layer only proven live image effects.
+                    _link_source_uv_transform(material, tex_node, layer, texture_object)
+                    source_uv_fallbacks += 1
+                    if not projection_uv.matrix_srt_is_identity(layer):
+                        deferred.append({
+                            "object": obj.name,
+                            "texture": texture_object,
+                            "reason": "nonidentity_code401_live_uvw_transform",
+                            "fallback": "authored_source_uv_plus_confirmed_repeat_image_transform",
+                        })
+                elif can_generate_missing_projection:
                     uv_name = _safe_name(f"P{code}_{texture_object}", "BZ2")
                     try:
                         _generate_uv_map(obj, layer, uv_name)
@@ -402,7 +421,7 @@ def apply_asset_uvs(gltf_path: Path, model_sidecar_path: Path, layer_sidecar_pat
                     _link_source_uv_transform(material, tex_node, layer, texture_object)
                     source_uv_fallbacks += 1
                     reason = (
-                        "nonidentity_matrix_srt"
+                        "nonidentity_matrix_srt_without_usable_source_uv"
                         if not projection_uv.matrix_srt_is_identity(layer)
                         else f"unsupported_projection_code_{code}"
                     )
