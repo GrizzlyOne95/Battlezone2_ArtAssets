@@ -1,0 +1,36 @@
+name: Persist local qualification fixes
+
+on:
+  push:
+    branches: [agent/full-extraction-pipeline-v1]
+    paths: [.github/workflows/persist-local-qualification.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  persist:
+    if: github.event.head_commit.message == 'Run local qualification persistence patch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: agent/full-extraction-pipeline-v1
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Apply proven archive-backed changes
+        run: python scripts/_persist_local_qualification.py
+      - name: Verify Python and regression suite
+        run: |
+          python -m compileall -q scripts tests
+          python -m unittest discover -s tests -p 'test_*.py' -v
+      - name: Commit persistent changes and remove staging helpers
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/persist-local-qualification.yml scripts/_persist_local_qualification.py
+          git add scripts/bz2_hrc_gltf.py scripts/bz2_full_extract.py tests/test_full_extract.py tests/test_hrc_gltf.py scripts/bz2_hierarchy_census.py
+          git commit -m 'Persist archive-backed qualification fixes'
+          git push origin HEAD:agent/full-extraction-pipeline-v1
