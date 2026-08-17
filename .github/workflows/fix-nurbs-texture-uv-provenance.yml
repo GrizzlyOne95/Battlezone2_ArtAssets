@@ -1,0 +1,54 @@
+name: Fix NURBS texture UV provenance
+on:
+  push:
+    branches: [agent/full-extraction-pipeline-v1]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: agent/full-extraction-pipeline-v1
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Patch current Blender fidelity source
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('scripts/blender_apply_bz2_asset_uvs.py')
+          s=p.read_text()
+          old='''        source_uv = _existing_source_uv_status(obj)\n        projections = [dict(item) for item in record.get("local_texture_projections") or []]\n'''
+          new='''        source_uv = _existing_source_uv_status(obj)\n        gltf_mesh = (\n            gltf.get("meshes", [])[int(node["mesh"])]\n            if isinstance(node.get("mesh"), int) and 0 <= int(node["mesh"]) < len(gltf.get("meshes", []))\n            else {}\n        )\n        mesh_uv_provenance = str((gltf_mesh.get("extras") or {}).get("uv_source") or "")\n        source_uv_is_parametric_placeholder = mesh_uv_provenance == "normalized_parameter_space"\n        projections = [dict(item) for item in record.get("local_texture_projections") or []]\n'''
+          if old not in s:
+              raise SystemExit('node source UV anchor not found')
+          s=s.replace(old,new)
+          old='''                source_uv_usable = (\n                    source_uv.get("uv_map_count", 0) > 0\n                    and source_uv.get("active_uv_all_zero") is False\n                )\n'''
+          new='''                source_uv_usable = (\n                    source_uv.get("uv_map_count", 0) > 0\n                    and source_uv.get("active_uv_all_zero") is False\n                    and not source_uv_is_parametric_placeholder\n                )\n'''
+          if old not in s:
+              raise SystemExit('source_uv_usable anchor not found')
+          s=s.replace(old,new)
+          old='''            "source_uv": source_uv,\n            "generated_model_uvs": object_generated,\n'''
+          new='''            "source_uv": source_uv,\n            "mesh_uv_provenance": mesh_uv_provenance or None,\n            "source_uv_is_parametric_placeholder": source_uv_is_parametric_placeholder,\n            "generated_model_uvs": object_generated,\n'''
+          if old not in s:
+              raise SystemExit('object record anchor not found')
+          s=s.replace(old,new)
+          p.write_text(s)
+          Path('tests/test_nurbs_texture_uv_provenance_policy.py').write_text('''from __future__ import annotations\nimport unittest\n\nclass NurbsTextureUvProvenancePolicyTests(unittest.TestCase):\n    def test_normalized_parameter_space_is_not_authored_current_uv(self):\n        def usable(count, all_zero, provenance):\n            return count > 0 and all_zero is False and provenance != "normalized_parameter_space"\n        self.assertFalse(usable(1, False, "normalized_parameter_space"))\n        self.assertTrue(usable(1, False, "source_polygon_uv"))\n        self.assertFalse(usable(1, True, "source_polygon_uv"))\n\nif __name__=='__main__': unittest.main()\n''')
+          PY
+      - name: Test
+        run: |
+          python -m compileall -q scripts tests
+          python -m unittest discover -s tests -p 'test_*.py' -v
+      - name: Commit tested patch and remove workflow
+        run: |
+          rm .github/workflows/fix-nurbs-texture-uv-provenance.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add scripts/blender_apply_bz2_asset_uvs.py tests/test_nurbs_texture_uv_provenance_policy.py .github/workflows/fix-nurbs-texture-uv-provenance.yml
+          git commit -m 'Respect NURBS texture UV provenance'
+          git push origin HEAD:agent/full-extraction-pipeline-v1
