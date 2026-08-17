@@ -2,7 +2,12 @@
 
 Source: supplied `bz2_art.7z`, SHA-256 `d5afa754837b1a3d1217f558d1e3d110d951c0e753e6fafb15d7726e3eff96bd`.
 
-Reproducible census: `scripts/bz2_txmp_corpus_census.py` and `artifacts/validation/texture_matrix_census_2026-08-17.json`.
+Reproducible evidence:
+
+- `scripts/bz2_txmp_corpus_census.py`
+- `scripts/bz2_ascii_xsi_texture_matrix_probe.py`
+- `artifacts/validation/texture_matrix_census_2026-08-17.json`
+- `artifacts/validation/ascii_xsi_texture_matrix_evidence_2026-08-17.json`
 
 ## Primary-corpus facts
 
@@ -16,32 +21,83 @@ These primary-corpus counts supersede the earlier historical-subset estimate of 
 
 ## ASCII source evidence
 
-`ISDF_vehicles/PICTURES/ivstas00.xsi` contains 11 source-era `SI_Texture2D` blocks. Ten reference `ivstas00.pic`; eight have the identity 4x4 matrix and two have exactly `diag(-1, 1, -1, 1)`.
+The extracted archive contains only one ASCII XSI file with `SI_Texture2D` blocks: `ISDF_vehicles/PICTURES/ivstas00.xsi`. The reusable probe finds 11 blocks. Ten reference `ivstas00.pic`; nine of the 11 total matrices are identity and exactly two are non-identity:
 
-This directly confirms that source-era `SI_Texture2D` objects store authored non-identity 4x4 transform state alongside the texture/projection fields.
+- `Frame frm-rlink` / `Mesh rlink`, source line 3513;
+- `Frame frm-rnacelle` / `Mesh rnacelle`, source line 3691.
 
-## Stasis Truck ASCII/binary correspondence
+Both serialize exactly:
 
-The primary binary source contains **59 TXMP records** referencing the same `ivstas00` picture family. Eight are non-identity and all are projection code 4 with unit XYZ scale and zero XYZ translation:
+```text
+-1  0  0  0
+ 0  1  0  0
+ 0  0 -1  0
+ 0  0  0  1
+```
+
+which is `diag(-1, 1, -1, 1)`, the ordinary 4x4 matrix for a 180-degree Y-axis rotation.
+
+This directly confirms that source-era `SI_Texture2D` objects carry authored 4x4 transform state alongside texture/projection fields. `ivstas00.xsi` also contains explicit `SI_MeshTextureCoords`, which gives a future geometry/UV comparison route even though the only non-identity source matrix is self-inverse.
+
+## Old binary Stasis Truck correspondence
+
+The old binary source family under `ISDF_vehicles` contains TXMP records pointing to the same `ivstas00` picture path. Eight are non-identity, all projection code 4, unit scale and zero translation:
 
 - `Stasis_Truck_t-t2d2` revisions 1/2: Y rotation approximately `-pi`;
 - `Stasis_Truck_t-t2d3` revisions 1/2: Y rotation approximately `-pi`;
 - `Stasis_Truck_t-t2d9` revisions 1/2: Y rotation approximately `+pi`;
 - `Stasis_Truck_t-t2d10` revisions 1/2: Y rotation approximately `+pi`.
 
-The ASCII matrix `diag(-1,1,-1,1)` is exactly the conventional 4x4 rotation matrix produced by a 180-degree Y-axis rotation. The ASCII and binary records therefore independently corroborate the same authored transform family and substantially strengthen the interpretation of the binary +90 rotation/scale/translation block as real `SI_Texture2D` transform state.
+The ASCII `diag(-1,1,-1,1)` matrices and binary `+/-pi` Y rotations therefore independently describe the same authored transform family. This substantially strengthens the interpretation of TXMP +90 as compact `SI_Texture2D` rotation/scale/translation state.
 
-This still does **not** establish which specific ASCII texture block corresponds to which binary `t2dN` member, nor how Softimage applies the stored transform to generated texture coordinates.
+The matching old DSC revision is not present, so an exact old `t2dN` member -> ASCII `rlink`/`rnacelle` assignment is not currently provable from relation numbering alone.
 
-## Still unresolved
+## Stasis revision split
 
-Do not apply the non-identity binary matrices to reconstructed UV/projection output until these are proven from an ASCII/binary context match:
+Do **not** use the later dedicated Stasis Truck scene to assign the old transformed TXMP object numbers.
 
-- exact ASCII block-to-binary TXMP member mapping;
-- direct versus inverse matrix application;
-- row-vector versus column-vector convention;
-- Euler rotation construction order for general XYZ rotations;
-- code-400 versus code-401 composition order;
+`ISDF_STASISTRUCK/SCENES/version2-Stasis_Truck_t.2-0.dsc` does contain model relations for the same named parts (`rlink`, `rnacelle`, `llink`, `lnacelle`), but all 11 TXMP texture matrices in that later/dedicated revision are identity. Its relation numbering is therefore evidence for a different source revision and must not be projected backward onto the old `ISDF_vehicles` t2d2/t2d3/t2d9/t2d10 objects.
+
+## Evidence from `GrizzlyOne95/io_scene_bz2xsi`
+
+The Blender XSI add-on is useful for the **general XSI matrix storage convention**, but not as a texture-transform implementation.
+
+Its import bridge converts XSI matrices with:
+
+```python
+Matrix(xsi_matrix.to_list()).transposed()
+```
+
+and its exporter performs the inverse bridge by storing Blender's local matrix after `.transposed()`. Therefore legacy XSI matrix rows are transposed relative to Blender `mathutils.Matrix` convention. Any future TXMP-to-Blender projection transform must respect this orientation boundary.
+
+However, the add-on's `SI_Texture2D` material reader reads only the texture filename and then intentionally skips the rest of the block. Repository history was checked back to initial upload commit `7ffc09910a35065219714314ca9a8531b70590c3`; the initial parser already has the same filename-only behavior. There is no older hidden texture-matrix application algorithm to recover from this repository.
+
+Consequently the add-on establishes a **matrix-orientation constraint**, not direct/inverse texture-transform semantics or code-400/code-401 composition order.
+
+## Current evidence boundary
+
+The following are now well supported:
+
+- TXMP +90 is real authored texture-matrix S/R/T state, not padding;
+- rotation values are radians;
+- the old Stasis binary +/-pi-Y family corresponds to source-era ASCII 180-degree Y matrices;
+- XSI matrix storage must be transposed when bridged to Blender's matrix convention;
+- later Stasis t2d numbering cannot be used to infer old-revision transformed-object ownership.
+
+The following remain unresolved and must **not** be guessed into production UVs:
+
+- exact old-revision t2d object -> `ivstas00.xsi` mesh/material mapping;
+- direct versus inverse texture-matrix application;
+- general Euler construction order for asymmetric XYZ rotations;
+- whether the +90 matrix transforms projection-support/object coordinates before projection or acts after projection in another space;
+- code-400 versus code-401 composition order when both are present;
 - behavior for special projection modes 7/8.
 
-The next target is to identify one texture block uniquely by picture + enclosing frame/mesh/material context in both ASCII and binary forms, then use that pair to determine transform direction and composition without guessing.
+## Next falsification target
+
+There is no second asymmetric ASCII `SI_Texture2D` example in the supplied archive. The next evidence route is therefore corpus-driven:
+
+1. find binary TXMP records with asymmetric non-identity +90 state (non-pi rotation and/or non-unit scale/translation);
+2. prioritize assets with explicit source/baked UVs, mirrored left/right geometry, or otherwise independently checkable texture orientation;
+3. test direct/inverse and matrix-orientation candidates against those independent UV/symmetry constraints;
+4. only then promote non-identity matrix application into `bz2_projection_uv.py` and add regression/corpus validation.
