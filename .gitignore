@@ -3,11 +3,14 @@ __pycache__/
 
 # Raw source dump
 /modelsdirectory/
+/bz2_art.7z
+/.bz2-source-cache/
 
 # Intermediate and report outputs
 artifacts/reports/
 artifacts/tmp/
 artifacts/extracts/archives/
+artifacts/reconstructed/
 
 # Keep converted/exported assets and manifests
 !artifacts/
@@ -20,6 +23,8 @@ artifacts/extracts/archives/
 !artifacts/extracts/scene_exports/**
 !artifacts/extracts/xsi/
 !artifacts/extracts/xsi/**
+!artifacts/validation/
+!artifacts/validation/**
 
 # Drop non-OBJ export variants from the kept extract trees
 artifacts/extracts/**/*.gltf
