@@ -1,5 +1,5 @@
 {
-  "schema": "bz2-softimage-texture-transform-contract-v1",
+  "schema": "bz2-softimage-texture-transform-contract-v2",
   "date": "2026-08-17",
   "official_sources": [
     {
@@ -10,7 +10,7 @@
     {
       "name": "Texture.GetTransformValues",
       "url": "https://download.autodesk.com/global/docs/softimage2012/en_us/sdkguide/si_om/Texture.GetTransformValues.html",
-      "evidence": "Transformation parameter names include projtrsu/v/w, projsclu/v/w and projrotu/v/w and are part of the texture-effects calculation alongside repeat/remap/crop/wrap state."
+      "evidence": "The final UVW values are calculated from the material CurrentUV plus texture projection definition, texture shader and image clip. Transformation, wrapping, repeats, UV remap, alternate, cropping and flip are independently selectable effects."
     },
     {
       "name": "CRotation Class Reference",
@@ -25,22 +25,27 @@
   ],
   "archive_evidence": {
     "txmp_matrix_fields": "post-path +90 stores rotation XYZ in radians, scale XYZ, translation XYZ",
-    "general_xsi_blender_bridge": "io_scene_bz2xsi transposes XSI matrices when importing into Blender and transposes Blender matrices when exporting to XSI",
+    "general_xsi_blender_bridge": "io_scene_bz2xsi transposes serialized XSI Matrix rows when importing into Blender and transposes Blender matrices when exporting to XSI; this is a storage/API bridge and is distinct from the TXMP Euler-coordinate direction",
     "stasis_ascii_binary_correspondence": "ASCII diag(-1,1,-1,1) on right-side Stasis meshes corresponds to the old binary +/-pi Y rotation TXMP family",
-    "code400_face39_geometry": "inverse support rotation aligns planar-XZ local Y with the textured face normal: abs dot 0.992183 versus 0.152876 for direct application"
+    "code400_face39_geometry": "For planar XZ, applying R=Rz*Ry*Rx directly to the object-space face normal yields projection-space normal approximately (-0.1232,0.9922,0.0197); applying transpose/inverse R yields the wrong Y alignment (~0.1529)."
   },
   "production_contract_for_code400": {
     "rotation_order": "Softimage default siXYZ",
-    "column_vector_rotation_matrix": "Rz * Ry * Rx (apply X, then Y, then Z)",
-    "projection_coordinate_direction": "inverse support pose: object-local geometry is transformed by inverse projection-support rotation before base planar/spherical/cylindrical projection",
-    "matrix_storage_boundary": "transpose when bridging XSI row storage to Blender/mathutils convention",
-    "support_scale_translation": "retain but do not promote beyond evidence-covered paths; the supplied class-4 nonidentity code400 set has unit matrix scale and zero matrix translation",
+    "column_vector_rotation_matrix": "R = Rz * Ry * Rx (apply X, then Y, then Z)",
+    "projection_coordinate_direction": "serialized object-to-projection transform: q = R * p for the corpus-validated rotation-only class-4 code400 path",
+    "fitted_support_bounds": "transform the actual mesh vertices first, then derive projection-space fitted bounds; rotating pre-transform AABB corners causes base-UV errors up to 0.3189 in the 21-edge class-4 corpus",
+    "matrix_storage_boundary": "transpose only when bridging serialized full XSI Matrix rows to Blender/mathutils; do not transpose the recovered TXMP Euler transform merely because the generic XSI Matrix bridge does",
+    "support_scale_translation": "retain but do not generalize beyond evidence-covered paths; all 21 nonidentity class-4 code400 edges have unit matrix scale and zero matrix translation",
     "code400_code401_composition": "none observed in supplied primary corpus; relation paths are mutually exclusive"
   },
+  "correction_history": {
+    "previous_contract": "v1 described the transform as an inverse support pose",
+    "correction": "The face39 oracle was initially expressed as alignment of candidate support axes in object space. Recasting the same evidence as an actual coordinate transform makes the direction unambiguous: q=R*p maps the face normal to +/- projection Y; q=R^T*p does not."
+  },
   "evidence_boundary": [
-    "The inverse direction is independently supported by asymmetric class-4 geometry, not only documentation.",
-    "The full XYZ order is completed by Softimage's documented default siXYZ convention; the face39 target alone has Y=0 and therefore cannot distinguish every Euler order without that source documentation.",
-    "This contract applies to model-local relation code400 projection support. Material-level code401 remains a separate binding path and must be validated at its own application stage.",
-    "Future archives with non-default rotation-order metadata, code400/code401 overlap, or class-4 nonunit support scale/translation must be treated as new cases rather than silently generalized."
+    "The object-to-projection direction is independently supported by asymmetric class-4 geometry, not only documentation.",
+    "The full XYZ order is completed by Softimage's documented default siXYZ convention; face39 itself has Y rotation zero.",
+    "This contract applies to model-local relation code400 projection generation. Material-level code401 starts from Material.CurrentUV and must be validated as a UVW-effect path rather than assumed to regenerate geometry projection.",
+    "Future archives with non-default rotation-order metadata, code400/code401 overlap, class-4 nonunit support scale or matrix translation must be treated as new cases rather than silently generalized."
   ]
 }
