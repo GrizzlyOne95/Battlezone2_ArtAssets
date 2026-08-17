@@ -15,10 +15,12 @@ all historical Softimage enum names have been recovered authoritatively:
     4 spherical
     5 cylindrical
 
-The supplied archival relation-code-400 corpus contains 403 resolved edges and
-all of their +90 texture-matrix SRT blocks are identity. Non-identity matrix
-state is therefore rejected here rather than guessed. Material-level code-401
-layers can preserve such matrix state separately until that direction is proven.
+The full supplied primary corpus contains 283 relation-code-400 edges, including
+54 non-identity +90 matrix SRTs. Archive/source validation proves that the stored
+rotation is a Softimage projection-support pose: for rotation-only model-local
+code-400 polygon bindings, object coordinates are transformed by the inverse
+siXYZ support rotation before projection. Non-unit support scale/translation and
+material-level code-401 matrix application remain separate evidence boundaries.
 """
 from __future__ import annotations
 
@@ -85,6 +87,51 @@ def projection_space_bounds(bounds, projection: dict):
         for z in (minimum[2], maximum[2])
     ]
     return bounds_from_points(projection_space_point(point, projection) for point in corners)
+
+
+def prepare_projection_points(points, projection: dict):
+    """Prepare a whole fitted support once, returning support-local points/bounds.
+
+    PATCH: rotating an object's pre-rotation AABB and then bounding its corners
+    overestimates the fitted support for irregular meshes. Corpus validation on
+    all 21 non-identity class-4 code-400 edges found base-UV deltas up to 0.319.
+    Transform the actual mesh vertices first, then derive the projection bounds.
+    """
+    values = [tuple(float(component) for component in point[:3]) for point in points]
+    if not values:
+        raise ValueError("cannot prepare projection support from zero points")
+    if matrix_srt_is_identity(projection):
+        return values, bounds_from_points(values)
+    if not code400_rotation_supported(projection):
+        raise ValueError("non-identity SI_Texture2D matrix is not proven for this binding path")
+    transformed = [projection_space_point(point, projection) for point in values]
+    return transformed, bounds_from_points(transformed)
+
+def project_prepared_polygon(points, bounds, projection: dict):
+    """Project points already expressed in projection-support local coordinates."""
+    code = int(projection.get("projection_or_mapping_code_candidate") or 0)
+    if code not in WORKING_PROJECTION_TYPES:
+        raise ValueError(f"unsupported working projection code {code}")
+    uvs = [base_projection_uv(point, bounds, code) for point in points]
+    if code in {4, 5}:
+        uvs = unwrap_angular_seam(uvs)
+    repeats = projection.get("si_texture2d_repeat_uv")
+    scale = projection.get("si_texture2d_uv_scale")
+    offset = projection.get("si_texture2d_uv_offset")
+    crop = projection.get("crop_rect_pixels_raw")
+    image_size = (
+        [projection.get("width"), projection.get("height")]
+        if projection.get("width") and projection.get("height")
+        else None
+    )
+    return [
+        apply_crop(
+            apply_uv_scale_offset(apply_uv_repeats(uv, repeats), scale, offset),
+            crop,
+            image_size,
+        )
+        for uv in uvs
+    ]
 
 
 def projection_type_name(code: int | None) -> str | None:
@@ -229,6 +276,12 @@ def matrix_srt_is_identity(
 
 
 def project_polygon(points: Sequence[Sequence[float]], bounds, projection: dict) -> list[tuple[float, float]]:
+    """Compatibility projection API for one polygon.
+
+    Blender's production path uses ``prepare_projection_points`` on the complete
+    mesh and ``project_prepared_polygon`` so fitted bounds are exact. This helper
+    retains the older bounds argument for standalone callers.
+    """
     code = int(projection.get("projection_or_mapping_code_candidate") or 0)
     if code not in WORKING_PROJECTION_TYPES:
         raise ValueError(f"unsupported working projection code {code}")
@@ -237,28 +290,7 @@ def project_polygon(points: Sequence[Sequence[float]], bounds, projection: dict)
             raise ValueError("non-identity SI_Texture2D matrix SRT is not promoted for this binding path")
         bounds = projection_space_bounds(bounds, projection)
         points = [projection_space_point(point, projection) for point in points]
-
-    uvs = [base_projection_uv(point, bounds, code) for point in points]
-    if code in {4, 5}:
-        uvs = unwrap_angular_seam(uvs)
-
-    repeats = projection.get("si_texture2d_repeat_uv")
-    scale = projection.get("si_texture2d_uv_scale")
-    offset = projection.get("si_texture2d_uv_offset")
-    crop = projection.get("crop_rect_pixels_raw")
-    image_size = (
-        [projection.get("width"), projection.get("height")]
-        if projection.get("width") and projection.get("height")
-        else None
-    )
-    return [
-        apply_crop(
-            apply_uv_scale_offset(apply_uv_repeats(uv, repeats), scale, offset),
-            crop,
-            image_size,
-        )
-        for uv in uvs
-    ]
+    return project_prepared_polygon(points, bounds, projection)
 
 
 def self_test() -> None:

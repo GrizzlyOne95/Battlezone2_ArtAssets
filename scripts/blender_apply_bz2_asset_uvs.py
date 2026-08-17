@@ -72,12 +72,14 @@ def _generate_uv_map(obj, projection: dict, uv_name: str) -> dict:
     layer = mesh.uv_layers.get(uv_name)
     if layer is None:
         layer = mesh.uv_layers.new(name=uv_name)
-    bounds = _bounds(mesh)
+    prepared_points, bounds = projection_uv.prepare_projection_points(
+        [tuple(vertex.co) for vertex in mesh.vertices], projection
+    )
     assigned = 0
     for polygon in mesh.polygons:
         loop_indices = list(polygon.loop_indices)
-        points = [mesh.vertices[mesh.loops[index].vertex_index].co for index in loop_indices]
-        uvs = projection_uv.project_polygon(points, bounds, projection)
+        points = [prepared_points[mesh.loops[index].vertex_index] for index in loop_indices]
+        uvs = projection_uv.project_prepared_polygon(points, bounds, projection)
         for loop_index, uv in zip(loop_indices, uvs):
             layer.data[loop_index].uv = uv
             assigned += 1

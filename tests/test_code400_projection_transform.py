@@ -20,6 +20,22 @@ class Code400ProjectionTransformTests(unittest.TestCase):
         for actual,want in zip(y,expected):
             self.assertAlmostEqual(actual,want,places=5)
 
+    def test_prepared_support_bounds_use_actual_transformed_mesh(self):
+        p={
+            "relation_code":400,
+            "projection_or_mapping_code_candidate":2,
+            "si_texture2d_matrix_rotation_xyz_radians":[0.0,0.0,0.7],
+            "si_texture2d_matrix_scale_xyz":[1,1,1],
+            "si_texture2d_matrix_translation_xyz":[0,0,0],
+        }
+        points=[(0,0,0),(4,0,0),(0,1,0)]
+        prepared,bounds=uv.prepare_projection_points(points,p)
+        self.assertEqual(len(prepared),3)
+        self.assertEqual(bounds,uv.bounds_from_points(prepared))
+        original=uv.bounds_from_points(points)
+        rotated_aabb=uv.projection_space_bounds(original,p)
+        self.assertNotEqual(bounds,rotated_aabb)
+
     def test_nonidentity_code401_remains_deferred(self):
         p={"relation_code":401,"projection_or_mapping_code_candidate":2,
            "si_texture2d_matrix_rotation_xyz_radians":[0,0.5,0],
