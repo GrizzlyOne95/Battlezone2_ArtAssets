@@ -6,9 +6,9 @@ adds one named Blender UV map per recoverable Softimage projection, rewires
 material-level texture nodes to those maps when the operator is supported, and
 adds model-local texture nodes without guessing unresolved cross-scope blending.
 
-Model-local DSC relation-code-400 projection records are particularly safe for
-this stage: the validated archival corpus contains 403 resolved edges, all using
-working projection codes 1..5 and all with identity +90 texture-matrix SRT.
+Model-local relation-code-400 projections and material-level code-401 CurrentUV
+paths are handled separately. Authored nonzero HRC UVs are preserved; a derived
+effective UV layer receives corpus-proven TXMP rotation/repeat/+6/crop effects.
 """
 from __future__ import annotations
 
@@ -103,6 +103,30 @@ def _existing_source_uv_status(obj) -> dict:
         "uv_map_count": len(mesh.uv_layers),
         "active_uv": layer.name,
         "active_uv_all_zero": all_zero,
+    }
+
+
+def _derive_current_uv_effect_map(obj, layer: dict, uv_name: str) -> dict:
+    """Create a derived effective UV layer while preserving imported CurrentUV."""
+    mesh = obj.data
+    source = mesh.uv_layers.active or (mesh.uv_layers[0] if mesh.uv_layers else None)
+    if source is None:
+        raise ValueError("no source UV layer available")
+    target = mesh.uv_layers.get(uv_name)
+    if target is None:
+        target = mesh.uv_layers.new(name=uv_name)
+    if len(source.data) != len(target.data):
+        raise ValueError("source/derived UV loop counts differ")
+    for index, source_loop in enumerate(source.data):
+        u, v, _w = projection_uv.apply_current_uv_effects(
+            (float(source_loop.uv.x), float(source_loop.uv.y), 0.0), layer
+        )
+        target.data[index].uv = (u, v)
+    return {
+        "uv_map": target.name,
+        "source_uv_map": source.name,
+        "loop_count": len(target.data),
+        "status": "derived_from_preserved_currentuv_with_live_txmp_effects",
     }
 
 
@@ -398,17 +422,21 @@ def apply_asset_uvs(gltf_path: Path, model_sidecar_path: Path, layer_sidecar_pat
                     )
                 )
                 if source_uv_usable:
-                    # Archive qualification: 6,230 mapped class-4 code401 models
-                    # carry nonzero authored HRC UVs, and regenerating them from
-                    # fitted geometry diverges materially for most source assets.
-                    # Preserve CurrentUV and layer only proven live image effects.
-                    _link_source_uv_transform(material, tex_node, layer, texture_object)
-                    source_uv_fallbacks += 1
-                    if not projection_uv.matrix_srt_is_identity(layer):
+                    # Preserve authored HRC CurrentUV. Build a separate effective UV
+                    # layer with the recovered live TXMP transformation/effects.
+                    uv_name = _safe_name(f"EFFECT_{texture_object}", "BZ2")
+                    try:
+                        uv_result = _derive_current_uv_effect_map(obj, layer, uv_name)
+                        _link_uv_map(material, tex_node, uv_result["uv_map"], f"Effective {texture_object}")
+                        material_rewired += 1
+                        source_uv_fallbacks += 1
+                    except Exception as exc:
+                        _link_source_uv_transform(material, tex_node, layer, texture_object)
+                        source_uv_fallbacks += 1
                         deferred.append({
                             "object": obj.name,
                             "texture": texture_object,
-                            "reason": "nonidentity_code401_live_uvw_transform",
+                            "reason": f"currentuv_effect_error:{type(exc).__name__}:{exc}",
                             "fallback": "authored_source_uv_plus_confirmed_repeat_image_transform",
                         })
                 elif can_generate_missing_projection:

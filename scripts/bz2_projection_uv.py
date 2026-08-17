@@ -145,6 +145,37 @@ def project_prepared_polygon(points, bounds, projection: dict):
     ]
 
 
+def apply_current_uv_effects(uvw, projection: dict):
+    """Apply corpus-proven live SI_Texture2D effects to an authored CurrentUV.
+
+    Softimage Texture.GetTransformValues starts from Material.CurrentUV and applies
+    projection-definition transformation plus texture/image effects. BZ2 HRC stores
+    only U/V, so the preserved polygon source is promoted to (U,V,0). The supplied
+    code-401 corpus has rotation-only matrix state: unit matrix scale and zero matrix
+    translation. Source UV data is never overwritten; callers create derived UVs.
+    """
+    u, v = float(uvw[0]), float(uvw[1])
+    w = float(uvw[2]) if len(uvw) >= 3 else 0.0
+    rotation = projection.get("si_texture2d_matrix_rotation_xyz_radians") or [0.0, 0.0, 0.0]
+    if not all(abs(float(value)) <= MATRIX_IDENTITY_TOLERANCE for value in rotation):
+        if not projection_rotation_supported(projection):
+            raise ValueError("non-identity CurrentUV matrix scale/translation is not corpus-proven")
+        u, v, w = _mul3(_rotation_matrix_xyz(rotation), (u, v, w))
+    result = apply_uv_repeats((u, v), projection.get("si_texture2d_repeat_uv"))
+    result = apply_uv_scale_offset(
+        result,
+        projection.get("si_texture2d_uv_scale"),
+        projection.get("si_texture2d_uv_offset"),
+    )
+    image_size = (
+        [projection.get("width"), projection.get("height")]
+        if projection.get("width") and projection.get("height")
+        else None
+    )
+    result = apply_crop(result, projection.get("crop_rect_pixels_raw"), image_size)
+    return result[0], result[1], w
+
+
 def projection_type_name(code: int | None) -> str | None:
     return WORKING_PROJECTION_TYPES.get(int(code)) if code is not None else None
 
