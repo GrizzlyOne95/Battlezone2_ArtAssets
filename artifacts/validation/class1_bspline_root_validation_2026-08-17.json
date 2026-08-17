@@ -30,7 +30,7 @@
     },
     "notes": [
       "The evaluator uses the standard uniform cubic B-spline four-control-point basis independently in U and V.",
-      "Source Step is treated as the number of straight subdivisions per patch span; 5x4 controls therefore produce 2x1 cubic spans and a 7x4 sample lattice at Step 3.",
+      "Source Step is treated as the straight subdivisions per patch span; 5x4 controls produce 2x1 cubic spans and a 7x4 sample lattice at Step 3.",
       "Closed type-3 directions remain unsupported because no type-3 closed-direction record exists in the supplied corpus."
     ]
   },
@@ -55,6 +55,6 @@
     "corpus": "All three class-1 surface-type-code-3 records are 5x4 open/open records with tension 0.5 and Step 3. The 183-record class-1 census independently validates the common binary envelope.",
     "historical_softimage_behavior": "Period Softimage documentation describes B-splines as best-fit curves that do not pass through edit points and Step as subdivisions used when tessellating UV patch sections.",
     "enum_correspondence": "A later Autodesk surface enum orders Cardinal as 2 and B-spline as 3. This is supporting correspondence, not direct proof that every legacy Softimage-3D binary enum shares the same implementation.",
-    "production_policy": "Type 3 is evaluated as an open uniform cubic B-spline because binary structure, corpus profile, historical spline behavior, enum correspondence, and complete downstream scene reconstruction agree. Type 2 remains the existing control-cage approximation until Cardinal interpolation and closed-boundary semantics are independently validated."
+    "production_policy": "Type 3 is evaluated as an open uniform cubic B-spline because binary structure, corpus profile, historical spline behavior, enum correspondence, and complete downstream scene reconstruction agree. Type 2 was subsequently validated separately as zero-tension Cardinal for all 167 code-2 records in this corpus; see class1_cardinal_validation_2026-08-17.json."
   }
 }
