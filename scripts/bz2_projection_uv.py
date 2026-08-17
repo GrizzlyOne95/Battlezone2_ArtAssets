@@ -58,8 +58,14 @@ def _mul3(m, p):
     x, y, z = (float(v) for v in p[:3])
     return tuple(m[i][0]*x + m[i][1]*y + m[i][2]*z for i in range(3))
 
-def code400_rotation_supported(projection: dict, tolerance: float = MATRIX_IDENTITY_TOLERANCE) -> bool:
-    if int(projection.get("relation_code") or 0) != 400:
+def projection_rotation_supported(projection: dict, tolerance: float = MATRIX_IDENTITY_TOLERANCE) -> bool:
+    """Allow corpus-observed rotation-only projection definitions.
+
+    Both DSC 400 and 401 reference the same TXMP projection-definition layout.
+    For 401 this helper is used only when geometry must generate a missing/all-zero
+    CurrentUV source; authored nonzero 401 UVs remain preserved separately.
+    """
+    if int(projection.get("relation_code") or 0) not in {400, 401}:
         return False
     scale = projection.get("si_texture2d_matrix_scale_xyz") or [1.0, 1.0, 1.0]
     translation = projection.get("si_texture2d_matrix_translation_xyz") or [0.0, 0.0, 0.0]
@@ -68,12 +74,16 @@ def code400_rotation_supported(projection: dict, tolerance: float = MATRIX_IDENT
         and all(abs(float(v)) <= tolerance for v in translation)
     )
 
+def code400_rotation_supported(projection: dict, tolerance: float = MATRIX_IDENTITY_TOLERANCE) -> bool:
+    """Compatibility predicate for the model-local relation-400 path."""
+    return int(projection.get("relation_code") or 0) == 400 and projection_rotation_supported(projection, tolerance)
+
 def projection_space_point(point, projection: dict):
     rotation = projection.get("si_texture2d_matrix_rotation_xyz_radians") or [0.0, 0.0, 0.0]
     if all(abs(float(v)) <= MATRIX_IDENTITY_TOLERANCE for v in rotation):
         return tuple(float(v) for v in point[:3])
-    if not code400_rotation_supported(projection):
-        raise ValueError("non-identity SI_Texture2D matrix is not proven for this binding path")
+    if not projection_rotation_supported(projection):
+        raise ValueError("non-identity SI_Texture2D matrix is not proven for this projection-generation path")
     # The serialized rotation maps object coordinates into projection-local UVW.
     # face39 validates this direction geometrically: R*n becomes almost pure +Y
     # for a planar-XZ projection; transposing R produces the wrong support axis.
@@ -103,8 +113,8 @@ def prepare_projection_points(points, projection: dict):
         raise ValueError("cannot prepare projection support from zero points")
     if matrix_srt_is_identity(projection):
         return values, bounds_from_points(values)
-    if not code400_rotation_supported(projection):
-        raise ValueError("non-identity SI_Texture2D matrix is not proven for this binding path")
+    if not projection_rotation_supported(projection):
+        raise ValueError("non-identity SI_Texture2D matrix is not proven for this projection-generation path")
     transformed = [projection_space_point(point, projection) for point in values]
     return transformed, bounds_from_points(transformed)
 

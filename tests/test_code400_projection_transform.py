@@ -37,14 +37,16 @@ class Code400ProjectionTransformTests(unittest.TestCase):
         rotated_aabb=uv.projection_space_bounds(original,p)
         self.assertNotEqual(bounds,rotated_aabb)
 
-    def test_nonidentity_code401_remains_deferred(self):
+    def test_rotation_only_code401_can_generate_missing_projection(self):
         p={"relation_code":401,"projection_or_mapping_code_candidate":2,
            "si_texture2d_matrix_rotation_xyz_radians":[0,0.5,0],
            "si_texture2d_matrix_scale_xyz":[1,1,1],
            "si_texture2d_matrix_translation_xyz":[0,0,0]}
         self.assertFalse(uv.code400_rotation_supported(p))
-        with self.assertRaises(ValueError):
-            uv.project_polygon([(0,0,0)],((-1,-1,-1),(1,1,1)),p)
+        self.assertTrue(uv.projection_rotation_supported(p))
+        prepared,bounds=uv.prepare_projection_points([(0,0,0),(1,0,1)],p)
+        self.assertEqual(len(prepared),2)
+        self.assertEqual(len(uv.project_prepared_polygon(prepared,bounds,p)),2)
 
     def test_nonunit_code400_scale_remains_deferred(self):
         p={"relation_code":400,"si_texture2d_matrix_rotation_xyz_radians":[0,0,0],

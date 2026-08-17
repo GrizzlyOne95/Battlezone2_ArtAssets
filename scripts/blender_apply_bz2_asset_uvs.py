@@ -392,7 +392,10 @@ def apply_asset_uvs(gltf_path: Path, model_sidecar_path: Path, layer_sidecar_pat
                 can_generate_missing_projection = (
                     not source_uv_usable
                     and projection_uv.projection_type_name(code) is not None
-                    and projection_uv.matrix_srt_is_identity(layer)
+                    and (
+                        projection_uv.matrix_srt_is_identity(layer)
+                        or projection_uv.projection_rotation_supported(layer)
+                    )
                 )
                 if source_uv_usable:
                     # Archive qualification: 6,230 mapped class-4 code401 models
