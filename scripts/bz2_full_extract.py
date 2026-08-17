@@ -339,7 +339,7 @@ def run_batch(modelsdirectory: Path, scenes: Sequence[SceneCandidate], output_ro
             render = out / "scene.render_state.json"
             if not render.is_file():
                 render.write_text(json.dumps({"schema": "bz2-render-state-placeholder-v1", "status": "not_authored", "note": "DSC scene contains no resolved SETUP_SOFT record"}, indent=2), encoding="utf-8")
-            item.update({"status": "ok", "reconstruction_manifest": str((out / "reconstruction.json").resolve()), "counts": {"nodes": manifest.get("final_node_count"), "meshes": manifest.get("final_mesh_count"), "primitives": manifest.get("final_primitive_count"), "materials": manifest.get("final_material_count"), "images": manifest.get("final_image_count")}})
+            item.update({"status": "ok", "reconstruction_manifest": str((out / "reconstruction.json").resolve()), "source_warning_count": int(manifest.get("source_warning_count") or 0), "source_warnings": manifest.get("source_warnings") or [], "counts": {"nodes": manifest.get("final_node_count"), "meshes": manifest.get("final_mesh_count"), "primitives": manifest.get("final_primitive_count"), "materials": manifest.get("final_material_count"), "images": manifest.get("final_image_count")}})
             if blender:
                 item["blender"] = _run_blender(blender, out)
                 if item["blender"]["returncode"]:

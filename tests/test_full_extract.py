@@ -117,7 +117,7 @@ class FullExtractTests(unittest.TestCase):
                     calls.append((asset_source, prefix))
                     output_dir.mkdir(parents=True, exist_ok=True)
                     (output_dir / "reconstruction.json").write_text("{}", encoding="utf-8")
-                    return {"final_node_count": 1, "final_mesh_count": 2, "final_primitive_count": 3, "final_material_count": 4, "final_image_count": 5}
+                    return {"final_node_count": 1, "final_mesh_count": 2, "final_primitive_count": 3, "final_material_count": 4, "final_image_count": 5, "source_warning_count": 2, "source_warnings": [{"kind": "missing_material_picture_sources", "count": 2, "details": []}]}
 
             original = full._import_reconstructor
             full._import_reconstructor = lambda: Fake
@@ -131,6 +131,8 @@ class FullExtractTests(unittest.TestCase):
                 full._import_reconstructor = original
 
             self.assertEqual(batch["success_count"], 1)
+            self.assertEqual(batch["results"][0]["source_warning_count"], 2)
+            self.assertEqual(batch["results"][0]["source_warnings"][0]["kind"], "missing_material_picture_sources")
             self.assertEqual(calls[0], (asset, "A"))
             out = Path(batch["results"][0]["output_dir"])
             self.assertFalse((out / "stale.txt").exists())

@@ -44,6 +44,16 @@ def _summary_error(name: str, summary: dict, fields: tuple[str, ...]) -> None:
         raise ReconstructionError(f"{name} failed validation: {problems}")
 
 
+def _source_picture_warnings(layers: dict, projections: dict) -> list[dict]:
+    """Promote absent source images to explicit archival warnings."""
+    warnings = []
+    for kind, summary in (("missing_material_picture_sources", layers), ("missing_model_projection_picture_sources", projections)):
+        count = int(summary.get("unresolved_picture_count") or 0)
+        if count:
+            warnings.append({"kind": kind, "count": count, "details": summary.get("unresolved_pictures", [])})
+    return warnings
+
+
 def _resolve_setup_soft(
     scene_dsc: Path,
     asset_source: Path,
@@ -184,10 +194,11 @@ def reconstruct(
         scene_prefix,
         final_gltf,
     )
+    # Missing picture bytes are corpus-completeness warnings; TXMP state remains preserved.
     _summary_error(
         "ordered texture layers",
         layers,
-        ("unresolved_picture_count", "missing_gltf_material_count"),
+        ("missing_gltf_material_count",),
     )
     stages.append({"stage": "texture_layers", "summary": layers})
 
@@ -218,7 +229,7 @@ def reconstruct(
         scene_prefix,
         final_gltf,
     )
-    _summary_error("model-local projections", projections, ("unresolved_picture_count",))
+    # Missing code-400 picture bytes are likewise preserved as source warnings.
     stages.append({"stage": "model_projections", "summary": projections})
 
     # Make the distinction between genuine per-corner source UVs, all-zero UVs
@@ -263,6 +274,7 @@ def reconstruct(
     (output_dir / "blender_command.txt").write_text(blender_command + "\n", encoding="utf-8")
 
     final_doc = json.loads(final_gltf.read_text(encoding="utf-8"))
+    source_warnings = _source_picture_warnings(layers, projections)
     manifest = {
         "schema": "bz2-reconstructed-scene-bundle-v2",
         "scene_dsc": str(scene_dsc),
@@ -288,6 +300,8 @@ def reconstruct(
         "source_explicit_polygon_uv_primitive_count": uv.get("source_explicit_polygon_uv_primitive_count"),
         "source_zero_uv_primitive_count": uv.get("source_zero_uv_primitive_count"),
         "zero_uv_with_model_projection_count": uv.get("zero_uv_with_model_projection_count"),
+        "source_warning_count": sum(int(item["count"]) for item in source_warnings),
+        "source_warnings": source_warnings,
         "copied_stage_reports": copied_reports,
         "stage_summaries": [
             {
@@ -300,6 +314,7 @@ def reconstruct(
             "scene.gltf is the portable reconstruction product; source-format sidecars remain alongside it for Blender and future decoder refinements",
             "source HRC polygon UVs are preserved; all-zero UVs that depend on projection state are explicitly annotated rather than treated as valid authored unwraps",
             "the Blender command now generates additive projection UV maps and restores confirmed texture scale/offset/crop while leaving source UVs intact",
+            "missing source picture files are preserved as explicit source warnings rather than guessed, substituted, or treated as decoder failures",
             "renderer-specific Mental Ray and FxDirector semantics remain metadata unless an explicit reconstruction stage has been proven",
         ],
     }

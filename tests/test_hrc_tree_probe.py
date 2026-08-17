@@ -20,6 +20,14 @@ class MeshSrtTailTests(unittest.TestCase):
         self.assertAlmostEqual(decoded["translation_xyz"][1], 1.25)
         self.assertAlmostEqual(decoded["translation_xyz"][2], 6.75)
 
+    def test_standard_tail_variant_6_recovers_srt(self):
+        values = (1.0, 1.0, 1.0, 0.0, 0.0, 0.0, -0.25, -0.75, 1.8)
+        data = struct.pack(">9f", *values) + probe.MESH_STANDARD_TAIL_VARIANT_6
+        decoded = probe._decode_mesh_srt_between(data, 0, len(data), 0)
+        self.assertIsNotNone(decoded)
+        self.assertEqual(decoded["source"], "pre_mesh_standard_tail_variant_6")
+        self.assertAlmostEqual(decoded["translation_xyz"][2], 1.8)
+
     def test_nonzero_bytes_after_tail_are_not_accepted(self):
         values = (1.0, 1.0, 1.0, 0.12, 0.0, 0.0, 0.0, 1.25, 6.75)
         data = struct.pack(">9f", *values) + probe.MESH_STANDARD_TAIL + b"\0\0\x01\0"

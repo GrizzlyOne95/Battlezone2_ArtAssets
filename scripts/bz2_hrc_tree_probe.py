@@ -32,6 +32,12 @@ MESH_SHORT_TAIL = bytes.fromhex("3f800000000000000004")
 MESH_STANDARD_TAIL = bytes.fromhex(
     "0000000000000000000000000000000000000000000000000007000000003f800000000000000004"
 )
+MESH_STANDARD_TAIL_VARIANT_5 = bytes.fromhex(
+    "0000000000000000000000050000000000000000000000000007000000003f800000000000000004"
+)
+MESH_STANDARD_TAIL_VARIANT_6 = bytes.fromhex(
+    "0000000000000000000000060000000000000000000000000007000000003f800000000000000004"
+)
 
 
 def _load_nurbs_probe():
@@ -203,17 +209,15 @@ def _decode_mesh_srt_between(
         decoded_source = source if not suffix else source + "_zero_padded"
         return _srt(values, decoded_source, offset)
 
-    decoded = srt_before_zero_padded_tail(
-        MESH_STANDARD_TAIL, "pre_mesh_standard_tail"
-    )
-    if decoded:
-        return decoded
-
-    decoded = srt_before_zero_padded_tail(
-        MESH_SHORT_TAIL, "pre_mesh_short_tail"
-    )
-    if decoded:
-        return decoded
+    for marker, source in (
+        (MESH_STANDARD_TAIL, "pre_mesh_standard_tail"),
+        (MESH_STANDARD_TAIL_VARIANT_5, "pre_mesh_standard_tail_variant_5"),
+        (MESH_STANDARD_TAIL_VARIANT_6, "pre_mesh_standard_tail_variant_6"),
+        (MESH_SHORT_TAIL, "pre_mesh_short_tail"),
+    ):
+        decoded = srt_before_zero_padded_tail(marker, source)
+        if decoded:
+            return decoded
 
     texture_candidates: list[tuple[int, str, tuple[float, ...]]] = []
     cursor = start
