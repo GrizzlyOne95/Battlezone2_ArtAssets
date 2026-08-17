@@ -18,8 +18,8 @@ all historical Softimage enum names have been recovered authoritatively:
 The full supplied primary corpus contains 283 relation-code-400 edges, including
 54 non-identity +90 matrix SRTs. Archive/source validation proves that the stored
 rotation is a Softimage projection-support pose: for rotation-only model-local
-code-400 polygon bindings, object coordinates are transformed by the inverse
-siXYZ support rotation before projection. Non-unit support scale/translation and
+code-400 polygon bindings, object coordinates are transformed by the serialized
+siXYZ object-to-projection rotation before projection. Non-unit support scale/translation and
 material-level code-401 matrix application remain separate evidence boundaries.
 """
 from __future__ import annotations
@@ -74,9 +74,10 @@ def projection_space_point(point, projection: dict):
         return tuple(float(v) for v in point[:3])
     if not code400_rotation_supported(projection):
         raise ValueError("non-identity SI_Texture2D matrix is not proven for this binding path")
-    # The stored matrix is the projection-support pose. Inverse rotation moves
-    # model coordinates into support-local UVW space; inverse(rotation)=transpose.
-    return _mul3(_transpose3(_rotation_matrix_xyz(rotation)), point)
+    # The serialized rotation maps object coordinates into projection-local UVW.
+    # face39 validates this direction geometrically: R*n becomes almost pure +Y
+    # for a planar-XZ projection; transposing R produces the wrong support axis.
+    return _mul3(_rotation_matrix_xyz(rotation), point)
 
 def projection_space_bounds(bounds, projection: dict):
     minimum, maximum = bounds

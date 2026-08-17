@@ -7,7 +7,7 @@ sys.path.insert(0,str(ROOT/'scripts'))
 import bz2_projection_uv as uv
 
 class Code400ProjectionTransformTests(unittest.TestCase):
-    def test_inverse_support_rotation_matches_face39_axis(self):
+    def test_serialized_rotation_maps_face39_normal_to_planar_axis(self):
         p={
             "relation_code":400,
             "projection_or_mapping_code_candidate":2,
@@ -15,10 +15,11 @@ class Code400ProjectionTransformTests(unittest.TestCase):
             "si_texture2d_matrix_scale_xyz":[1,1,1],
             "si_texture2d_matrix_translation_xyz":[0,0,0],
         }
-        y=uv.projection_space_point((0,1,0),p)
-        expected=(-0.627239,0.683484,0.373391)
-        for actual,want in zip(y,expected):
-            self.assertAlmostEqual(actual,want,places=5)
+        normal=(-0.7183021974407146,0.6008504122768953,0.350743118561898)
+        projected=uv.projection_space_point(normal,p)
+        self.assertGreater(abs(projected[1]),0.99)
+        self.assertLess(abs(projected[0]),0.13)
+        self.assertLess(abs(projected[2]),0.03)
 
     def test_prepared_support_bounds_use_actual_transformed_mesh(self):
         p={
