@@ -1,0 +1,36 @@
+{
+  "schema": "bz2-code400-projection-bounds-validation-v1",
+  "date": "2026-08-17",
+  "source": {
+    "archive": "bz2_art.7z",
+    "sha256": "d5afa754837b1a3d1217f558d1e3d110d951c0e753e6fafb15d7726e3eff96bd"
+  },
+  "scope": {
+    "nonidentity_code400_class4_edges": 21,
+    "decode_errors": 0,
+    "all_uvs_finite_current": true,
+    "all_uvs_finite_exact": true
+  },
+  "comparison": {
+    "max_base_uv_delta_aabb_corner_bounds_vs_transformed_mesh_bounds": 0.3188944702742298,
+    "mean_of_per_edge_mean_base_uv_delta": 0.04304753108691161,
+    "edges_with_delta_gt_1e-6": 15,
+    "edges_with_delta_gt_0_01": 14
+  },
+  "largest_deltas": [
+    {"scene":"movieAssets/soft_soldier/SCENES/SLODIER_S2g-helmet_V1.1-0.dsc","model":"helmet_V1-face39.1-0","projection_code":2,"point_count":324,"max_uv_delta":0.3188944702742298,"mean_uv_delta":0.19477130975950221},
+    {"scene":"movieAssets/movie_hires/SCENES/SOLDIER_S2g-ALL_V33_Skel.1-0.dsc","model":"ALL_V33_Skel-face39.1-0","projection_code":2,"point_count":324,"max_uv_delta":0.3188944702742298,"mean_uv_delta":0.19477130975950221},
+    {"scene":"MIRE/SCENES/MIRE-mobush01.1-0.dsc","model":"mobush01-leaves2_1_2.1-0","projection_code":4,"point_count":20,"max_uv_delta":0.20649859606482523,"mean_uv_delta":0.10001890766819126},
+    {"scene":"MIRE/SCENES/MIRE-mobush01.1-0.dsc","model":"mobush01-leaves2_1_3.1-0","projection_code":4,"point_count":20,"max_uv_delta":0.206498084970133,"mean_uv_delta":0.10001869874320106},
+    {"scene":"MIRE/SCENES/MIRE-mobush01.1-0.dsc","model":"mobush01-leaves2_1.1-0","projection_code":4,"point_count":20,"max_uv_delta":0.12455386833548998,"mean_uv_delta":0.06941623211076971},
+    {"scene":"MIRE/SCENES/MIRE-mobush01.1-0.dsc","model":"mobush01-leaves2_1_1.1-0","projection_code":4,"point_count":20,"max_uv_delta":0.12455386833548998,"mean_uv_delta":0.06941623211076971},
+    {"scene":"MIRE/SCENES/MIRE-grass3.2-0.dsc","model":"TREE2-leaf3.1-0","projection_code":4,"point_count":7,"max_uv_delta":0.0805786034021525,"mean_uv_delta":0.04330675458969852},
+    {"scene":"MIRE/SCENES/MIRE-grass3.2-0.dsc","model":"TREE2-leaf4.1-0","projection_code":4,"point_count":7,"max_uv_delta":0.0805786034021525,"mean_uv_delta":0.04330675458969852},
+    {"scene":"MIRE/SCENES/MIRE-grass3.2-0.dsc","model":"TREE2-leaf5.1-0","projection_code":4,"point_count":7,"max_uv_delta":0.0805786034021525,"mean_uv_delta":0.04330675458969852},
+    {"scene":"MIRE/SCENES/MIRE-grass3.2-0.dsc","model":"TREE2-leaf6.1-0","projection_code":4,"point_count":7,"max_uv_delta":0.0805786034021525,"mean_uv_delta":0.04330675458969852},
+    {"scene":"movieAssets/movie_hires/SCENES/FINAL_S1s4-lowresvger.5-0.dsc","model":"lowresvger-cyl5.1-0","projection_code":5,"point_count":114,"max_uv_delta":0.03358415946791643,"mean_uv_delta":0.0005892727561530128},
+    {"scene":"movieAssets/movie_hires/SCENES/FINAL_S1s4-lowresvger.6-0.dsc","model":"lowresvger-cyl5.1-0","projection_code":5,"point_count":114,"max_uv_delta":0.03358415946791643,"mean_uv_delta":0.0005892727561530128}
+  ],
+  "conclusion": "For rotated fitted supports, transforming the original object AABB corners overestimates the projection-space extent. Production should transform all mesh vertices first and derive fitted support bounds from those transformed vertices before applying planar/spherical/cylindrical mapping.",
+  "production_requirement": "Do not freeze the first rotation patch as complete until Blender UV generation uses transformed-mesh bounds once per projection."
+}

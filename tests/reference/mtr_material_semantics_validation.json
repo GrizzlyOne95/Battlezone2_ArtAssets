@@ -1,0 +1,74 @@
+{
+  "schema": "bz2-mtr-material-semantics-validation-v1",
+  "source": "supplied bz2_art.7z direct files plus embedded ZIP material members",
+  "corpus": {
+    "mtr_records_decoded": 14773,
+    "nonzero_transparency_records": 754,
+    "nonzero_reflectivity_records": 232,
+    "ior_1_1_records": 9,
+    "ior_zero_records": 2,
+    "default_ior_1_records": 14762
+  },
+  "scalar_block": {
+    "offset_rule": "material_name_nul + 9",
+    "encoding": "13 big-endian float32",
+    "fields": [
+      "ambient_r", "ambient_g", "ambient_b",
+      "diffuse_r", "diffuse_g", "diffuse_b",
+      "specular_r", "specular_g", "specular_b",
+      "shininess", "transparency", "reflectivity", "refractive_index"
+    ]
+  },
+  "targets": {
+    "high_res_isdf_tank": {
+      "material_count": 27,
+      "refined_count": 27,
+      "failure_count": 0,
+      "transmission_material_count": 0,
+      "reflective_source_material_count": 1,
+      "nondefault_ior_material_count": 0,
+      "representative_reflective_material": {
+        "name": "tank2-mat8_1.1-0",
+        "reflectivity": 0.5091000199317932
+      },
+      "geometry_instances_after_refinement": 22,
+      "finite_bounds": true
+    },
+    "isdf_walker_scene_20": {
+      "material_count": 51,
+      "refined_count": 51,
+      "failure_count": 0,
+      "transmission_material_count": 1,
+      "reflective_source_material_count": 15,
+      "nondefault_ior_material_count": 1,
+      "glass": {
+        "name": "walker_final-GLASS-glass.1-2.3-0",
+        "ambient_rgb": [0.0, 0.0, 0.0],
+        "diffuse_rgb": [0.0, 0.0, 0.0],
+        "specular_rgb": [50.0, 50.0, 50.0],
+        "shininess": 300.0,
+        "transparency": 0.10000000149011612,
+        "reflectivity": 1.0,
+        "refractive_index": 1.100000023841858
+      },
+      "geometry_instances_after_refinement": 108,
+      "camera_count": 1,
+      "light_count": 6,
+      "finite_bounds": true
+    }
+  },
+  "mapping_policy": {
+    "ambient_rgb": "preserve as source metadata; no direct glTF PBR equivalent",
+    "diffuse_rgb": "baseColorFactor RGB",
+    "specular_rgb": "KHR_materials_specular with normalized/clamped color and factor",
+    "shininess": "roughness = sqrt(2/(shininess+2))",
+    "transparency": "provisional KHR_materials_transmission mapping",
+    "reflectivity": "preserve as source metadata; explicitly not mapped to metallic",
+    "refractive_index": "KHR_materials_ior only when source value is >=1 and non-default"
+  },
+  "notes": [
+    "The previous provisional MTR decoder began four bytes late. Diffuse/specular/shininess happened to line up, but it incorrectly treated refractive index as alpha.",
+    "The corrected alignment explains the named Softimage glass family: nonzero transparency, high reflectivity and IOR 1.1.",
+    "Reflectivity is an authored Softimage reflection control and must not be conflated with a physically based metallic workflow without further render validation."
+  ]
+}

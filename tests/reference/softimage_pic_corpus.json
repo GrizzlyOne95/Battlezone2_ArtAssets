@@ -1,0 +1,67 @@
+{
+  "schema": "bz2-softimage-pic-corpus-v1",
+  "source": "bz2_art.7z",
+  "summary": {
+    "pic_named_files": 6494,
+    "standard_softimage_pic": 6490,
+    "softimage_ray_reference": 2,
+    "empty_placeholder": 2,
+    "render_named_or_contained": 5756,
+    "standard_render_pics": 5754
+  },
+  "packet_variants": [
+    {
+      "size": 8,
+      "type": 2,
+      "channel": 224,
+      "count": 6485,
+      "meaning": "mixed-RLE RGB"
+    },
+    {
+      "size": 8,
+      "type": 2,
+      "channel": 16,
+      "count": 5939,
+      "meaning": "mixed-RLE alpha"
+    },
+    {
+      "size": 8,
+      "type": 0,
+      "channel": 240,
+      "count": 5,
+      "meaning": "uncompressed RGBA"
+    }
+  ],
+  "top_dimensions": [
+    {"width": 320, "height": 240, "count": 5346},
+    {"width": 256, "height": 256, "count": 535},
+    {"width": 32, "height": 32, "count": 162},
+    {"width": 640, "height": 480, "count": 125},
+    {"width": 240, "height": 189, "count": 60},
+    {"width": 128, "height": 128, "count": 38},
+    {"width": 64, "height": 64, "count": 24},
+    {"width": 648, "height": 792, "count": 16},
+    {"width": 1024, "height": 768, "count": 16},
+    {"width": 1024, "height": 512, "count": 13}
+  ],
+  "exceptions": [
+    {
+      "path": "PLUTO/PICTURES/indoorwall.pic",
+      "kind": "empty_placeholder"
+    },
+    {
+      "path": "PLUTO/PICTURES/pbextw02.pic",
+      "kind": "empty_placeholder"
+    },
+    {
+      "path": "movieAssets/movie_terrain/RENDER_PICTURES/shot8.52.pic",
+      "kind": "softimage_ray_reference",
+      "raw": "ray1.9.11.17,320,240,CCHICO,1042,1.000000,126"
+    },
+    {
+      "path": "Archival.zip!walker_final/RENDER_PICTURES/walker_front.1.pic",
+      "kind": "softimage_ray_reference",
+      "raw": "ray1.9.11.10,1024,768,CCHICO,1437,1.000000,62"
+    }
+  ]
+}

@@ -1,0 +1,119 @@
+{
+  "schema": "bz2-class1-patch-census-summary-v2",
+  "date": "2026-08-17",
+  "source": {
+    "archive": "bz2_art.7z",
+    "size_bytes": 515756693,
+    "sha256": "d5afa754837b1a3d1217f558d1e3d110d951c0e753e6fafb15d7726e3eff96bd"
+  },
+  "coverage": {
+    "class1_record_count": 183,
+    "outer_count": 29,
+    "nested_count": 154,
+    "nested_layout_decode_failure_count": 0,
+    "surface_type_code_counts": {"0": 13, "2": 167, "3": 3},
+    "nonzero_tag_record_count": 16,
+    "nonzero_tag_terminator_count": 0
+  },
+  "binary_layout": {
+    "header": ["u16 surface_type_code", "u16 u_count", "u16 v_count"],
+    "control_points": "u_count*v_count big-endian XYZ float32 triples",
+    "post_control_fields": [
+      {"offset": 0, "field": "u_closed", "type": "u16"},
+      {"offset": 2, "field": "v_closed", "type": "u16"},
+      {"offset": 4, "field": "u_tension", "type": "f32"},
+      {"offset": 8, "field": "v_tension", "type": "f32"},
+      {"offset": 12, "field": "u_step", "type": "u16"},
+      {"offset": 14, "field": "v_step", "type": "u16"},
+      {"offset": 16, "field": "u_curve", "type": "u16"},
+      {"offset": 18, "field": "v_curve", "type": "u16"},
+      {"offset": 20, "field": "reserved8", "type": "8 bytes"},
+      {"offset": 28, "field": "approx_type", "type": "u32"},
+      {"offset": 32, "field": "view_dep", "type": "u16"},
+      {"offset": 34, "field": "spatial", "type": "f32"},
+      {"offset": 38, "field": "curv_u", "type": "f32"},
+      {"offset": 42, "field": "curv_v", "type": "f32"},
+      {"offset": 46, "field": "rec_min", "type": "u16"},
+      {"offset": 48, "field": "rec_max", "type": "u16"},
+      {"offset": 50, "field": "recursion", "type": "u16"},
+      {"offset": 52, "field": "tagged_points", "type": "u_count*v_count u16 flags"},
+      {"offset": "52 + 2*u_count*v_count", "field": "tag_terminator", "type": "u16; zero in all 183 records"},
+      {"offset": "54 + 2*u_count*v_count", "field": "local_srt", "type": "9 big-endian f32"}
+    ],
+    "boundary_validation": {
+      "nested_records_tested": 154,
+      "plausible_srt_at_exact_offset_count": 154,
+      "plausible_srt_two_bytes_early_count": 0,
+      "plausible_srt_two_bytes_late_count": 2,
+      "conclusion": "the exact SRT boundary is +54+2*N; recursion is u16 and an explicit zero u16 terminator follows N tagged-point flags"
+    },
+    "corpus_invariants": {
+      "reserved8_hex": "0000000000000000",
+      "approx_type": 1,
+      "view_dep": 0,
+      "spatial": 5.0,
+      "curv_u": 0.10000000149011612,
+      "curv_v": 45.0,
+      "rec_min": 1,
+      "rec_max": 10,
+      "recursion": 0,
+      "tag_terminator": 0
+    },
+    "nested_nonzero_tag_counts": {
+      "0": 138,
+      "3": 1,
+      "6": 1,
+      "36": 12,
+      "121": 2
+    }
+  },
+  "profiles": [
+    {"count": 65, "surface_type_code": 2, "subtype": 2, "dimensions": [9,8], "closed": [false,true], "tension": [0.0,0.0], "step": [10,10], "curve": [1,1]},
+    {"count": 39, "surface_type_code": 2, "subtype": 2, "dimensions": [7,8], "closed": [false,true], "tension": [0.0,0.0], "step": [10,10], "curve": [1,1]},
+    {"count": 26, "surface_type_code": 2, "subtype": 2, "dimensions": [11,8], "closed": [false,true], "tension": [0.0,0.0], "step": [10,10], "curve": [1,1]},
+    {"count": 17, "surface_type_code": 2, "subtype": 2, "dimensions": [13,13], "closed": [false,false], "tension": [0.0,0.0], "step": [3,3], "curve": [1,1]},
+    {"count": 13, "surface_type_code": 2, "subtype": 2, "dimensions": [8,8], "closed": [false,true], "tension": [0.0,0.0], "step": [10,10], "curve": [1,1]},
+    {"count": 12, "surface_type_code": 0, "subtype": 2, "dimensions": [12,5], "closed": [false,true], "tension": [0.0,0.0], "step": [3,1], "curve": [1,1]},
+    {"count": 3, "surface_type_code": 3, "subtype": 3, "dimensions": [5,4], "closed": [false,false], "tension": [0.5,0.5], "step": [3,3], "curve": [1,1]},
+    {"count": 3, "surface_type_code": 2, "subtype": 2, "dimensions": [8,8], "closed": [true,true], "tension": [0.0,0.0], "step": [3,3], "curve": [1,1]},
+    {"count": 2, "surface_type_code": 2, "subtype": 2, "dimensions": [8,8], "closed": [false,false], "tension": [0.0,0.0], "step": [3,3], "curve": [1,1]},
+    {"count": 1, "surface_type_code": 2, "subtype": 2, "dimensions": [5,8], "closed": [false,true], "tension": [0.0,0.0], "step": [10,10], "curve": [1,1]},
+    {"count": 1, "surface_type_code": 0, "subtype": 2, "dimensions": [8,22], "closed": [true,false], "tension": [0.0,0.0], "step": [3,1], "curve": [1,1]},
+    {"count": 1, "surface_type_code": 2, "subtype": 2, "dimensions": [8,11], "closed": [true,false], "tension": [0.0,0.0], "step": [3,3], "curve": [1,1]}
+  ],
+  "important_examples": [
+    {
+      "path": "movieAssets/movie_hires/MODELS/rr2-extru3_3.1-0.hrc",
+      "scope": "outer",
+      "surface_type_code": 2,
+      "dimensions": [5,8],
+      "closed": [false,true],
+      "step": [10,10],
+      "binary_srt_matches_dsc_environment": true
+    },
+    {
+      "path": "movieAssets/movie_hires/MODELS/ALL_V12-sphere1.1-0.hrc",
+      "scope": "outer",
+      "surface_type_code": 3,
+      "dimensions": [5,4],
+      "closed": [false,false],
+      "tension": [0.5,0.5],
+      "step": [3,3],
+      "binary_srt_matches_dsc_environment": true
+    },
+    {
+      "path": "movieAssets/soft_soldier/MODELS/ALL_Skeleton_V13-null38.1-0.hrc",
+      "scope": "nested",
+      "records": [
+        {"name": "sphere1", "surface_type_code": 3, "dimensions": [5,4]},
+        {"names": ["skin38","skin47","skin48","skin59","skin60","skin61"], "surface_type_code": 0, "dimensions": [12,5], "closed": [false,true], "nonzero_tag_counts": [36]}
+      ]
+    }
+  ],
+  "interpretation_boundary": {
+    "proven": "183 class-1 records share the decoded control-lattice, closure/tension/step/curve, approximation, tagged-point/terminator and local-SRT envelope",
+    "strong_external_correspondence_not_yet_source-proven": "Autodesk MotionBuilder's FBSurfaceType enum orders Bezier=0, BezierQuadric=1, Cardinal=2, Bspline=3, Linear=4; source codes 2 and 3 therefore align with Cardinal and B-spline, but the legacy Softimage-3D binary enum identity still requires direct proof",
+    "current_renderer_limitation": "production type-code-2 emission triangulates neighboring control points directly and does not honor source closure or spline interpolation; type-code 3 remains intentionally unsupported pending evaluator validation"
+  },
+  "reproducibility": {"tool": "scripts/bz2_class1_patch_census.py"}
+}

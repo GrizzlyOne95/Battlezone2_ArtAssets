@@ -1,0 +1,76 @@
+{
+  "schema": "bz2-dsc-multiroot-material-validation-v1",
+  "walker_scene20": {
+    "class4_source_meshes": 71,
+    "class4_rebound_count": 71,
+    "class4_decode_failures": 0,
+    "material_slot_errors": 0,
+    "class4_material_primitives": 109,
+    "inherited_material_nodes": {
+      "cube8": "walker_final-cube8_1.2-0",
+      "cube10": "walker_final-cube8_2.1-0"
+    },
+    "class1_grid_object_material": "walker_final-mat8.1-0",
+    "parametric_object_material_count": 6,
+    "parametric_code401_deferred_count": 0,
+    "source_material_count": 51,
+    "final_mesh_count": 78,
+    "final_primitive_count": 116,
+    "independent_loader_geometry_instances": 116,
+    "finite_bounds": [
+      [-71.5595703125, 0.0, -71.5595703125],
+      [71.5595703125, 20.909671783447266, 71.5595703125]
+    ],
+    "parametric_untextured_material_nodes": [
+      "revol13_1",
+      "revol13",
+      "extru50",
+      "extru49",
+      "extru48",
+      "extru47"
+    ]
+  },
+  "tank_highres": {
+    "class4_source_meshes": 17,
+    "class4_rebound_count": 17,
+    "class4_decode_failures": 0,
+    "material_slot_errors": 0,
+    "class4_material_primitives": 24,
+    "inherited_material_node_count": 0,
+    "class1_grid_object_material": "tank2-mat8_1.1-0",
+    "parametric_object_material_count": 0,
+    "parametric_code401_deferred_count": 0,
+    "source_material_count": 27,
+    "final_mesh_count": 18,
+    "final_primitive_count": 25,
+    "independent_loader_geometry_instances": 25,
+    "finite_bounds": [
+      [-71.5595703125, -1.602825, -71.5595703125],
+      [71.5595703125, 3.24484961247988, 71.5595703125]
+    ]
+  },
+  "new_root_material_evidence": {
+    "walker_final-bmerge19.1-0": {
+      "used_material_slots": [0],
+      "direct_material_count": 2,
+      "note": "only source slot 0 is used by the polygon payload"
+    },
+    "Main_tank-gun.1-0": {
+      "used_material_slots": [0],
+      "direct_material_count": 1
+    },
+    "tank2-bmerge5_default_7.1-0": {
+      "used_material_slots": [0],
+      "direct_material_count": 1
+    }
+  },
+  "parametric_safety_rule": {
+    "policy": "assign object-level MTR material only when exactly one material is present and that material has no authoritative DSC code-401 TEXTURES2D relation",
+    "reason": "reconstructed NURBS TEXCOORD_0 is normalized parameter space and is not authoritative Softimage texture projection"
+  },
+  "notes": [
+    "class-4 binding is keyed by ROOT HRC + source byte offset + authoritative DSC model index from the complete scene graph",
+    "the floor grids receive their direct object material but retain code-400 projection texturing as a separate stage",
+    "ordered multi-texture restoration and corrected MTR scalar semantics are intentionally reapplied after complete-scene material binding"
+  ]
+}

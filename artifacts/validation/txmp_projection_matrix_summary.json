@@ -1,0 +1,149 @@
+{
+  "schema": "bz2-txmp-projection-validation-v5",
+  "source_policy": "Derived statistics only; original 1998 Softimage files, supplied source references, textures and render outputs are not committed.",
+  "confirmed_repeat_layout": {
+    "post_path_offsets_bytes": {"URepeat": 2, "VRepeat": 4},
+    "byte_order": "big-endian",
+    "interpretation": "legacy SI_Texture2D URepeat/VRepeat",
+    "supporting_artifact": "artifacts/validation/txmp_repeat_summary.json"
+  },
+  "confirmed_uv_transform": {
+    "post_path_offset_bytes": 6,
+    "byte_order": "big-endian",
+    "float_count": 4,
+    "field_order": ["UScale", "VScale", "UOffset", "VOffset"],
+    "interpretation": "SI_Texture2D image-space UV scale and offset",
+    "source_evidence": "Public dotXSI exporter source writes SI_Texture2D U/V scale followed by U/V offset; BZ2 corpus values at +6 match defaults and authored placement behavior.",
+    "identity": [1.0, 1.0, 0.0, 0.0]
+  },
+  "confirmed_matrix_layout": {
+    "post_path_offset_bytes": 90,
+    "byte_order": "big-endian",
+    "float_count": 9,
+    "field_order": [
+      "rotation_x_radians", "rotation_y_radians", "rotation_z_radians",
+      "scale_x", "scale_y", "scale_z",
+      "translation_x", "translation_y", "translation_z"
+    ],
+    "interpretation": "compact SI_Texture2D texture-matrix R/S/T state",
+    "not_hierarchy_transform": true
+  },
+  "complete_package_matrix_corpus": {
+    "txmp_record_count": 15150,
+    "nonzero_rotation_record_count": 3361,
+    "nonunit_scale_record_count": 1,
+    "nonzero_translation_record_count": 0
+  },
+  "readable_dotxsi_crosscheck": {
+    "derived_source_label": "ivstas00.xsi SI_Texture2D",
+    "readable_matrix_diagonal_xyz": [-1.0, 1.0, -1.0],
+    "corresponding_binary_rotation_xyz_radians": [0.0, -3.1415927, 0.0],
+    "corresponding_binary_scale_xyz": [1.0, 1.0, 1.0],
+    "corresponding_binary_translation_xyz": [0.0, 0.0, 0.0],
+    "result": "matches 180-degree Y rotation"
+  },
+  "glare_source_anchor": {
+    "readable_source_texture": "ivstas00.xsi glare.pic SI_Texture2D",
+    "readable_mapping_type": 1,
+    "readable_image_size": [64, 64],
+    "readable_crop_pixels": [0, 63, 0, 63],
+    "readable_repeat_uv": [1, 1],
+    "readable_uv_scale": [1.0, 1.0],
+    "readable_uv_offset": [0.0, 0.0],
+    "readable_matrix": "identity",
+    "archival_txmp_exemplar": {
+      "picture_family": "glare",
+      "plus2_plus4_repeat_uv": [1, 1],
+      "plus6_uv_scale_offset": [1.0, 1.0, 0.0, 0.0],
+      "crop_pixels": [0, 63, 0, 63],
+      "plus90_matrix_srt": "identity",
+      "plus24_raw": 1
+    }
+  },
+  "projection_code_frontier": {
+    "post_path_offset_bytes": 24,
+    "production_field": "projection_or_mapping_code_candidate",
+    "stable_conclusion": "The field is projection/operator-related state and is not the readable dotXSI SI_Texture2D.mappingType field.",
+    "nested_high_resolution_validation_subset": {
+      "scope": "nested Archival.zip scenes used for the walker/tank/high-resolution reversal",
+      "relation_code_400_edge_count": 403,
+      "observed_values": [1, 2, 3, 4, 5],
+      "counts": {"1": 55, "2": 18, "3": 22, "4": 54, "5": 254},
+      "effective_identity_plus90_count": 403,
+      "working_table_used_by_current_practical_generator": {
+        "1": "Planar XY candidate",
+        "2": "Planar XZ candidate",
+        "3": "Planar YZ candidate",
+        "4": "Spherical anchor/candidate",
+        "5": "high-resolution-subset working Cylindrical candidate"
+      },
+      "important_scope_limit": "This table was useful for the high-resolution nested subset but is not a universal BZ2 +24 enum mapping."
+    },
+    "full_outer_bz2_art_census": {
+      "artifact": "artifacts/validation/txmp_full_archive_projection_summary.json",
+      "raw_txmp_record_count": 14486,
+      "resolved_relation_code_400_edge_count": 283,
+      "resolved_relation_code_401_edge_count": 9985,
+      "relation_code_400_values": [1, 2, 3, 4, 5, 6, 8],
+      "relation_code_400_counts": {"1": 18, "2": 11, "3": 5, "4": 172, "5": 9, "6": 65, "8": 3},
+      "relation_code_400_effective_identity_plus90_count": 229,
+      "relation_code_400_meaningful_nonidentity_plus90_count": 54,
+      "relation_code_401_values": [1, 2, 3, 4, 5, 6, 7, 8],
+      "relation_code_401_counts": {"1": 318, "2": 1487, "3": 343, "4": 7425, "5": 160, "6": 154, "7": 93, "8": 5},
+      "conclusion": "The full archive contains code 6 and 8 model-local projection state and nonidentity code-400 +90 transforms. Production code must preserve +24 raw and scope any numeric-to-operator mapping to evidence that actually supports it."
+    },
+    "independent_anchors_retained": {
+      "code_2_nested_fixture": "The high-resolution walker grid is an exact XZ support with +24=2, strongly supporting Planar XZ in that source family.",
+      "code_4_autodesk_example": "The existing Autodesk source example used during the reversal independently identifies numeric 4.0 as siTxtSpherical; this remains an anchor, but full-archive usage still requires the rest of the source coordinate convention."
+    },
+    "retracted_evidence": {
+      "code_5_plus78_exclusivity": "Retracted globally. In the full outer archive +78=1 occurs with multiple +24 codes, including code 6 and code 4, so +78 cannot be used to prove code 5 is Cylindrical.",
+      "global_1_through_5_sequential_enum": "Retracted as a universal interpretation. It remains only a practical high-resolution-subset working table."
+    },
+    "production_policy": "Keep projection_or_mapping_code_candidate raw. Generate projection UVs only for explicitly supported/scoped working cases and defer unsupported codes or nonidentity transform state rather than silently applying a global enum guess."
+  },
+  "auxiliary_projection_fields": {
+    "nested_subset_observation": "The 664-record nested set showed strong +24/+76/+78 correlations, including +78=1 on all nested code-5 records.",
+    "full_archive_correction": "The full outer archive disproves +78 exclusivity: +78=1 is present across several +24 codes and relation scopes. +76/+78/+80 remain raw auxiliary fields.",
+    "production_policy": "Do not label +76/+78/+80 as wrap, repeat, alternate, seam or projection-type flags without source-correlated evidence."
+  },
+  "crop_state": {
+    "post_path_offsets": {"x0": 60, "x1": 62, "y0": 64, "y1": 66},
+    "encoding": "four big-endian u16 source-pixel coordinates",
+    "trailing_duplicate_offsets": [68, 70, 72],
+    "trailing_duplicate_relation": ["x1", "y0", "y1"],
+    "repeat_correction": "Repeat is not stored in +68/+70/+72; URepeat/VRepeat are recovered at +2/+4."
+  },
+  "showcases": {
+    "hi_res_ISDF_walker": {
+      "model_count": 108,
+      "code400_projection_edge_count": 34,
+      "resolved_projection_edge_count": 34,
+      "observed_picture_families": ["rusty", "cavern", "bump1", "chrome3"]
+    },
+    "hi_res_ISDF_tank": {
+      "model_count": 21,
+      "code400_projection_edge_count": 1,
+      "resolved_projection_edge_count": 1,
+      "floor_projection": {
+        "model": "tank2-grid1",
+        "texture_object": "tank2-t2d85",
+        "picture_family": "rusty",
+        "projection_creation_type_raw": 2,
+        "matrix_rotation_xyz_radians": [0.0, 0.0, 0.0],
+        "matrix_scale_xyz": [1.0, 1.0, 1.0],
+        "matrix_translation_xyz": [0.0, 0.0, 0.0],
+        "repeat_uv": [1, 1],
+        "uv_scale": [1.0, 1.0],
+        "uv_offset": [0.0, 0.0]
+      }
+    }
+  },
+  "unresolved": [
+    "authoritative source-generation-aware numeric interpretation of +24 codes 1..8",
+    "support-space direction and U/V handedness/origin for generated projections",
+    "exact +90 UVW rotation application/direction for meaningful nonidentity records",
+    "UAlternate/VAlternate/UVSwap behavior where non-default anchors can be established",
+    "exact semantics of +76/+78/+80 and other auxiliary words"
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "schema": "bz2-code400-projection-direction-validation-v2",
+  "date": "2026-08-17",
+  "source": {
+    "archive": "bz2_art.7z",
+    "sha256": "d5afa754837b1a3d1217f558d1e3d110d951c0e753e6fafb15d7726e3eff96bd"
+  },
+  "target": {
+    "primary_scene": "movieAssets/soft_soldier/SCENES/SLODIER_S2g-helmet_V1.1-0.dsc",
+    "model": "helmet_V1-face39.1-0",
+    "txmp": "movieAssets/soft_soldier/TEXTURES2D/helmet_V1-t2d26.1-0.txt",
+    "projection_code": 2,
+    "projection_interpretation": "planar XZ; projection-space normal is local Y",
+    "rotation_xyz_radians": [-0.5000020265579224, 0.0, -0.6780027747154236],
+    "scale_xyz": [1.0, 1.0, 1.0],
+    "translation_xyz": [0.0, 0.0, 0.0]
+  },
+  "geometry": {
+    "class_id": 4,
+    "vertex_normal_count": 324,
+    "normalized_average_normal_object_space": [-0.7183021974407146, 0.6008504122768953, 0.350743118561898]
+  },
+  "matrix_test": {
+    "softimage_default_euler": "siXYZ",
+    "column_vector_matrix": "R = Rz * Ry * Rx",
+    "serialized_direction": "object to projection coordinates: q = R * p",
+    "average_normal_after_R": [-0.12321925, 0.99218309, 0.01974160],
+    "average_normal_after_transpose_R": [-0.93630983, -0.15287579, 0.31615327],
+    "planar_axis_abs_alignment_R": 0.9921831,
+    "planar_axis_abs_alignment_transpose_R": 0.1528758,
+    "per_vertex_normal_mean_abs_planar_axis_R": 0.8646446,
+    "per_vertex_normal_mean_abs_planar_axis_transpose_R": 0.3252217,
+    "per_vertex_normal_median_abs_planar_axis_R": 0.8891132,
+    "interpretation": "Applying the serialized siXYZ rotation directly to object-space geometry maps the textured face normal almost entirely onto projection-space +Y, exactly the discarded axis for planar-XZ mapping. Transposing/inverting the rotation produces the wrong projection axis."
+  },
+  "cross_revision": {
+    "scene": "movieAssets/movie_hires/SCENES/SOLDIER_S2g-ALL_V33_Skel.1-0.dsc",
+    "model": "ALL_V33_Skel-face39.1-0",
+    "txmp": "movieAssets/movie_hires/TEXTURES2D/FACE_V19-t2d26.1-0.txt",
+    "same_rotation": true,
+    "same_normalized_average_normal": true,
+    "direct_R_planar_axis_abs_alignment": 0.9921831,
+    "transpose_R_planar_axis_abs_alignment": 0.1528758
+  },
+  "correction_history": {
+    "supersedes": "artifacts/validation/code400_inverse_geometry_validation_2026-08-17.json",
+    "reason": "The first interpretation compared object-space support-axis vectors rather than applying the candidate coordinate transforms to the actual face normal. For q=R*p, the object-space normal of a qY-constant plane is row Y of R; equivalently R*n should become +/-Y. Re-evaluating the face39 oracle establishes direct R, not R-transpose."
+  },
+  "evidence_boundary": [
+    "The asymmetric geometry strongly distinguishes direct R from transpose/inverse R for relation code 400.",
+    "Softimage SDK documentation independently establishes default Euler order siXYZ, completing the Rz*Ry*Rx construction.",
+    "Relation code 401 remains a distinct material-level binding path and is not generalized from this result without its own validation."
+  ]
+}

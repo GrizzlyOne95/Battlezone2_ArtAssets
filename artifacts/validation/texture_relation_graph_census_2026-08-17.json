@@ -1,0 +1,30 @@
+{
+  "schema": "bz2-texture-relation-graph-census-v1",
+  "date": "2026-08-17",
+  "source": {
+    "archive": "bz2_art.7z",
+    "sha256": "d5afa754837b1a3d1217f558d1e3d110d951c0e753e6fafb15d7726e3eff96bd",
+    "scope": "1,139 primary DSC scenes"
+  },
+  "code400_model_path": {
+    "model_count_with_code400": 195,
+    "code400_edge_count": 283,
+    "code401_edges_on_materials_attached_to_those_models": 0,
+    "model_classification": {
+      "same_texture_target_set_as_attached_material_code401": 0,
+      "partial_texture_target_overlap": 0,
+      "disjoint_texture_target_sets": 0,
+      "no_code401_on_attached_materials": 195
+    }
+  },
+  "target_identity": {
+    "per_scene_unique_textures_referenced_by_both_code400_and_code401": 0,
+    "per_scene_unique_code400_only_texture_targets": 283
+  },
+  "conclusion": "Within the supplied primary corpus, DSC relation code 400 and relation code 401 are mutually exclusive texture-binding paths rather than two independent texture transforms that need to be composed on the same model/texture object.",
+  "production_implications": [
+    "Do not implement a code400-vs-code401 matrix multiplication order for this corpus; no observed graph requires one.",
+    "Treat code400 as model-local texture/projection state and code401 as material-level texture/layer state on separate binding paths.",
+    "Any future source archive that contains overlap should be detected explicitly and treated as a new format case rather than silently composed using a guessed order."
+  ]
+}

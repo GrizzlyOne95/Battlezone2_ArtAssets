@@ -27,11 +27,25 @@ from pathlib import Path
 
 NAME_RE = re.compile(rb"\x00\x01([ -~]{1,80})\x00")
 KNOWN_CLASSES = {0, 1, 2, 4, 5, 6, 9, 10}
-MESH_MATERIAL_RE = re.compile(rb"\x00\x01\x00\x00([ -~]{1,80})\x00")
+MESH_MATERIAL_RE = re.compile(rb"(?=\x00([\x01-\xff])\x00\x00([ -~]{1,80})\x00)")
 MESH_SHORT_TAIL = bytes.fromhex("3f800000000000000004")
 MESH_STANDARD_TAIL = bytes.fromhex(
     "0000000000000000000000000000000000000000000000000007000000003f800000000000000004"
 )
+MESH_STANDARD_TAIL_VARIANT_5 = bytes.fromhex(
+    "0000000000000000000000050000000000000000000000000007000000003f800000000000000004"
+)
+MESH_STANDARD_TAIL_VARIANT_6 = bytes.fromhex(
+    "0000000000000000000000060000000000000000000000000007000000003f800000000000000004"
+)
+MESH_STANDARD_TAIL_ZERO_UNIT = bytes.fromhex(
+    "00000000000000000000000000000000000000000000000000070000000000000000000000000004"
+)
+MESH_MIRE_GRID_EXTENDED_TAIL = bytes.fromhex(
+    "000000000000000100003e4ccccd3f6666663f19999a3f800000000000003e99999afffffffe"
+    "000000000000000100014270000041700000417000000000000000000007000000003f800000000000000004"
+)
+CUSA_PREAMBLE_PREFIX = bytes.fromhex("0000000000000000000d00000000000000000000000000")
 
 
 def _load_nurbs_probe():
@@ -152,7 +166,12 @@ def _decode_mesh_srt_between(
         return None
     tail_end = end - next_zero_run
 
-    material_candidates: list[tuple[int, str, tuple[float, ...]]] = []
+    # All authored material-slot tags (not only slot 1) use the same SRT-before-
+    # slot envelope. Zero-width lookahead is required because bytes in the final
+    # SRT float can themselves resemble a shorter slot signature and would make a
+    # consuming regex skip the genuine marker one byte later. This consolidates
+    # the exporter's archive-proven slot fallback into the shared tree probe.
+    material_candidates: list[tuple[int, int, str, tuple[float, ...]]] = []
     for match in MESH_MATERIAL_RE.finditer(data, start, tail_end):
         srt_offset = match.start() - 36
         if srt_offset < start:
@@ -162,7 +181,8 @@ def _decode_mesh_srt_between(
             material_candidates.append(
                 (
                     srt_offset,
-                    match.group(1).decode("latin-1", errors="replace"),
+                    match.group(1)[0],
+                    match.group(2).decode("latin-1", errors="replace"),
                     values,
                 )
             )
@@ -173,25 +193,81 @@ def _decode_mesh_srt_between(
         chosen = min(trailing, key=lambda item: item[0]) if trailing else max(
             material_candidates, key=lambda item: item[0]
         )
-        offset, material_name, values = chosen
-        decoded = _srt(values, "pre_mesh_material_block", offset)
+        offset, slot, material_name, values = chosen
+        source = "pre_mesh_material_block" if slot == 1 else "pre_mesh_material_slot_block"
+        decoded = _srt(values, source, offset)
         if decoded:
+            decoded["anchor_slot"] = slot
             decoded["anchor_name"] = material_name
             return decoded
 
-    if tail_end >= 40 and data[tail_end - 40 : tail_end] == MESH_STANDARD_TAIL:
-        offset = tail_end - 76
-        if offset >= start:
-            values = struct.unpack_from(">9f", data, offset)
-            if _plausible_mesh_srt(values):
-                return _srt(values, "pre_mesh_standard_tail", offset)
+    # Softimage custom-attribute blocks begin with a 24-byte preamble followed by
+    # the ASCII CUSA tag. Across all 40 CUSA records in the supplied corpus the
+    # model SRT is exactly 36 bytes immediately before that preamble. Thirty-nine
+    # are class-2 effect records; the sole class-4 occurrence is the movie
+    # explode1 ROOT, whose recovered SRT independently matches its DSC ENVIRONMENT
+    # SRT. Accept only the two observed preamble terminal tags (2/3).
+    cursor = start
+    cusa_candidates: list[tuple[int, tuple[float, ...]]] = []
+    while True:
+        cusa_offset = data.find(b"CUSA", cursor, tail_end)
+        if cusa_offset < 0:
+            break
+        preamble_offset = cusa_offset - 24
+        srt_offset = preamble_offset - 36
+        if srt_offset >= start and preamble_offset >= start:
+            preamble = data[preamble_offset:cusa_offset]
+            if (
+                len(preamble) == 24
+                and preamble[:23] == CUSA_PREAMBLE_PREFIX
+                and preamble[23] in {2, 3}
+            ):
+                values = struct.unpack_from(">9f", data, srt_offset)
+                if _plausible_mesh_srt(values):
+                    cusa_candidates.append((srt_offset, values))
+        cursor = cusa_offset + 4
+    if cusa_candidates:
+        offset, values = max(cusa_candidates, key=lambda item: item[0])
+        decoded = _srt(values, "pre_custom_attribute_cusa", offset)
+        if decoded:
+            decoded["anchor_name"] = "CUSA"
+            return decoded
 
-    if tail_end >= 10 and data[tail_end - 10 : tail_end] == MESH_SHORT_TAIL:
-        offset = tail_end - 46
-        if offset >= start:
-            values = struct.unpack_from(">9f", data, offset)
-            if _plausible_mesh_srt(values):
-                return _srt(values, "pre_mesh_short_tail", offset)
+    # PATCH: a large class-4 corpus variant appends even-length zero padding
+    # after the otherwise standard/short post-mesh tail. The older decoder
+    # required the tail marker to end exactly at ``tail_end``, leaving valid
+    # SRTs unresolved (hardpoints, collision helpers, Walker dork__h, etc.).
+    # Accept the last tail marker near the record end only when every following
+    # byte is zero, then decode the nine floats immediately before the marker.
+    # This preserves the exact-tail case and avoids scanning arbitrary mesh data.
+    def srt_before_zero_padded_tail(marker: bytes, source: str) -> dict | None:
+        search_start = max(start, tail_end - 512)
+        marker_offset = data.rfind(marker, search_start, tail_end)
+        if marker_offset < 0:
+            return None
+        suffix = data[marker_offset + len(marker) : tail_end]
+        if any(suffix):
+            return None
+        offset = marker_offset - 36
+        if offset < start:
+            return None
+        values = struct.unpack_from(">9f", data, offset)
+        if not _plausible_mesh_srt(values):
+            return None
+        decoded_source = source if not suffix else source + "_zero_padded"
+        return _srt(values, decoded_source, offset)
+
+    for marker, source in (
+        (MESH_STANDARD_TAIL, "pre_mesh_standard_tail"),
+        (MESH_STANDARD_TAIL_VARIANT_5, "pre_mesh_standard_tail_variant_5"),
+        (MESH_STANDARD_TAIL_VARIANT_6, "pre_mesh_standard_tail_variant_6"),
+        (MESH_STANDARD_TAIL_ZERO_UNIT, "pre_mesh_standard_tail_zero_unit"),
+        (MESH_MIRE_GRID_EXTENDED_TAIL, "pre_mesh_mire_grid_extended_tail"),
+        (MESH_SHORT_TAIL, "pre_mesh_short_tail"),
+    ):
+        decoded = srt_before_zero_padded_tail(marker, source)
+        if decoded:
+            return decoded
 
     texture_candidates: list[tuple[int, str, tuple[float, ...]]] = []
     cursor = start
@@ -243,6 +319,12 @@ def discover_records(data: bytes) -> list[dict]:
         subtype = int.from_bytes(data[payload + 2 : payload + 4], "big")
         zeros = zero_run_before(data, match.start())
         if class_id not in KNOWN_CLASSES or zeros < 20 or zeros % 2:
+            continue
+        # Archive census: class 0 is a hierarchy transform/null only for
+        # subtype 0. The 13 class-0/nonzero signatures across 7,665 HRCs
+        # are internal/helper payload records (cls0, Face, t); treating them
+        # as nodes creates garbage immediate SRTs and false parent scopes.
+        if class_id == 0 and subtype != 0:
             continue
         item = {
             "name": match.group(1).decode("latin-1", errors="replace"),
@@ -314,7 +396,7 @@ def apply_tree(records: list[dict], outer_name: str, baseline: int) -> list[dict
 def probe(path: Path, forced_baseline: int | None = None) -> dict:
     data = path.read_bytes()
     outer = outer_model(data)
-    if outer and outer["class_id"] in {0, 5}:
+    if outer and (outer["class_id"] == 5 or (outer["class_id"] == 0 and outer.get("subtype") == 0)):
         name_end = data.find(b"\0", outer["string_offset"])
         srt_offset = name_end + 5 if name_end >= 0 else -1
         if srt_offset >= 0 and srt_offset + 36 <= len(data):

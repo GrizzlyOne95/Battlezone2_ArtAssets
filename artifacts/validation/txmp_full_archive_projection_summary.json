@@ -1,0 +1,126 @@
+{
+  "schema": "bz2-txmp-full-outer-archive-projection-census-v1",
+  "source_policy": "Derived statistics only; original Softimage assets from bz2_art.7z are not committed.",
+  "scope": {
+    "source": "outer bz2_art.7z modelsdirectory tree only",
+    "important": "This census is deliberately separate from the smaller nested Archival.zip high-resolution validation set. Conclusions inferred from the nested subset must not be treated as universal across the full source archive.",
+    "txmp_record_count": 14486,
+    "dsc_scene_count": 1139,
+    "resolved_relation_code_400_edge_count": 283,
+    "resolved_relation_code_401_edge_count": 9985,
+    "unresolved_relation_code_400_edge_count": 0,
+    "unresolved_relation_code_401_edge_count": 0
+  },
+  "raw_txmp_plus24": {
+    "counts": {
+      "1": 641,
+      "2": 2603,
+      "3": 918,
+      "4": 9782,
+      "5": 174,
+      "6": 267,
+      "7": 94,
+      "8": 7
+    },
+    "conclusion": "The full outer archive uses +24 codes 1 through 8 except no additional values. Codes 6, 7 and 8 are therefore real source states and any 1..5-only table is subset-scoped rather than universal."
+  },
+  "relation_code_400": {
+    "edge_count": 283,
+    "projection_code_counts": {
+      "1": 18,
+      "2": 11,
+      "3": 5,
+      "4": 172,
+      "5": 9,
+      "6": 65,
+      "8": 3
+    },
+    "effective_matrix_identity_at_1e_5": 229,
+    "meaningful_nonidentity_matrix_count": 54,
+    "matrix_by_projection_code": {
+      "1": {"identity": 17, "nonidentity": 1},
+      "2": {"identity": 9, "nonidentity": 2},
+      "3": {"identity": 3, "nonidentity": 2},
+      "4": {"identity": 130, "nonidentity": 42},
+      "5": {"identity": 2, "nonidentity": 7},
+      "6": {"identity": 65, "nonidentity": 0},
+      "8": {"identity": 3, "nonidentity": 0}
+    },
+    "representative_picture_families": {
+      "1": ["fade003", "plant", "eye2", "back2", "faceal"],
+      "2": ["bump3", "pbintf00", "logo4", "cat", "noIcon"],
+      "3": ["noIcon", "cat", "ISDF_logo"],
+      "4": ["pbintw02", "wall", "plant", "bump_largebille", "fade003", "orange3", "fringe3"],
+      "5": ["bump1"],
+      "6": ["wall", "plant", "cloudmap", "earthmap", "earthxray"],
+      "8": ["eye_tip_specular_map", "eye_tip_specular_map2"]
+    },
+    "correction_to_nested_subset": "The nested Archival.zip high-resolution set had 403 resolved code-400 edges using only 1..5 with identity +90. The full outer archive instead contains model-local codes 6 and 8 plus 54 meaningful nonidentity +90 records. The working high-resolution 1..5 identity path remains useful but is not a universal code-400 decoder."
+  },
+  "relation_code_401": {
+    "edge_count": 9985,
+    "projection_code_counts": {
+      "1": 318,
+      "2": 1487,
+      "3": 343,
+      "4": 7425,
+      "5": 160,
+      "6": 154,
+      "7": 93,
+      "8": 5
+    },
+    "effective_matrix_identity_at_1e_5": 8101,
+    "meaningful_nonidentity_matrix_count": 1884,
+    "matrix_by_projection_code": {
+      "1": {"identity": 232, "nonidentity": 86},
+      "2": {"identity": 1212, "nonidentity": 275},
+      "3": {"identity": 264, "nonidentity": 79},
+      "4": {"identity": 6062, "nonidentity": 1363},
+      "5": {"identity": 152, "nonidentity": 8},
+      "6": {"identity": 82, "nonidentity": 72},
+      "7": {"identity": 93, "nonidentity": 0},
+      "8": {"identity": 4, "nonidentity": 1}
+    },
+    "representative_picture_families": {
+      "1": ["glare", "tran_shade", "pbintw02", "pbextw00", "ibrail00"],
+      "2": ["dark3", "cbextf02", "cbextw05", "pbintc00", "glare", "moleaf01"],
+      "3": ["glare", "pbintw00", "vsmoke2", "tracks", "alienskin"],
+      "4": ["ivrckt00", "cbextw12", "ivwalk00", "ispilo00", "fvtank00"],
+      "5": ["motrnk01", "darkflat3", "tran_shade"],
+      "6": ["rock4", "psnebu02", "core_cloud_1024", "dark_terrain_1024", "reflection3"],
+      "7": ["reflection3"],
+      "8": ["reflection3", "reflection", "backgr"]
+    },
+    "special_mode_correction": "Code 7 is exceptionally strong reflection/environment evidence in the full outer archive: 93/93 resolved code-401 edges use reflection3. Code 8 is also environment-associated in the outer archive (reflection3/reflection/backgr), so the nested walker glass/cavern association was a subset-specific usage rather than a universal code-8 meaning."
+  },
+  "auxiliary_word_correction": {
+    "raw_plus78_equal_1_record_count": 255,
+    "raw_plus80_equal_1_record_count": 253,
+    "relation_code_400_examples": [
+      {"plus24": 6, "plus76": 0, "plus78": 1, "plus80": 1, "edge_count": 52},
+      {"plus24": 4, "plus76": 0, "plus78": 1, "plus80": 1, "edge_count": 29},
+      {"plus24": 2, "plus76": 0, "plus78": 1, "plus80": 0, "edge_count": 2}
+    ],
+    "relation_code_401_examples": [
+      {"plus24": 2, "plus76": 0, "plus78": 1, "plus80": 1, "edge_count": 52},
+      {"plus24": 4, "plus76": 0, "plus78": 1, "plus80": 1, "edge_count": 4},
+      {"plus24": 6, "plus76": 0, "plus78": 1, "plus80": 1, "edge_count": 1}
+    ],
+    "retraction": "The earlier nested-archive observation that +78=1 was exclusive to +24=5 does not hold across the full source archive. +78 must not be used as evidence that code 5 means Cylindrical. +76/+78/+80 remain raw auxiliary state until source-correlated semantics are recovered."
+  },
+  "repeat_state": {
+    "status": "confirmed separately",
+    "note": "The full archive further reinforces +2/+4 as URepeat/VRepeat because repeat values vary broadly and coherently across thousands of ordinary assets. Detailed repeat validation remains in txmp_repeat_summary.json."
+  },
+  "projection_operator_policy": {
+    "production_field": "projection_or_mapping_code_candidate",
+    "working_high_res_subset_table": {
+      "1": "Planar XY candidate",
+      "2": "Planar XZ candidate",
+      "3": "Planar YZ candidate",
+      "4": "Spherical anchor/candidate",
+      "5": "legacy high-resolution subset working mapping only"
+    },
+    "full_archive_policy": "Do not apply one global 1..5 sequential enum table to all BZ2 source generations. Preserve +24 raw, apply only explicitly supported/scoped working mappings, and defer codes/states whose semantics are not independently anchored. The full archive demonstrates code 6 and 8 on model-local projections and invalidates the former +78-based code-5 cylindrical argument."
+  }
+}

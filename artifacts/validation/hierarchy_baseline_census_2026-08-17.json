@@ -1,0 +1,77 @@
+{
+  "schema": "bz2-hierarchy-baseline-census-v2",
+  "date": "2026-08-17",
+  "source": {
+    "archive": "bz2_art.7z",
+    "size_bytes": 515756693,
+    "sha256": "d5afa754837b1a3d1217f558d1e3d110d951c0e753e6fafb15d7726e3eff96bd",
+    "extracted_modelsdirectory_files": 57546,
+    "extracted_modelsdirectory_bytes": 1471037637
+  },
+  "coverage": {
+    "scene_count": 1180,
+    "declared_root_count": 3815,
+    "unique_root_hrc_member_count": 3496,
+    "unique_dsc_backed_baseline_improvement_count": 123
+  },
+  "before_class0_nonzero_filter": {
+    "remaining_mapped_parent_mismatch_count": 0,
+    "remaining_unresolved_hrc_parent_root_count": 2,
+    "remaining_unresolved_hrc_parent_edge_count": 3
+  },
+  "after_class0_nonzero_filter": {
+    "first_1050_scenes": {
+      "scene_count": 1050,
+      "declared_root_count": 3076,
+      "unique_hrc_member_count": 2790,
+      "unique_dsc_backed_baseline_improvement_count": 113,
+      "remaining_violation_root_count": 0
+    },
+    "final_130_scenes": {
+      "scene_count": 130,
+      "declared_root_count": 739,
+      "unique_hrc_member_count": 706,
+      "unique_dsc_backed_baseline_improvement_count": 10,
+      "remaining_violation_root_count": 0
+    },
+    "remaining_mapped_parent_mismatch_count": 0,
+    "remaining_unresolved_hrc_parent_count": 0,
+    "remaining_violation_root_count": 0
+  },
+  "conclusion": {
+    "zero_run_rule": "The HRC zero-run preorder representation can admit multiple mathematically valid global baselines. Choosing the smallest valid baseline can flatten genuine parent/child chains.",
+    "dsc_code110_policy": "Use DSC MODELS->MODELS relation code 110 only to score/select among already-valid HRC baselines. Change the standalone default only for a unique strict improvement; never post-hoc reparent individual nodes from code 110.",
+    "class0_rule": "Only class-0/subtype-0 records are HRC transform/null hierarchy nodes. The 13 class-0/nonzero records in the primary corpus are internal/helper payload records and must not participate in the preorder model tree or generic immediate-SRT decoding.",
+    "result": "With DSC-backed baseline selection plus the class-0/subtype-0 hierarchy rule, all 1,180 discovered scenes and all 3,815 declared roots have zero known hierarchy violations against every uniquely mapped DSC code-110 parent constraint."
+  },
+  "known_baseline_corrections": [
+    {"family": "Pluto", "default": 20, "selected": 22},
+    {"family": "archived Mire", "default": 20, "selected": 22},
+    {"family": "Power_Ups spawnpoint", "default": 24, "selected": 26},
+    {"family": "Multiplayer streetlight", "default": 24, "selected": 26}
+  ],
+  "resolved_class0_cases": [
+    {
+      "selector": "movieAssets/movie_hires/SCENES/SOLDIER_S2g-ALL_V33_Skel.1-0.dsc",
+      "root": "ALL_V33_Skel-null2_1_1.1-0",
+      "hrc": "movieAssets/movie_hires/MODELS/ALL_V33_Skel-null2_1_1.1-0.hrc",
+      "baseline": 22,
+      "before": {"constraint_count": 356, "match_count": 355, "mismatch_count": 0, "unresolved_parent_count": 1},
+      "intermediate_record": {"name": "Face", "class_id": 0, "subtype": 80},
+      "after": "torus9 naturally becomes depth-14 child of smerge44 and all 356 mapped code-110 constraints agree. Full reconstruction then proceeds past hierarchy and exposes an unrelated unsupported class-1/subtype-3 ROOT primitive."
+    },
+    {
+      "selector": "movieAssets/movie_hires/SCENES/SemiFinal-RocketTank.1-0.dsc",
+      "root": "rocket_tank_t-DUMMYROOT_3_2.1-0",
+      "hrc": "movieAssets/movie_hires/MODELS/rocket_tank_t-DUMMYROOT_3_2.1-0.hrc",
+      "baseline": 22,
+      "before": {"constraint_count": 19, "match_count": 17, "mismatch_count": 0, "unresolved_parent_count": 2},
+      "intermediate_record": {"name": "cls0", "class_id": 0, "subtype": 1},
+      "after": "LCANTILEVER_4 and LCANTILEVER_3 naturally become children of lfin_1 and lfin_2. Full reduced-tessellation reconstruction succeeds with 64 nodes, 20 meshes, 20 primitives, 6 materials and 3 images."
+    }
+  ],
+  "reproducibility": {
+    "tool": "scripts/bz2_hierarchy_census.py",
+    "note": "The committed census tool caches HRC parsing by source/member while keeping DSC scoring scene-specific. The final post-filter validation was also run in two deterministic scene ranges (1-1050 and 1051-1180) to fit the qualification sandbox execution window."
+  }
+}

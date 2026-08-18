@@ -1,0 +1,40 @@
+{
+  "schema": "bz2-nonidentity-txmp-profile-census-v1",
+  "date": "2026-08-17",
+  "source": {
+    "archive": "bz2_art.7z",
+    "sha256": "d5afa754837b1a3d1217f558d1e3d110d951c0e753e6fafb15d7726e3eff96bd"
+  },
+  "unique_nonidentity_txmp_files": {
+    "count": 3178,
+    "with_meaningful_rotation": 3177,
+    "with_nonunit_matrix_scale": 1,
+    "with_nonzero_matrix_translation": 0,
+    "simple_asymmetric_single_axis_rotation_count": 1455
+  },
+  "sole_nonunit_scale_record": {
+    "path": "movieAssets/movie_hires/TEXTURES2D/ALL_V28-t2d34.1-0.txt",
+    "projection_code": 1,
+    "rotation_xyz_radians": [0.0, 0.0, 0.0],
+    "scale_xyz": [1.0487803220748901, 1.0487803220748901, 1.0],
+    "translation_xyz": [0.0, 0.0, 0.0],
+    "scene": "movieAssets/movie_hires/SCENES/SOLDIER_S2g-ALL_V33_Skel.1-0.dsc",
+    "relation_code": 400,
+    "model": "ALL_V33_Skel-skin37.2-0",
+    "model_class": 10,
+    "model_kind": "parametric/NURBS",
+    "production_note": "This record is not a class-4 polygon UV oracle and should be carried into the textured-NURBS projection-binding work rather than used to generalize polygon support scaling prematurely."
+  },
+  "nonidentity_code400_model_classes": {
+    "edge_count": 54,
+    "class4_polygon": 21,
+    "class10_nurbs": 29,
+    "class0_helper_or_null": 4,
+    "historical_archival_zip_nonidentity_code400_edge_count": 0
+  },
+  "production_boundary": [
+    "All nonidentity code400 class-4 polygon examples in the supplied corpus have unit +90 matrix scale and zero +90 matrix translation; the immediate polygon promotion can therefore be rotation-only without inventing scale/translation behavior.",
+    "Nonunit support scale remains explicitly preserved and deferred for the class-10/NURBS path.",
+    "No matrix translation example exists in the supplied TXMP corpus, so translation application cannot be corpus-validated here."
+  ]
+}

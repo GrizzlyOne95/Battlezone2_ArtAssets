@@ -1,0 +1,105 @@
+{
+  "schema": "bz2-class1-cardinal-validation-v1",
+  "date": "2026-08-17",
+  "source": {
+    "archive": "bz2_art.7z",
+    "size_bytes": 515756693,
+    "sha256": "d5afa754837b1a3d1217f558d1e3d110d951c0e753e6fafb15d7726e3eff96bd",
+    "extracted_modelsdirectory_files": 57546,
+    "extracted_modelsdirectory_bytes": 1471037637
+  },
+  "corpus": {
+    "class1_type2_record_count": 167,
+    "outer_root_count": 27,
+    "nested_record_count": 140,
+    "profile_count": 9,
+    "u_tension_values": [0.0],
+    "v_tension_values": [0.0],
+    "evaluation_success_count": 167,
+    "evaluation_failure_count": 0,
+    "nonfinite_geometry_count": 0,
+    "outer_root_degenerate_triangle_count": 0,
+    "profiles": [
+      {"count": 1, "u_count": 5, "v_count": 8, "u_closed": false, "v_closed": true, "u_step": 10, "v_step": 10, "sample_u_count": 21, "sample_v_count": 80},
+      {"count": 39, "u_count": 7, "v_count": 8, "u_closed": false, "v_closed": true, "u_step": 10, "v_step": 10, "sample_u_count": 41, "sample_v_count": 80},
+      {"count": 2, "u_count": 8, "v_count": 8, "u_closed": false, "v_closed": false, "u_step": 3, "v_step": 3, "sample_u_count": 16, "sample_v_count": 16},
+      {"count": 13, "u_count": 8, "v_count": 8, "u_closed": false, "v_closed": true, "u_step": 10, "v_step": 10, "sample_u_count": 51, "sample_v_count": 80},
+      {"count": 3, "u_count": 8, "v_count": 8, "u_closed": true, "v_closed": true, "u_step": 3, "v_step": 3, "sample_u_count": 24, "sample_v_count": 24},
+      {"count": 1, "u_count": 8, "v_count": 11, "u_closed": true, "v_closed": false, "u_step": 3, "v_step": 3, "sample_u_count": 24, "sample_v_count": 25},
+      {"count": 65, "u_count": 9, "v_count": 8, "u_closed": false, "v_closed": true, "u_step": 10, "v_step": 10, "sample_u_count": 61, "sample_v_count": 80},
+      {"count": 26, "u_count": 11, "v_count": 8, "u_closed": false, "v_closed": true, "u_step": 10, "v_step": 10, "sample_u_count": 81, "sample_v_count": 80},
+      {"count": 17, "u_count": 13, "v_count": 13, "u_closed": false, "v_closed": false, "u_step": 3, "v_step": 3, "sample_u_count": 31, "sample_v_count": 31}
+    ]
+  },
+  "evaluator": {
+    "name": "zero_tension_cardinal",
+    "degree": 3,
+    "basis": "Catmull-Rom / zero-tension Cardinal four-control-point basis",
+    "open_direction": {
+      "span_count": "N-3",
+      "control_window": "span i uses controls i..i+3 and interpolates control i+1 -> i+2",
+      "sample_count": "(N-3)*Step+1",
+      "boundary_policy": "first and last controls are tangent controls, not rendered endpoints"
+    },
+    "closed_direction": {
+      "span_count": "N",
+      "control_window": "span i uses controls i-1,i,i+1,i+2 modulo N and interpolates control i -> i+1",
+      "sample_count": "N*Step",
+      "seam_policy": "periodic topology; no duplicated seam sample"
+    },
+    "tension_policy": "Only source tension 0.0 is accepted for type 2. Nonzero tension remains unsupported because the supplied corpus contains no such record."
+  },
+  "source_evidence": {
+    "mental_ray_cardinal": "Autodesk mental ray documents Cardinal as degree 3 with evaluation-window step size 1; Cardinal uses p+2 control points for p parameters, which implies N-3 open polynomial spans for N controls.",
+    "surface_type_correspondence": "Autodesk MotionBuilder FBSurfaceType orders Cardinal at numeric code 2 and B-spline at numeric code 3. This is supporting correspondence, not a claim that every historical Softimage binary enum is definitionally identical.",
+    "step_and_closure": "MotionBuilder FBSurface exposes UStep/VStep and UClosed/VClosed alongside surface type, matching the fields decoded from the archive."
+  },
+  "outer_root_geometry": {
+    "count": 27,
+    "all_supported": true,
+    "degenerate_triangle_count": 0,
+    "representatives": [
+      {
+        "model": "movieAssets/movie_hires/MODELS/rr2-extru3_3.1-0.hrc",
+        "controls": [5, 8],
+        "closed": [false, true],
+        "step": [10, 10],
+        "samples": [21, 80],
+        "vertices": 1680,
+        "triangles": 3200,
+        "bounds": {"min": [0.0030021071434020987, -0.7959911823272706, -0.10826842468976976], "max": [0.17180258035659793, 2.0458178520202637, 0.36992013454437256]}
+      },
+      {
+        "model": "Archival.zip::walker_final/MODELS/walker_final-grid1.7-0.hrc",
+        "controls": [13, 13],
+        "closed": [false, false],
+        "step": [3, 3],
+        "samples": [31, 31],
+        "vertices": 961,
+        "triangles": 1800,
+        "bounds": {"min": [-59.63298034667969, 0.0, -59.63298034667969], "max": [59.63298034667969, 0.0, 59.63298034667969]}
+      },
+      {
+        "model": "Archival.zip::adconcept/MODELS/tank2-grid1.1-0.hrc",
+        "controls": [13, 13],
+        "closed": [false, false],
+        "step": [3, 3],
+        "samples": [31, 31],
+        "vertices": 961,
+        "triangles": 1800,
+        "bounds": {"min": [-59.63298034667969, 0.0, -59.63298034667969], "max": [59.63298034667969, 0.0, 59.63298034667969]}
+      }
+    ]
+  },
+  "end_to_end_reconstruction": [
+    {"selector": "movieAssets/movie_hires/SCENES/SemiFinal-RocketTank.1-0.dsc", "status": "ok", "nodes": 64, "meshes": 20, "primitives": 20, "materials": 6, "images": 3, "source_warning_count": 0},
+    {"selector": "Archival.zip::walker_final/SCENES/ISDF-walker_final.20-0.dsc", "status": "ok", "nodes": 115, "meshes": 78, "primitives": 116, "materials": 52, "images": 34, "source_warning_count": 0},
+    {"selector": "Archival.zip::adconcept/SCENES/hi_res-ISDF_tank.1-0.dsc", "status": "ok", "nodes": 31, "meshes": 18, "primitives": 25, "materials": 28, "images": 15, "source_warning_count": 0}
+  ],
+  "production_boundary": [
+    "Type-2 class-1 ROOTs are now suitable for Cardinal tessellation using source Step and closure flags for the exact zero-tension profiles present in the corpus.",
+    "Nested class-1 records remain non-rendering construction/history objects in the scene exporter; the 167-record census validates the binary/evaluator family but does not emit duplicate nested meshes.",
+    "No TEXCOORD set is fabricated; texture projection remains handled by the existing projection pipeline.",
+    "Nonzero type-2 tension and future unknown class-1 profiles remain explicit unsupported cases rather than guessed."
+  ]
+}

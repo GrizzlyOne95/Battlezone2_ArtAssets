@@ -1,0 +1,62 @@
+{
+  "schema": "bz2-code401-geometry-uv-census-v1",
+  "date": "2026-08-17",
+  "source": {
+    "archive": "bz2_art.7z",
+    "sha256": "d5afa754837b1a3d1217f558d1e3d110d951c0e753e6fafb15d7726e3eff96bd",
+    "scope": "1,139 primary DSC scenes"
+  },
+  "relation_graph": {
+    "unique_code401_relation_edge_count": 9985,
+    "scene_count_with_models_consuming_code401_materials": 944,
+    "model_instances_with_code401_materials": 8260,
+    "mapped_model_instances": 7580,
+    "unmapped_model_instances": 680,
+    "unmapped_note": "The dominant unresolved family is the already-documented ISDF_outro missing-root source gap; do not cross-bind similarly named roots from other groups."
+  },
+  "mapped_model_class_counts": {
+    "class4_polygon": 7303,
+    "class10_nurbs": 245,
+    "class0_helper_or_null": 24,
+    "class2": 6,
+    "class1": 2
+  },
+  "mapped_texture_attachment_counts_by_model_class": {
+    "class4_polygon": 8857,
+    "class10_nurbs": 261,
+    "class0_helper_or_null": 40,
+    "class2": 12,
+    "class1": 2
+  },
+  "class4_source_uv_state_by_model": {
+    "nonzero_serialized_uv": 6230,
+    "all_serialized_uv_zero": 1047,
+    "no_polygon_uv_corners": 26,
+    "decode_error": 0
+  },
+  "class4_texture_attachments_by_uv_state": {
+    "nonzero": {
+      "count": 7746,
+      "projection_code_counts": {"1":90,"2":874,"3":81,"4":6499,"5":115,"6":5,"7":81,"8":1},
+      "matrix_state": {"identity":6349,"nonidentity":1397}
+    },
+    "all_zero": {
+      "count": 1085,
+      "projection_code_counts": {"1":193,"2":433,"3":254,"4":106,"5":3,"6":80,"7":12,"8":4},
+      "matrix_state": {"identity":729,"nonidentity":356}
+    },
+    "no_uv_corners": {
+      "count": 26,
+      "projection_code_counts": {"4":26},
+      "matrix_state": {"identity":25,"nonidentity":1}
+    }
+  },
+  "conclusion": "Material-level code401 cannot be modeled solely as a 2D transform on serialized HRC TEXCOORD_0. A material's live Softimage texture projection must remain reconstructable because 1,047 mapped class-4 models (1,085 texture attachments) have polygon UV corners whose serialized U/V values are entirely zero, and those records retain meaningful projection-type state across codes 1 through 8.",
+  "official_semantic_constraint": "Softimage Texture.GetTransformValues calculates final UVW from Material.CurrentUV together with Texture Projection Definition, texture shader and ImageClip effects. The archive therefore needs two source-coordinate paths: preserve usable authored/current UVs where present, and reconstruct the live projection generator when the serialized UV source is absent/zero.",
+  "production_requirements": [
+    "Do not apply code401 matrix state as only KHR_texture_transform on all-zero UVs; that cannot create the missing base projection.",
+    "For class4 zero-UV cases, recover the projection generator before applying matrix/repeat/remap/crop/wrap effects.",
+    "For class4 nonzero-UV cases, retain the serialized UVs as a candidate CurrentUV source and apply only independently proven live texture effects; do not overwrite them merely because a projection code is present.",
+    "Class10/NURBS code401 attachments require the NURBS parameterization/projection path and are tracked separately."
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "schema": "bz2-hrc-class0-subtype-census-v1",
+  "date": "2026-08-17",
+  "source": {
+    "archive_sha256": "d5afa754837b1a3d1217f558d1e3d110d951c0e753e6fafb15d7726e3eff96bd",
+    "primary_hrc_count": 7665,
+    "discovered_record_count": 76578
+  },
+  "class0_counts": {
+    "outer_subtype_0": 1546,
+    "record_subtype_0": 33769,
+    "record_nonzero_subtype_total": 13,
+    "record_nonzero_by_subtype": {
+      "1": 4,
+      "18": 4,
+      "20": 4,
+      "80": 1
+    }
+  },
+  "nonzero_records": [
+    {
+      "hrc": "movieAssets/movie_hires/MODELS/rocket_tank_t-DUMMYROOT_3_2.1-0.hrc",
+      "name": "cls0",
+      "subtype": 1,
+      "count": 4,
+      "behavior": "internal/helper records; two sit between lfin_1/lfin_2 and their DSC children, two appear after lwing_1/lwing_2. Their immediate nine-float payload interpretation contains subnormal/structural values rather than a plausible SRT."
+    },
+    {
+      "hrc": "movieAssets/movie_hires/MODELS/ALL_V33_Skel-null2_1_1.1-0.hrc",
+      "name": "Face",
+      "subtype": 80,
+      "count": 1,
+      "behavior": "internal/helper record between smerge44 and torus9; not present as a DSC MODELS node; immediate nine-float payload interpretation is integer-like subnormal data rather than a plausible SRT."
+    },
+    {
+      "hrcs": [
+        "movieAssets/soft_soldier/MODELS/ALL_V12-null2_1_1.1-0.hrc",
+        "movieAssets/soft_soldier/MODELS/ALL_V12-null2_1_1.2-0.hrc"
+      ],
+      "name": "t",
+      "subtypes": [18, 20],
+      "count": 8,
+      "behavior": "internal payload signatures embedded among class-10 model records; no meaningful SRT is present at the generic class-0 immediate-transform offset."
+    }
+  ],
+  "cross_check": "The older bz2_extract.py classifier already identifies only class_id=0/subtype_id=0 as transform_node; class-0/nonzero falls through as unknown.",
+  "tested_correction": "Exclude class-0/nonzero records from the HRC hierarchy stream and decode immediate class-0 SRT only for subtype 0. This removes all 13 bogus hierarchy records. Rocket Tank then fully reconstructs; the movie soldier hierarchy reaches complete code-110 agreement before exposing an unrelated class-1 ROOT geometry limitation.",
+  "safety": "No class-0/nonzero outer HRC roots were found in the 7,665-HRC primary corpus."
+}

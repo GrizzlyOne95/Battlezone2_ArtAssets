@@ -1,0 +1,51 @@
+{
+  "schema": "bz2-softimage-texture-transform-contract-v2",
+  "date": "2026-08-17",
+  "official_sources": [
+    {
+      "name": "Texture Projection Definition Property Editor",
+      "url": "https://download.autodesk.com/global/docs/softimage2014/en_us/userguide/files/property9001.htm",
+      "evidence": "Texture-projection UVW transformation exposes Scale U/V/W, Rotation U/V/W and Translation U/V/W; these transform the projection on its support and use the picture bottom-left as pivot. Freeze bakes the UVW transformation into UV coordinates."
+    },
+    {
+      "name": "Texture.GetTransformValues",
+      "url": "https://download.autodesk.com/global/docs/softimage2012/en_us/sdkguide/si_om/Texture.GetTransformValues.html",
+      "evidence": "The final UVW values are calculated from the material CurrentUV plus texture projection definition, texture shader and image clip. Transformation, wrapping, repeats, UV remap, alternate, cropping and flip are independently selectable effects."
+    },
+    {
+      "name": "CRotation Class Reference",
+      "url": "https://download.autodesk.com/global/docs/softimage2012/en_us/sdkguide/si_cpp/class_x_s_i_1_1_m_a_t_h_1_1_c_rotation.html",
+      "evidence": "Euler constructor defaults to RotationOrder siXYZ; siXYZ is explicitly X, Y, Z order."
+    },
+    {
+      "name": "Changing the Bones' Order of Rotation",
+      "url": "https://download.autodesk.com/global/docs/softimage2013/en_us/userguide/files/skel_ChangingtheBonesxd5OrderofRotation.htm",
+      "evidence": "Softimage user documentation describes XYZ as the default Euler rotation order."
+    }
+  ],
+  "archive_evidence": {
+    "txmp_matrix_fields": "post-path +90 stores rotation XYZ in radians, scale XYZ, translation XYZ",
+    "general_xsi_blender_bridge": "io_scene_bz2xsi transposes serialized XSI Matrix rows when importing into Blender and transposes Blender matrices when exporting to XSI; this is a storage/API bridge and is distinct from the TXMP Euler-coordinate direction",
+    "stasis_ascii_binary_correspondence": "ASCII diag(-1,1,-1,1) on right-side Stasis meshes corresponds to the old binary +/-pi Y rotation TXMP family",
+    "code400_face39_geometry": "For planar XZ, applying R=Rz*Ry*Rx directly to the object-space face normal yields projection-space normal approximately (-0.1232,0.9922,0.0197); applying transpose/inverse R yields the wrong Y alignment (~0.1529)."
+  },
+  "production_contract_for_code400": {
+    "rotation_order": "Softimage default siXYZ",
+    "column_vector_rotation_matrix": "R = Rz * Ry * Rx (apply X, then Y, then Z)",
+    "projection_coordinate_direction": "serialized object-to-projection transform: q = R * p for the corpus-validated rotation-only class-4 code400 path",
+    "fitted_support_bounds": "transform the actual mesh vertices first, then derive projection-space fitted bounds; rotating pre-transform AABB corners causes base-UV errors up to 0.3189 in the 21-edge class-4 corpus",
+    "matrix_storage_boundary": "transpose only when bridging serialized full XSI Matrix rows to Blender/mathutils; do not transpose the recovered TXMP Euler transform merely because the generic XSI Matrix bridge does",
+    "support_scale_translation": "retain but do not generalize beyond evidence-covered paths; all 21 nonidentity class-4 code400 edges have unit matrix scale and zero matrix translation",
+    "code400_code401_composition": "none observed in supplied primary corpus; relation paths are mutually exclusive"
+  },
+  "correction_history": {
+    "previous_contract": "v1 described the transform as an inverse support pose",
+    "correction": "The face39 oracle was initially expressed as alignment of candidate support axes in object space. Recasting the same evidence as an actual coordinate transform makes the direction unambiguous: q=R*p maps the face normal to +/- projection Y; q=R^T*p does not."
+  },
+  "evidence_boundary": [
+    "The object-to-projection direction is independently supported by asymmetric class-4 geometry, not only documentation.",
+    "The full XYZ order is completed by Softimage's documented default siXYZ convention; face39 itself has Y rotation zero.",
+    "This contract applies to model-local relation code400 projection generation. Material-level code401 starts from Material.CurrentUV and must be validated as a UVW-effect path rather than assumed to regenerate geometry projection.",
+    "Future archives with non-default rotation-order metadata, code400/code401 overlap, class-4 nonunit support scale or matrix translation must be treated as new cases rather than silently generalized."
+  ]
+}

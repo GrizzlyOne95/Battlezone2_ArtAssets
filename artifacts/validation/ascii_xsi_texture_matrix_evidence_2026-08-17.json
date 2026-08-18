@@ -1,0 +1,64 @@
+{
+  "schema": "bz2-ascii-xsi-texture-matrix-evidence-v1",
+  "date": "2026-08-17",
+  "source": {
+    "archive": "bz2_art.7z",
+    "sha256": "d5afa754837b1a3d1217f558d1e3d110d951c0e753e6fafb15d7726e3eff96bd",
+    "ascii_xsi": "ISDF_vehicles/PICTURES/ivstas00.xsi",
+    "si_texture2d_ascii_file_count_in_extracted_corpus": 1,
+    "si_texture2d_block_count": 11
+  },
+  "ascii_blocks": [
+    {"line":693,"frame":"frm-main_body","mesh":"main_body","picture":"//SERVER/Battlezone/modelsdirectory/ISDF_vehicles/PICTURES/ivstas00.pic","matrix4x4":[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]],"matrix_identity":true},
+    {"line":2976,"frame":"frm-hp_light_2","mesh":"hp_light_2","picture":"//SERVER/Battlezone/modelsdirectory/ISDF_vehicles/PICTURES/ivstas00.pic","matrix4x4":[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]],"matrix_identity":true},
+    {"line":3108,"frame":"frm-hp_light_1","mesh":"hp_light_1","picture":"//SERVER/Battlezone/modelsdirectory/ISDF_vehicles/PICTURES/ivstas00.pic","matrix4x4":[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]],"matrix_identity":true},
+    {"line":3240,"frame":"frm-hp_special_1","mesh":"hp_special_1","picture":"//SERVER/Battlezone/modelsdirectory/ISDF_vehicles/PICTURES/ivstas00.pic","matrix4x4":[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]],"matrix_identity":true},
+    {"line":3372,"frame":"frm-hp_eyepoint","mesh":"hp_eyepoint","picture":"//SERVER/Battlezone/modelsdirectory/ISDF_vehicles/PICTURES/ivstas00.pic","matrix4x4":[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]],"matrix_identity":true},
+    {"line":3513,"frame":"frm-rlink","mesh":"rlink","picture":"//SERVER/Battlezone/modelsdirectory/ISDF_vehicles/PICTURES/ivstas00.pic","matrix4x4":[[-1,0,0,0],[0,1,0,0],[0,0,-1,0],[0,0,0,1]],"matrix_identity":false},
+    {"line":3691,"frame":"frm-rnacelle","mesh":"rnacelle","picture":"//SERVER/Battlezone/modelsdirectory/ISDF_vehicles/PICTURES/ivstas00.pic","matrix4x4":[[-1,0,0,0],[0,1,0,0],[0,0,-1,0],[0,0,0,1]],"matrix_identity":false},
+    {"line":3885,"frame":"frm-llink","mesh":"llink","picture":"//SERVER/Battlezone/modelsdirectory/ISDF_vehicles/PICTURES/ivstas00.pic","matrix4x4":[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]],"matrix_identity":true},
+    {"line":4063,"frame":"frm-lnacelle","mesh":"lnacelle","picture":"//SERVER/Battlezone/modelsdirectory/ISDF_vehicles/PICTURES/ivstas00.pic","matrix4x4":[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]],"matrix_identity":true},
+    {"line":4271,"frame":"frm-cockpit","mesh":"cockpit","picture":"Z:/modelsdirectory/ISDF_vehicles/PICTURES/glare.pic","matrix4x4":[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]],"matrix_identity":true},
+    {"line":4467,"frame":"frm-hp_com_1","mesh":"hp_com_1","picture":"//SERVER/Battlezone/modelsdirectory/ISDF_vehicles/PICTURES/ivstas00.pic","matrix4x4":[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]],"matrix_identity":true}
+  ],
+  "nonidentity_ascii_blocks": [
+    {"line":3513,"frame":"frm-rlink","mesh":"rlink","picture":"//SERVER/Battlezone/modelsdirectory/ISDF_vehicles/PICTURES/ivstas00.pic","matrix4x4":[[-1,0,0,0],[0,1,0,0],[0,0,-1,0],[0,0,0,1]],"matrix_identity":false},
+    {"line":3691,"frame":"frm-rnacelle","mesh":"rnacelle","picture":"//SERVER/Battlezone/modelsdirectory/ISDF_vehicles/PICTURES/ivstas00.pic","matrix4x4":[[-1,0,0,0],[0,1,0,0],[0,0,-1,0],[0,0,0,1]],"matrix_identity":false}
+  ],
+  "binary_old_revision": {
+    "source_group": "ISDF_vehicles",
+    "nonidentity_txmp_records": [
+      {"texture_object":"Stasis_Truck_t-t2d2.1-0","rotation_xyz_radians":[0,-3.141592502593994,0],"scale_xyz":[1,1,1],"translation_xyz":[0,0,0],"projection_code":4},
+      {"texture_object":"Stasis_Truck_t-t2d2.2-0","rotation_xyz_radians":[0,-3.141592502593994,0],"scale_xyz":[1,1,1],"translation_xyz":[0,0,0],"projection_code":4},
+      {"texture_object":"Stasis_Truck_t-t2d3.1-0","rotation_xyz_radians":[0,-3.141592502593994,0],"scale_xyz":[1,1,1],"translation_xyz":[0,0,0],"projection_code":4},
+      {"texture_object":"Stasis_Truck_t-t2d3.2-0","rotation_xyz_radians":[0,-3.141592502593994,0],"scale_xyz":[1,1,1],"translation_xyz":[0,0,0],"projection_code":4},
+      {"texture_object":"Stasis_Truck_t-t2d9.1-0","rotation_xyz_radians":[0,3.141592264175415,0],"scale_xyz":[1,1,1],"translation_xyz":[0,0,0],"projection_code":4},
+      {"texture_object":"Stasis_Truck_t-t2d9.2-0","rotation_xyz_radians":[0,3.141592264175415,0],"scale_xyz":[1,1,1],"translation_xyz":[0,0,0],"projection_code":4},
+      {"texture_object":"Stasis_Truck_t-t2d10.1-0","rotation_xyz_radians":[0,3.141592264175415,0],"scale_xyz":[1,1,1],"translation_xyz":[0,0,0],"projection_code":4},
+      {"texture_object":"Stasis_Truck_t-t2d10.2-0","rotation_xyz_radians":[0,3.141592264175415,0],"scale_xyz":[1,1,1],"translation_xyz":[0,0,0],"projection_code":4}
+    ],
+    "interpretation": "The old ISDF_vehicles TXMP family directly corroborates the ASCII pi-Y texture-matrix family. Exact t2d-number to ASCII mesh mapping remains unresolved because the matching old DSC revision is not present."
+  },
+  "later_revision": {
+    "source_group": "ISDF_STASISTRUCK",
+    "scene": "ISDF_STASISTRUCK/SCENES/version2-Stasis_Truck_t.2-0.dsc",
+    "texture_object_count": 11,
+    "matrix_state": "all 11 TXMP texture matrices are identity in this later/dedicated revision",
+    "warning": "Do not use this later scene relation numbering to assign the old ISDF_vehicles t2d2/t2d3/t2d9/t2d10 records to ivstas00 ASCII meshes."
+  },
+  "io_scene_bz2xsi_evidence": {
+    "repository": "GrizzlyOne95/io_scene_bz2xsi",
+    "initial_commit_checked": "7ffc09910a35065219714314ca9a8531b70590c3",
+    "current_behavior": "SI_Texture2D parser reads the texture filename and then skips the remainder of the block.",
+    "history_result": "The same filename-only behavior is present in the initial uploaded bz2xsi.py, so there is no older texture-matrix parser hidden in this repository history.",
+    "matrix_bridge": "Blender importer uses Matrix(xsi_matrix.to_list()).transposed(); exporter writes local_matrix.transposed() into the XSI Matrix rows.",
+    "constraint": "This establishes the general XSI/Blender matrix orientation bridge, but not texture-specific direct-vs-inverse application or code-400/code-401 composition."
+  },
+  "remaining_questions": [
+    "exact old-revision t2d object to ivstas00 ASCII mesh/material mapping",
+    "direct versus inverse texture-matrix application",
+    "general Euler construction order for asymmetric rotations",
+    "code-400/code-401 composition order",
+    "special projection modes 7 and 8"
+  ]
+}

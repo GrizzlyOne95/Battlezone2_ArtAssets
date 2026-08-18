@@ -1,0 +1,27 @@
+{
+  "schema": "bz2-code401-source-uv-vs-regeneration-v1",
+  "date": "2026-08-17",
+  "source": {
+    "archive": "bz2_art.7z",
+    "sha256": "d5afa754837b1a3d1217f558d1e3d110d951c0e753e6fafb15d7726e3eff96bd"
+  },
+  "method": "For mapped class-4 models with nonzero serialized HRC UVs and at least one identity-matrix code401 texture using projection codes 1..5, compare every polygon corner's source UV against the current fitted geometric projection from the same object-local vertex. Angular U comparisons allow integer seam wrapping.",
+  "results_by_projection_code": {
+    "1": {"model_case_count":55,"median_mean_abs_uv_delta":0.2740232508558674,"mean_of_model_means":0.3132170458279299,"model_cases_with_mean_delta_le_0_01":10,"model_cases_with_mean_delta_le_0_05":14},
+    "2": {"model_case_count":643,"median_mean_abs_uv_delta":0.30658206509218777,"mean_of_model_means":0.35345763098829175,"model_cases_with_mean_delta_le_0_01":121,"model_cases_with_mean_delta_le_0_05":123},
+    "3": {"model_case_count":60,"median_mean_abs_uv_delta":0.5208858192959188,"mean_of_model_means":0.48634124604447976,"model_cases_with_mean_delta_le_0_01":0,"model_cases_with_mean_delta_le_0_05":0},
+    "4": {"model_case_count":4147,"median_mean_abs_uv_delta":0.37085490224856443,"mean_of_model_means":0.4525390065855317,"model_cases_with_mean_delta_le_0_01":0,"model_cases_with_mean_delta_le_0_05":0},
+    "5": {"model_case_count":107,"median_mean_abs_uv_delta":0.1946896332630946,"mean_of_model_means":0.19693476734021975,"model_cases_with_mean_delta_le_0_01":0,"model_cases_with_mean_delta_le_0_05":0}
+  },
+  "conclusion": "A code401 projection code does not authorize replacing nonzero HRC TEXCOORD_0 with a newly fitted geometric projection. Most nonzero source UVs differ materially from the simple fitted generator, reflecting authored/frozen/editable projection coordinates or source-specific support settings that the compact reconstruction cannot infer from object bounds alone.",
+  "production_policy": [
+    "If a class-4 model has a usable nonzero source UV layer, preserve it as the CurrentUV/base coordinate source for code401 textures.",
+    "Generate codes1..5 from geometry only when the source UV layer is absent or entirely zero.",
+    "Apply independently proven live SI_Texture2D effects on top of the chosen CurrentUV/projection source; do not overwrite source UVs solely because +24 contains a projection type.",
+    "The near-exact subset for planar codes1/2 is useful as an oracle for the working fitted generators, not as permission to regenerate all authored UVs."
+  ],
+  "related_artifacts": [
+    "artifacts/validation/code401_geometry_uv_census_2026-08-17.json",
+    "artifacts/validation/stasis_ascii_binary_uv_matrix_preservation_2026-08-17.json"
+  ]
+}

@@ -1,0 +1,213 @@
+{
+  "schema": "bz2-full-archive-qualification-v3",
+  "date": "2026-08-17",
+  "source": {
+    "archive": "bz2_art.7z",
+    "size_bytes": 515756693,
+    "sha256": "d5afa754837b1a3d1217f558d1e3d110d951c0e753e6fafb15d7726e3eff96bd",
+    "extracted_modelsdirectory_files": 57546,
+    "extracted_modelsdirectory_bytes": 1471037637,
+    "primary_hrc_count": 7665
+  },
+  "discovery": {
+    "scene_count": 1180,
+    "primary_scene_count": 1139,
+    "archival_zip_scene_count": 41,
+    "non_scene_embedded_zips_ignored": [
+      "ISDF_vehicles/PICTURES/isdf.zip",
+      "wormhole_seq/RENDER_PICTURES/wormhole_renders.zip"
+    ]
+  },
+  "dsc_preflight": {
+    "parsed_ok": 1180,
+    "parsed_failed": 0,
+    "declared_root_count": 3815,
+    "no_root_scene_count": 0,
+    "ambiguous_root_count": 0,
+    "known_source_incomplete_group": "ISDF_outro",
+    "source_incomplete_scene_count": 14,
+    "source_incomplete_root_reference_count": 100
+  },
+  "hierarchy_census": {
+    "unique_root_hrc_member_count": 3496,
+    "dsc_code110_unique_baseline_improvement_count": 123,
+    "mapped_parent_mismatch_count_after_fixes": 0,
+    "unresolved_hrc_parent_count_after_fixes": 0,
+    "remaining_violation_root_count": 0,
+    "rules": [
+      "choose among already-valid HRC zero-run baselines using DSC code 110 only when one alternative is a unique strict improvement",
+      "never post-hoc reparent individual HRC nodes from code 110",
+      "class-0 records participate in the model hierarchy only when subtype is zero"
+    ]
+  },
+  "environment_srt_census": {
+    "declared_root_srt_count": 3815,
+    "previous_parser_recovered": 3376,
+    "previous_parser_missed": 439,
+    "scene_count_with_missed_root_srt": 118,
+    "missed_non_identity_count": 331,
+    "fix": "parse the first nine numeric values following SRT; MPRFLG is optional trailing syntax"
+  },
+  "class4_srt_census": {
+    "class4_node_count": 34308,
+    "resolved_count": 34308,
+    "unresolved_count": 0,
+    "identity_substitution_count": 0,
+    "history": {
+      "unresolved_before_archive_fixes": 3122,
+      "unresolved_after_zero_padded_tails": 1179,
+      "tree_probe_unresolved_after_tail_variants_5_6": 698,
+      "exporter_slot_fallback_resolved_from_probe_remainder": 694,
+      "true_production_unresolved_before_final_rules": 4
+    },
+    "final_four_evidence": [
+      "Artillery RIGHT_GUN is an exact X-mirror of decoded LEFT_GUN behind a zero-unit standard-tail variant",
+      "two Mire grid revisions share an identical extended envelope and identity SRT, corroborated by earlier revisions with ordinary standard-tail identity SRTs",
+      "movie explode1 SRT immediately preceding CUSA exactly matches the DSC ENVIRONMENT SRT; all 40 corpus CUSA records share the same SRT boundary"
+    ],
+    "artifact": "artifacts/validation/class4_srt_complete_validation_2026-08-17.json"
+  },
+  "texture_source_census": {
+    "txmp_record_count": 14486,
+    "txmp_decode_success_count": 14486,
+    "txmp_decode_failure_count": 0,
+    "missing_picture_source_reference_count": 2370,
+    "policy": "preserve missing picture paths as source-completeness warnings; do not invent or cross-bind picture bytes"
+  },
+  "class1_patch_census": {
+    "record_count": 183,
+    "outer_count": 29,
+    "nested_count": 154,
+    "nested_layout_decode_failure_count": 0,
+    "surface_type_code_counts": {"0": 13, "2": 167, "3": 3},
+    "common_envelope": "header + XYZ control lattice + closure/tension/step/curve + approximation fields + u16 recursion + N tagged-point u16 flags + zero u16 terminator + nine-float local SRT",
+    "type3": {
+      "record_count": 3,
+      "policy": "open code-3 roots are evaluated as tensor-product uniform cubic B-splines using source U/V Step; closed code-3 remains unsupported because no corpus example exists"
+    },
+    "type2": {
+      "record_count": 167,
+      "all_source_tension_zero": true,
+      "evaluation_success_count": 167,
+      "evaluation_failure_count": 0,
+      "outer_root_count": 27,
+      "outer_degenerate_triangle_count": 0,
+      "policy": "evaluate corpus profiles as zero-tension cubic Cardinal; open directions use tangent controls and N-3 spans, closed directions use N periodic spans without duplicate seam samples; honor serialized Step",
+      "artifact": "artifacts/validation/class1_cardinal_validation_2026-08-17.json"
+    }
+  },
+  "reference_scenes": [
+    {
+      "selector": "Archival.zip::walker_final/SCENES/ISDF-walker_final.20-0.dsc",
+      "status": "ok",
+      "nodes": 115,
+      "meshes": 78,
+      "primitives": 116,
+      "materials": 52,
+      "images": 34,
+      "source_warning_count": 0,
+      "root_count": 7,
+      "roots_with_explicit_environment_srt": 7
+    },
+    {
+      "selector": "Archival.zip::adconcept/SCENES/hi_res-ISDF_tank.1-0.dsc",
+      "status": "ok",
+      "nodes": 31,
+      "meshes": 18,
+      "primitives": 25,
+      "materials": 28,
+      "images": 15,
+      "source_warning_count": 0,
+      "root_count": 6,
+      "roots_with_explicit_environment_srt": 6
+    },
+    {
+      "selector": "movieAssets/movie_hires/SCENES/SemiFinal-RocketTank.1-0.dsc",
+      "status": "ok",
+      "nodes": 64,
+      "meshes": 20,
+      "primitives": 20,
+      "materials": 6,
+      "images": 3,
+      "qualification_role": "class-0 helper filtering, ENVIRONMENT SRT alternate syntax, and open/closed Cardinal root validation"
+    },
+    {
+      "selector": "movieAssets/movie_hires/SCENES/SOLDIER_S2g-ALL_V33_Skel.1-0.dsc",
+      "status": "ok",
+      "nodes": 797,
+      "meshes": 201,
+      "primitives": 201,
+      "materials": 143,
+      "images": 1,
+      "source_warning_count": 65,
+      "qualification_role": "zero-residual hierarchy plus class-1 type-3 open B-spline ROOT validation",
+      "type3_root": {"controls": [5,4], "step": [3,3], "samples": [7,4], "vertices": 28, "triangles": 36}
+    },
+    {
+      "selector": "ISDF_vehicles/SCENES/DEFEND-Artillery.3-0.dsc",
+      "status": "ok",
+      "nodes": 26,
+      "meshes": 24,
+      "primitives": 24,
+      "materials": 1,
+      "images": 0,
+      "qualification_role": "final class-4 zero-unit standard-tail SRT validation"
+    },
+    {
+      "selector": "movieAssets/animatics/SCENES/pluto-scene3_shot12.3-0.dsc",
+      "status": "ok",
+      "nodes": 54,
+      "meshes": 42,
+      "primitives": 73,
+      "materials": 44,
+      "images": 47,
+      "qualification_role": "final class-4 CUSA-anchored SRT validation"
+    }
+  ],
+  "stratified_reconstruction": {
+    "settings": {"curve_steps": 8, "surface_steps_u": 6, "surface_steps_v": 6},
+    "scene_count": 22,
+    "success_count": 22,
+    "failure_count": 0,
+    "source_warning_count": 26,
+    "coverage": ["ISDF vehicles", "Scion vehicles", "creatures", "buildings", "power-ups", "multiplayer props", "HUD/interface", "planets", "movie terrain", "outro", "wormhole", "foliage", "sky domes"]
+  },
+  "orchestration_qualification": {
+    "rolling_batch_checkpoint": true,
+    "clean_per_scene_output_default": true,
+    "historical_zip_source_isolation": true,
+    "non_scene_zip_classification": true,
+    "render_state_placeholder_for_unresolved_setup_soft": true
+  },
+  "durable_evidence": [
+    "artifacts/validation/hierarchy_baseline_census_2026-08-17.json",
+    "artifacts/validation/class0_subtype_census_2026-08-17.json",
+    "artifacts/validation/environment_srt_census_2026-08-17.json",
+    "artifacts/validation/class1_patch_census_2026-08-17.json",
+    "artifacts/validation/class1_bspline_root_validation_2026-08-17.json",
+    "artifacts/validation/class1_cardinal_validation_2026-08-17.json",
+    "artifacts/validation/class4_srt_complete_validation_2026-08-17.json",
+    "docs/archive-qualification-research-log-2026-08-17.md",
+    "scripts/bz2_hierarchy_census.py",
+    "scripts/bz2_class1_patch_census.py"
+  ],
+  "ci": {
+    "production_source_commit": "8139d9bb0e083d450ada78dfef7b8544c27a0cb7",
+    "pipeline_run_id": 32063562299,
+    "python_test_count": 26,
+    "python_test_failures": 0,
+    "runtime_artifact_id": 9299016304,
+    "runtime_artifact_sha256": "02ea216391aae4a8547e57ff11167016e555d737719b748d3de2cb29b46db70e"
+  },
+  "limits": {
+    "full_1180_scene_reconstruction_completed": false,
+    "blender_finishing_exercised": false,
+    "remaining_class4_unresolved_srt_count": 0,
+    "notes": [
+      "Every DSC received structural/source preflight and every declared root participated in hierarchy/SRT census work; full glTF reconstruction was exercised on exact references, a 22-scene cross-family set, and additional blocker-focused scenes.",
+      "Blender was unavailable in the qualification sandbox, so scene.blend finishing remains a local-user release check.",
+      "Do not cross-bind the 100 ISDF_outro missing root HRC references to similarly named assets from other source groups/revisions.",
+      "Class-1 type-2 Cardinal behavior is qualified for the exact zero-tension profiles in this corpus; nonzero tension and unseen profiles remain explicit unsupported cases."
+    ]
+  }
+}

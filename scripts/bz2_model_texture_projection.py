@@ -1,0 +1,281 @@
+#!/usr/bin/env python3
+"""Preserve DSC model-local Softimage texture/projection state (relation code 400).
+
+Code 400 is distinct from material-level TEXTURES2D code 401. Softimage source
+meshes may carry zero baked UVs and rely on projection state instead, so this
+layer records the model-local texture relationship without pretending that
+TEXCOORD_0 is authoritative.
+
+All common TXMP field decoding is delegated to ``bz2_texture_layers_gltf`` so
+model-local and material-level texture records cannot silently drift onto
+incompatible byte layouts as fields are recovered.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import re
+from pathlib import Path
+
+import bz2_dsc_material_gltf as dscmat
+import bz2_texture_layers_gltf as texture_layers
+import softimage_pic
+
+VERSION_RE = re.compile(r"\.\d+-\d+$")
+
+
+def parse_projection(data: bytes) -> dict:
+    """Decode one model-local TXMP using the shared production layout.
+
+    PATCH: older versions of this module redundantly re-decoded TXMP fields and
+    exposed ``scope_u32_be`` / ``scope_u16_be`` from bytes that are now known to
+    overlap URepeat/VRepeat. Keeping a second decoder also left model-local state
+    behind when +2/+4 repeats, +80 and the aligned +86/+88 words were recovered.
+    Use the common parser as the single source of truth and add only relation-400
+    status here.
+    """
+    result = texture_layers.parse_txmp(data)
+    marker = data.find(b"TXMP")
+    end = data.find(b"\0", marker + 4) if marker >= 0 else -1
+    if marker < 0 or end < 0:
+        raise ValueError("invalid TXMP record")
+    payload_length = len(data) - (end + 1)
+    result["projection_record_status"] = (
+        "decoded_common_txmp_v1" if payload_length >= 74 else "short"
+    )
+    result["projection_record_payload_bytes"] = payload_length
+    return result
+
+
+def _strip_version(name: str) -> str:
+    return VERSION_RE.sub("", name)
+
+
+def resolve_gltf_node(model_name: str, nodes: list[dict]) -> int | None:
+    """Resolve a DSC namespaced/versioned model to an HRC/glTF node name."""
+    stem = _strip_version(model_name)
+    by_name = {
+        str(node.get("name")): index
+        for index, node in enumerate(nodes)
+        if node.get("name")
+    }
+    if stem in by_name:
+        return by_name[stem]
+    candidates = [
+        (len(name), index)
+        for name, index in by_name.items()
+        if stem.endswith("-" + name)
+    ]
+    return max(candidates, default=(0, None))[1]
+
+
+def export_picture(
+    store: dscmat.SourceStore,
+    logical_source: str,
+    texture_object: str,
+    output_dir: Path,
+) -> dict:
+    data = store.read(logical_source)
+    info = softimage_pic.inspect_pic_bytes(data)
+    if info.get("kind") != "softimage_pic":
+        return {"status": info.get("kind"), "uri": None}
+    rgba, decoded = softimage_pic.decode_pic_bytes(data)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    safe_texture = re.sub(r"[^A-Za-z0-9_.-]+", "_", texture_object)
+    safe_stem = re.sub(r"[^A-Za-z0-9_.-]+", "_", Path(logical_source).stem)
+    destination = output_dir / f"{safe_texture}__{safe_stem}.png"
+    softimage_pic.write_rgba_png(
+        destination,
+        int(decoded["width"]),
+        int(decoded["height"]),
+        rgba,
+    )
+    return {
+        "status": "ok",
+        "uri": f"textures/{destination.name}",
+        "width": int(decoded["width"]),
+        "height": int(decoded["height"]),
+    }
+
+
+def augment_model_projections(
+    input_gltf: Path,
+    scene_dsc: Path,
+    asset_source: Path,
+    scene_prefix: str,
+    output_gltf: Path,
+) -> dict:
+    gltf = json.loads(input_gltf.read_text(encoding="utf-8"))
+    chapters, relations = dscmat.parse_dsc(scene_dsc)
+    store = dscmat.open_store(asset_source)
+
+    models = chapters.get("MODELS", [])
+    materials = chapters.get("MATERIALS", [])
+    texture_objects = chapters.get("TEXTURES2D", [])
+    model_materials: dict[int, list[int]] = {}
+    material_textures: dict[int, list[int]] = {}
+    model_textures: dict[int, list[int]] = {}
+
+    for relation in relations:
+        key = (
+            relation["source_chapter"],
+            relation["target_chapter"],
+            relation["relation_code"],
+        )
+        if key == ("MODELS", "MATERIALS", 300):
+            model_materials.setdefault(relation["source_index"], []).append(
+                relation["target_index"]
+            )
+        elif key == ("MATERIALS", "TEXTURES2D", 401):
+            material_textures.setdefault(relation["source_index"], []).append(
+                relation["target_index"]
+            )
+        elif key == ("MODELS", "TEXTURES2D", 400):
+            model_textures.setdefault(relation["source_index"], []).append(
+                relation["target_index"]
+            )
+
+    texture_dir = output_gltf.parent / "textures"
+    records = []
+    missing_pictures = []
+    resolved_nodes = 0
+
+    for model_index, texture_indices in sorted(model_textures.items()):
+        if not 0 <= model_index < len(models):
+            continue
+        model_name = models[model_index]
+        material_indices = model_materials.get(model_index, [])
+        node_index = resolve_gltf_node(model_name, gltf.get("nodes", []))
+        record = {
+            "model_index": model_index,
+            "model_name": model_name,
+            "gltf_node_index": node_index,
+            "material_indices": material_indices,
+            "material_names": [
+                materials[index]
+                for index in material_indices
+                if 0 <= index < len(materials)
+            ],
+            "first_material_has_401": bool(
+                material_indices and material_textures.get(material_indices[0])
+            ),
+            "local_texture_projections": [],
+        }
+
+        for order, texture_index in enumerate(texture_indices):
+            if not 0 <= texture_index < len(texture_objects):
+                continue
+            texture_name = texture_objects[texture_index]
+            texture_member = texture_layers.find_txt(store, texture_name, scene_prefix)
+            projection = {
+                "order": order,
+                "texture_index": texture_index,
+                "texture_object": texture_name,
+                "source_txt": texture_member,
+                "relation_code": 400,
+                "projection_required": True,
+            }
+            if texture_member:
+                try:
+                    projection.update(parse_projection(store.read(texture_member)))
+                    picture = texture_layers.resolve_picture(
+                        store,
+                        projection["raw_source_path"],
+                        scene_prefix,
+                    )
+                    projection["resolved_picture"] = picture
+                    if picture:
+                        projection.update(
+                            export_picture(store, picture, texture_name, texture_dir)
+                        )
+                    else:
+                        missing_pictures.append(
+                            {
+                                "model": model_name,
+                                "texture": texture_name,
+                                "raw_source_path": projection.get("raw_source_path"),
+                            }
+                        )
+                except Exception as exc:
+                    projection["status"] = f"{type(exc).__name__}: {exc}"
+            else:
+                projection["status"] = "missing_texture_object_file"
+            record["local_texture_projections"].append(projection)
+
+        if node_index is not None:
+            resolved_nodes += 1
+            extras = gltf["nodes"][node_index].setdefault("extras", {})
+            extras["bz2_dsc_model_name"] = model_name
+            extras["bz2_model_texture_projections"] = record[
+                "local_texture_projections"
+            ]
+        records.append(record)
+
+    output_gltf.parent.mkdir(parents=True, exist_ok=True)
+    output_gltf.write_text(json.dumps(gltf, indent=2), encoding="utf-8")
+    result = {
+        "schema": "bz2-model-local-texture-projection-v2",
+        "input_gltf": str(input_gltf),
+        "scene_dsc": str(scene_dsc),
+        "asset_source": str(asset_source),
+        "scene_prefix": scene_prefix,
+        "output_gltf": str(output_gltf),
+        "code400_model_count": len(model_textures),
+        "code400_edge_count": sum(len(items) for items in model_textures.values()),
+        "resolved_gltf_node_count": resolved_nodes,
+        "unresolved_gltf_node_count": len(model_textures) - resolved_nodes,
+        "unresolved_picture_count": len(missing_pictures),
+        "unresolved_pictures": missing_pictures,
+        "models": records,
+        "notes": [
+            "DSC relation code 400 is preserved as model-local TEXTURES2D/projection state and is distinct from material-level code 401.",
+            "No model projection overwrites source TEXCOORD_0; projection-dependent all-zero UVs remain distinguishable from authored polygon UVs.",
+            "Model-local and material-level TXMP records use the same shared decoder for repeat, scale/offset, crop, raw operator state, aligned auxiliary/layer words and +90 texture-matrix SRT.",
+            "TXMP +2/+4 are recovered URepeat/VRepeat and +6 is recovered UScale/VScale/UOffset/VOffset image-space placement.",
+            "TXMP +90 is confirmed compact SI_Texture2D texture-matrix RXYZ/SXYZ/TXYZ state with radians for rotation.",
+            "TXMP +24 remains raw projection/operator state. The nested high-resolution validation subset supports the practical 1..5 generator, but the full outer bz2_art.7z corpus also contains model-local codes 6 and 8 plus nonidentity +90 transforms; unsupported states must be deferred rather than forced through the subset mapping.",
+            "The earlier nested-subset +78/code-5 exclusivity does not hold across the full outer source archive. +76/+78/+80 remain raw auxiliary state and are not labeled as wrap/seam/cylindrical flags.",
+            "The TXMP crop rectangle is preserved in source pixel coordinates; +68/+70/+72 structurally duplicate x1/y0/y1 and are not repeat values.",
+        ],
+    }
+    output_gltf.with_suffix(".model_textures.json").write_text(
+        json.dumps(result, indent=2), encoding="utf-8"
+    )
+    return result
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("input_gltf", type=Path)
+    parser.add_argument("scene_dsc", type=Path)
+    parser.add_argument("asset_source", type=Path)
+    parser.add_argument("scene_prefix")
+    parser.add_argument("output_gltf", type=Path)
+    args = parser.parse_args()
+    result = augment_model_projections(
+        args.input_gltf,
+        args.scene_dsc,
+        args.asset_source,
+        args.scene_prefix,
+        args.output_gltf,
+    )
+    print(
+        json.dumps(
+            {
+                key: result[key]
+                for key in (
+                    "code400_model_count",
+                    "code400_edge_count",
+                    "resolved_gltf_node_count",
+                    "unresolved_gltf_node_count",
+                    "unresolved_picture_count",
+                )
+            },
+            indent=2,
+        )
+    )
+    return 1 if result["unresolved_picture_count"] else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

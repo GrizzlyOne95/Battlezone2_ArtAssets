@@ -1,0 +1,83 @@
+{
+  "schema": "bz2-fxdirector-validation-v1",
+  "hrc_corpus": {
+    "outer_class2_count": 81,
+    "outer_class2_subtype1_count": 78,
+    "outer_class2_subtype0_count": 3,
+    "bounded_cusb_count": 60,
+    "cusb_size_multiple_of_40_count": 60,
+    "cusb_size_distribution": {
+      "2120": 3,
+      "2160": 24,
+      "2200": 16,
+      "2240": 17
+    },
+    "active_feature_counts": {
+      "Volume_On": 38,
+      "Volume_Shard_On": 16,
+      "Flare_On": 22,
+      "Glow_On": 3,
+      "Star_On": 0,
+      "Projector_On": 0
+    }
+  },
+  "dsc_relations": {
+    "relation_code": 20000,
+    "all_code20000_edges": 136,
+    "lights_to_models_edges": 128,
+    "models_to_models_edges": 8,
+    "note": "the FxDirector scene layer intentionally consumes only LIGHTS->MODELS code-20000 relations"
+  },
+  "tank_highres": {
+    "unique_fx_relation_pairs": 2,
+    "fx_directors": [
+      {
+        "model": "tank2-fx1.1-0",
+        "effective_light": "tank2-light9.1-0",
+        "Flare_On": 1,
+        "Volume_On": 0,
+        "Flare_Scale": 0.25,
+        "Flare_Brightness": 1.0,
+        "Flare_Preset": "91 D:/SOFT3D/mental_ray/MR_Shaders/Shader_Lib\\FLARES/REAL_LIGHT_short_rays/FLARE_no_reflection"
+      },
+      {
+        "model": "tank2-fx2.1-0",
+        "effective_light": "tank2-light10.1-0",
+        "Flare_On": 1,
+        "Volume_On": 0,
+        "Flare_Scale": 0.25,
+        "Flare_Brightness": 1.0,
+        "Flare_Preset": "91 D:/SOFT3D/mental_ray/MR_Shaders/Shader_Lib\\FLARES/REAL_LIGHT_short_rays/FLARE_no_reflection"
+      }
+    ]
+  },
+  "walker_scene20": {
+    "unique_fx_relation_pairs": 2,
+    "fx_directors": [
+      {
+        "model": "walker_final-fx4.13-0",
+        "relation_source_light": "walker_final-spot2_int1.20-0",
+        "effective_light_after_2110_reverse": "walker_final-spot2.1-0",
+        "Volume_On": 1,
+        "Flare_On": 0,
+        "Volume_Maximum_Length": 200.0,
+        "Volume_Brightness": 2.0
+      },
+      {
+        "model": "walker_final-fx3.13-0",
+        "relation_source_light": "walker_final-spot3_int1.20-0",
+        "effective_light_after_2110_reverse": "walker_final-spot3.1-0",
+        "Volume_On": 1,
+        "Flare_On": 0,
+        "Volume_Maximum_Length": 200.0,
+        "Volume_Brightness": 2.0,
+        "inactive_flare_preset_retained": "91 D:/SOFT3D_3.8/mental_ray/MR_Shaders/Shader_Lib\\FLARES/CLASSIC_FLARE/FLARE_bright_reflection"
+      }
+    ]
+  },
+  "notes": [
+    "CUSB begins with a big-endian byte length; property strings start at 40-byte boundaries.",
+    "Long settings such as Flare_Preset can occupy multiple 40-byte slots and must be read to their NUL terminator before advancing to the next slot.",
+    "Class-2 FxDirector roots are renderer/effect controllers, not polygon face meshes despite the historical class-id naming used in earlier probes."
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "schema": "bz2-dsc-material-texture-validation-v1",
+  "source": "supplied bz2_art.7z / modelsdirectory/Archival.zip",
+  "targets": {
+    "high_res_isdf_tank": {
+      "scene": "NewTank/NewTank/SCENES/hi_res-ISDF_tank.1-0.dsc",
+      "hrc": "NewTank/NewTank/MODELS/tank2-NewIVTankBody.1-0.hrc",
+      "hrc_nodes": 17,
+      "class4_meshes": 15,
+      "gltf_material_primitives": 22,
+      "source_materials": 27,
+      "source_texture_images": 4,
+      "texture_files": [
+        "tankturret1.pic",
+        "turret.pic",
+        "tank.pic",
+        "TANKTURRETTOP.1.pic"
+      ],
+      "slot_errors": 0,
+      "unresolved_class4_srt": 0,
+      "independent_loader": {
+        "geometry_instances": 22,
+        "finite_bounds": true,
+        "textured_geometry_instances": 9
+      }
+    },
+    "high_res_isdf_walker": {
+      "scene": "walker_final/SCENES/ISDF-walker_final_carey.1-0.dsc",
+      "hrc": "walker_final/MODELS/walker_final_carey-null1.1-0.hrc",
+      "hrc_nodes": 104,
+      "class4_meshes": 71,
+      "gltf_material_primitives": 101,
+      "source_materials": 50,
+      "source_texture_images": 8,
+      "texture_files": [
+        "wmiddle.pic",
+        "stripes.1.pic",
+        "cavern.pic",
+        "blueglow.1.pic",
+        "chrome3.pic",
+        "pipes_shade.pic",
+        "wlowerleg.pic",
+        "wupperleg.pic"
+      ],
+      "slot_errors": 0,
+      "unresolved_class4_srt": 0,
+      "inherited_material_child_meshes": ["cube8", "cube10"],
+      "independent_loader": {
+        "geometry_instances": 101,
+        "finite_bounds": true,
+        "textured_geometry_instances": 87
+      }
+    }
+  },
+  "proven_rules": [
+    "The upper 16 bits of each class-4 polygon metadata word encode the polygon material-slot index.",
+    "The material-slot index addresses the ordered DSC MODELS-to-MATERIALS relation-code-300 list for the corresponding model node.",
+    "DSC MATERIALS-to-TEXTURES2D relation code 401 selects the texture object for a material.",
+    "Binary TEXTURES2D .txt objects contain the original source-picture reference, including Softimage PIC paths.",
+    "A class-4 child without a direct code-300 material list may inherit the nearest ancestor material list; this is required by the archived walker for cube8/cube10."
+  ]
+}
