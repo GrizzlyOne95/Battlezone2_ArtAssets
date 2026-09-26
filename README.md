@@ -4,6 +4,14 @@ Preservation and reconstruction tooling for the original Battlezone II Softimage
 
 The repository intentionally excludes the raw source dump. It contains reverse-engineering notes, Python decoders/exporters, Blender reconstruction helpers, regression fixtures, derived validation data, and selected modern exports.
 
+## Setup
+
+```powershell
+python -m pip install -r requirements.txt
+```
+
+`numpy`, `Pillow` and `shapely>=2.1` are required (Shapely triangulates multi-contour source polygons; the pipeline refuses to drop them). `py7zr` is optional.
+
 ## Full reconstruction pipeline
 
 The primary entry point is now:
@@ -63,6 +71,12 @@ python .\scripts\bz2_full_extract.py .\bz2_art.7z --all --keep-going --cache-dir
 
 `--match` accepts a case-insensitive substring or glob. `--keep-going` is useful for corpus runs because one unsupported historical scene will be recorded as a failure without stopping the remainder of the batch.
 
+Multi-scene batches run every scene in its own Python process, so a native crash is recorded as a per-scene `WorkerCrash` instead of killing the batch (the old single-process `--all` run died after ~128 scenes). Use `--jobs N` to run N scenes in parallel; the full 1,180-scene corpus takes about 23 minutes with `--jobs 16` on a 24-thread machine:
+
+```powershell
+python .\scripts\bz2_full_extract.py .\bz2_art.7z --all --keep-going --jobs 16 --cache-dir .\.bz2-source-cache
+```
+
 ### Historical ZIP revisions
 
 ZIP archives embedded inside `modelsdirectory` are extracted into isolated temporary source roots. This prevents a scene from accidentally resolving same-named HRC/MTR/TXMP/PIC files from a different historical revision.
@@ -119,8 +133,13 @@ scene.render_state.json
 reconstruction.json
 blender_command.txt
 reports/
+engine/<scene>.xsi          # engine-ready dotXSI model (BZ2 1.3 / BZCC)
+engine/<picture>.tga        # its textures
+engine/xsi_export.json      # frame/UV/material provenance
 scene.blend                 # when --blender is used
 ```
+
+`scene.gltf` uses glTF's top-left UV convention; all JSON sidecars keep Softimage's bottom-left UV space.
 
 The batch root additionally contains:
 
@@ -147,9 +166,11 @@ The current stacked pipeline includes:
 11. source UV/projection provenance;
 12. recovered repeat, scale, offset and crop state;
 13. projected UV generation for the proven planar/spherical/cylindrical operator set;
-14. FxDirector scene-control metadata;
+14. FxDirector scene-control metadata, including FX records nested inside ROOT HRCs;
 15. SETUP_SOFT / Mental Ray render-state preservation;
-16. Blender reconstruction and asset-fidelity finishing.
+16. glTF UV-convention normalization (Softimage bottom-left to glTF top-left);
+17. engine-ready dotXSI export for Battlezone II 1.3 / Battlezone: Combat Commander;
+18. Blender reconstruction and asset-fidelity finishing.
 
 The source reconstruction remains deliberately conservative where Softimage behavior has not yet been proven. In particular, special material projection modes, some non-identity texture matrices, exact environment/reflection behavior, some NURBS projection binding, and renderer-specific Mental Ray/FxDirector effects remain explicit metadata rather than guessed equivalents.
 
