@@ -24,12 +24,29 @@ except ImportError:  # pragma: no cover - Blender-only runtime
     bpy = None
 
 
-def _find_object(name: str):
-    obj = bpy.data.objects.get(name)
-    if obj is not None:
-        return obj
-    matches = [candidate for candidate in bpy.data.objects if candidate.name.startswith(name + ".")]
-    return matches[0] if matches else None
+def _find_object(name: str, extras: dict | None = None):
+    """Resolve a glTF node's Blender object.
+
+    Scene assembly can produce duplicate node names (Blender renames them
+    ``name.001``), so the node's source identity - root HRC plus record offset,
+    imported by Blender as custom properties - is matched first.
+    """
+    extras = extras or {}
+    root_model, offset = extras.get("bz2_root_hrc_model"), extras.get("source_offset")
+    if root_model is not None and offset is not None:
+        for candidate in bpy.data.objects:
+            if (
+                candidate.type == "MESH"
+                and candidate.get("bz2_root_hrc_model") == root_model
+                and candidate.get("source_offset") == offset
+            ):
+                return candidate
+    candidates = [bpy.data.objects.get(name)] + [
+        candidate for candidate in bpy.data.objects if candidate.name.startswith(name + ".")
+    ]
+    candidates = [candidate for candidate in candidates if candidate is not None]
+    meshes = [candidate for candidate in candidates if candidate.type == "MESH"]
+    return (meshes or candidates or [None])[0]
 
 
 def _safe_name(value: str, prefix: str = "BZ2") -> str:
@@ -63,8 +80,18 @@ def _load_image(record: dict, sidecar_dir: Path):
     return bpy.data.images.load(str(path), check_existing=True)
 
 
+def _softimage_point(co) -> tuple[float, float, float]:
+    """Undo Blender's glTF Y-up -> Z-up import conversion for projection math.
+
+    Blender stores imported glTF (x, y, z) as (x, -z, y). Softimage projection
+    supports (planar XY/XZ/YZ, +Y spherical/cylindrical pole) are defined in the
+    native Y-up object space, which is also the reconstructed glTF space.
+    """
+    return (float(co[0]), float(co[2]), -float(co[1]))
+
+
 def _bounds(mesh):
-    return projection_uv.bounds_from_points(tuple(vertex.co) for vertex in mesh.vertices)
+    return projection_uv.bounds_from_points(_softimage_point(vertex.co) for vertex in mesh.vertices)
 
 
 def _generate_uv_map(obj, projection: dict, uv_name: str) -> dict:
@@ -73,7 +100,7 @@ def _generate_uv_map(obj, projection: dict, uv_name: str) -> dict:
     if layer is None:
         layer = mesh.uv_layers.new(name=uv_name)
     prepared_points, bounds = projection_uv.prepare_projection_points(
-        [tuple(vertex.co) for vertex in mesh.vertices], projection
+        [_softimage_point(vertex.co) for vertex in mesh.vertices], projection
     )
     assigned = 0
     for polygon in mesh.polygons:
@@ -169,15 +196,17 @@ def _combined_source_uv_transform(layer: dict) -> tuple[tuple[float, float], tup
     offset = layer.get("si_texture2d_uv_offset") or [0.0, 0.0]
     ru = float(repeats[0]) if len(repeats) >= 1 else 1.0
     rv = float(repeats[1]) if len(repeats) >= 2 else 1.0
-    su, sv = float(scale[0]) * ru, float(scale[1]) * rv
-    ou, ov = float(offset[0]), float(offset[1])
+    # SI_Texture2D scale/offset move the texture: lookup = (uv*repeat - offset)/scale.
+    scale_u = float(scale[0]) if abs(float(scale[0])) > 1.0e-9 else 1.0
+    scale_v = float(scale[1]) if abs(float(scale[1])) > 1.0e-9 else 1.0
+    su, sv = ru / scale_u, rv / scale_v
+    # V window measured from the picture's top row: v' = 1 - ((1 - v) - o) / s.
+    ou, ov = -float(offset[0]) / scale_u, 1.0 - (1.0 - float(offset[1])) / scale_v
     crop = layer.get("crop_rect_pixels_raw") or {}
     width, height = layer.get("width"), layer.get("height")
-    if width and height and int(width) > 1 and int(height) > 1 and crop:
-        x0 = float(crop.get("x0", 0))
-        x1 = float(crop.get("x1", int(width) - 1))
-        y0 = float(crop.get("y0", 0))
-        y1 = float(crop.get("y1", int(height) - 1))
+    window = projection_uv.effective_crop(crop, int(width), int(height)) if width and height else None
+    if window is not None:
+        x0, x1, y0, y1 = window
         crop_su = (x1 - x0) / float(int(width) - 1)
         crop_sv = (y1 - y0) / float(int(height) - 1)
         su, sv = su * crop_su, sv * crop_sv
@@ -338,7 +367,7 @@ def apply_asset_uvs(gltf_path: Path, model_sidecar_path: Path, layer_sidecar_pat
             continue
         record = model_by_node.get(node_index, {})
         node_name = str(node.get("name") or "")
-        obj = _find_object(node_name)
+        obj = _find_object(node_name, node.get("extras"))
         if obj is None or getattr(obj, "type", None) != "MESH":
             missing_objects.append({"node_index": node_index, "node": node_name})
             continue
@@ -421,15 +450,16 @@ def apply_asset_uvs(gltf_path: Path, model_sidecar_path: Path, layer_sidecar_pat
                     and source_uv.get("active_uv_all_zero") is False
                     and not source_uv_is_parametric_placeholder
                 )
+                prefer_live = projection_uv.prefers_live_projection(layer)
                 can_generate_missing_projection = (
-                    not source_uv_usable
+                    (not source_uv_usable or prefer_live)
                     and projection_uv.projection_type_name(code) is not None
                     and (
                         projection_uv.matrix_srt_is_identity(layer)
                         or projection_uv.projection_rotation_supported(layer)
                     )
                 )
-                if source_uv_usable:
+                if source_uv_usable and not prefer_live:
                     # Preserve authored HRC CurrentUV. Build a separate effective UV
                     # layer with the recovered live TXMP transformation/effects.
                     uv_name = _safe_name(f"EFFECT_{texture_object}", "BZ2")
