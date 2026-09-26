@@ -84,10 +84,10 @@ def _resolve_setup_soft(
         }
 
     data = store.read(member)
-    with tempfile.NamedTemporaryFile(suffix=".sts") as handle:
-        handle.write(data)
-        handle.flush()
-        payload = sts_render_state.parse_sts(Path(handle.name))
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_sts = Path(tmpdir) / "setup.sts"
+        tmp_sts.write_bytes(data)
+        payload = sts_render_state.parse_sts(tmp_sts)
     payload["source_sts"] = member
     payload["setup_soft_name"] = name
     payload["status"] = "ok"

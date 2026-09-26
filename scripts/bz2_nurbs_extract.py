@@ -389,11 +389,11 @@ def main() -> int:
             hierarchy_dir = logical_output_dir(logical, output_root)
             hierarchy_obj = hierarchy_dir / f"{sanitize_component(PurePosixPath(logical).stem)}__hierarchy.obj"
             if container_source:
-                with tempfile.NamedTemporaryFile(suffix=".hrc") as handle:
-                    handle.write(data)
-                    handle.flush()
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    tmp_hrc = Path(tmpdir) / "source.hrc"
+                    tmp_hrc.write_bytes(data)
                     hierarchy = export_hierarchy_obj(
-                        Path(handle.name), hierarchy_obj, args.curve_steps, args.surface_steps_u, args.surface_steps_v
+                        tmp_hrc, hierarchy_obj, args.curve_steps, args.surface_steps_u, args.surface_steps_v
                     )
                 hierarchy["logical_source"] = logical
                 hierarchy["container_source"] = container_source
