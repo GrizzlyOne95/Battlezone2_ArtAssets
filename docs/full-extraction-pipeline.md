@@ -4,6 +4,16 @@
 
 The driver does not replace the format decoders. Its purpose is to make the complete archive-to-scene path safe, repeatable, and auditable.
 
+## Setup
+
+```powershell
+python -m pip install -r requirements.txt
+```
+
+`numpy`, `Pillow` and `shapely>=2.1` are required. Shapely triangulates multi-contour source polygons, and the pipeline refuses to drop them. `py7zr` is optional.
+
+Each reconstructed scene bundle under `artifacts/reconstructed/<scene>/` now also contains `engine/<scene>.xsi`, `engine/<picture>.tga` and `engine/xsi_export.json` (see `docs/engine-xsi-export.md`). `scene.gltf` uses glTF's top-left UV convention; all JSON sidecars keep Softimage's bottom-left UV space.
+
 ## Source preparation
 
 The driver accepts:
@@ -59,8 +69,11 @@ For each selected scene the driver invokes `bz2_reconstruct_scene.reconstruct()`
 8. model-local code-400 texture projections;
 9. UV provenance;
 10. FxDirector metadata;
-11. SETUP_SOFT/Mental Ray render state;
-12. final Blender handoff sidecars.
+11. glTF UV-convention normalization (Softimage bottom-left to glTF top-left);
+12. SETUP_SOFT/Mental Ray render state;
+13. final Blender handoff sidecars.
+
+The driver then runs the engine-ready dotXSI export (`bz2_xsi_export.py`, see `docs/engine-xsi-export.md`) unless `--no-xsi` is given.
 
 ### HRC hierarchy disambiguation
 
@@ -70,9 +83,19 @@ When a DSC scene is available, relation code 110 independently serializes the mo
 
 This prevents the earlier failure mode where choosing the shallowest valid HRC tree could flatten genuine parent/child chains.
 
+### Missing and cross-group ROOT HRCs
+
+A DSC ROOT normally resolves to `<prefix>/MODELS/<name>.hrc`. When that file is absent, the root may bind to an exact versioned filename elsewhere in the **same** source store (never another historical ZIP/revision) only if the candidate is unique or all candidates are byte-identical. Every such binding is listed in `cross_group_root_bindings` and in the batch record; differing candidates are refused.
+
+A scene with ROOT HRCs that exist nowhere in the archive fails as `SourceIncompleteError`, distinguishing an incomplete source dump from a decoder failure.
+
 ### Explicitly unbound source meshes
 
-A class-4 mesh that uses only slot 0 and has no direct or inherited DSC code-300 material relation is preserved as explicitly unbound source geometry. The placeholder is retained and recorded rather than inventing a material. Nonzero unresolved slots and partial authored mappings remain validation failures.
+A class-4 mesh that uses only slot 0 and has no direct or inherited DSC code-300 material relation is preserved as explicitly unbound source geometry. The placeholder is retained and recorded rather than inventing a material.
+
+### Out-of-range material slots
+
+Merged/imported objects can carry polygon material slots beyond their model's ordered code-300 list (for example PLUTO `intro_movie-obj4` keeps slots 6 and 9 of a six-material `entranceway` list). Those polygons keep their geometry on the explicit placeholder material and the scene records an `out_of_range_material_slots` source warning; no material is guessed. Slots with no authored list at all (other than the slot-0 unbound case) remain validation failures.
 
 ### Missing source pictures
 
@@ -102,7 +125,9 @@ This keeps the Blender input contract total while distinguishing an unauthored r
 
 Without `--keep-going`, processing stops after the first failed scene. With `--keep-going`, failures are recorded and later scenes continue; the command still exits nonzero if any scene failed.
 
-`batch_reconstruction.json` records source provenance, selector/prefix, output path, elapsed time, reconstruction counts, source-warning details, optional Blender status, and any failure type/message.
+`batch_reconstruction.json` records source provenance, selector/prefix, output path, elapsed time, reconstruction counts, source-warning details, cross-group bindings, XSI export status, optional Blender status, and any failure type/message.
+
+Multi-scene batches (and `--isolate`) run each scene in a fresh interpreter via a hidden `--scene-worker` mode. A native crash therefore becomes a per-scene `WorkerCrash` record with the worker's output tail instead of ending the batch; the previous single-process `--all` run segfaulted after about 128 scenes. `--jobs N` runs N isolated workers concurrently. Results are checkpointed after every scene and written in selection order.
 
 ## Blender mode
 
@@ -112,9 +137,11 @@ The Blender finisher imports the glTF, restores recovered camera/light state, re
 
 A nonzero Blender result converts that scene to a batch failure.
 
+The finisher had not previously been executed under Blender. Running it with Blender 5.2 exposed two defects, now fixed: its sibling modules were not importable under `blender --python`, and projection UVs were generated on Blender's Z-up converted coordinates instead of the native Y-up object space the projection table is defined in.
+
 ## Source-independent CI
 
-GitHub Actions compiles `scripts/` and `tests/` under Python 3.12 and runs the unittest suite. Current coverage includes archive/source routing, selection/ambiguity, cache ownership, ZIP traversal protection, output cleanup, render-state placeholders, explicit unbound materials, class-4 SRT tail variants, missing-picture warning propagation, and DSC-backed HRC hierarchy-baseline selection.
+GitHub Actions installs `requirements.txt`, compiles `scripts/` and `tests/` under Python 3.12 and runs the unittest suite. Current coverage includes archive/source routing, selection/ambiguity, cache ownership, ZIP traversal protection, output cleanup, render-state placeholders, explicit unbound materials, class-4 SRT tail variants, missing-picture warning propagation, DSC-backed HRC hierarchy-baseline selection, glTF UV-convention conversion, the engine XSI contract (single root, rigid frames, baked mirror/scale, effective UVs, staging-grid exclusion), cross-group ROOT binding, class-2 FX pointer residue, pinched multi-contour polygons, and MTR shading-model mapping.
 
 ## Real `bz2_art.7z` qualification — August 17, 2026
 
@@ -197,6 +224,30 @@ This qualification does **not** claim that all 1,180 scenes have received full g
 
 Blender is not installed in the qualification sandbox, so `.blend` finishing was not exercised here. The portable glTF/sidecar path is qualified; Blender finishing remains a local-user release check.
 
+## Full-corpus qualification — September 26, 2026
+
+Every one of the 1,180 discovered scenes was run through the complete pipeline (reconstruction, UV-convention stage and engine XSI export) with `--all --keep-going --jobs 16` in about 23 minutes. Record: `artifacts/validation/full_corpus_qualification_2026-09-26.json`.
+
+| | 2026-08-26 chunked run | 2026-09-26 |
+|---|---|---|
+| reconstructed | 1,162 | **1,166** |
+| failed | 18 | **14**, all `SourceIncompleteError` |
+| engine XSI models | — | **1,165** (+1 camera-only scene skipped) |
+
+The four decoder failures were fixed at their cause:
+
+- `movieAssets/movie_hires/SCENES/Semi_FIXED-APC_360_V3.1-0.dsc`: 13 consecutive class-2 FX records carry a 4-byte runtime pointer in their depth padding; the HRC probe now counts that slot (only this one file in the 7,665-HRC corpus changes), and the FxDirector stage resolves FX records nested inside ROOT HRCs.
+- `movieAssets/movie_hires/SCENES/ISDF_base_s3g_b-All_V7_temp.1-0.dsc`: needed Shapely for multi-contour polygons (now in `requirements.txt`) plus acceptance of "pinched" self-touching rings, repaired only when no new vertices are introduced.
+- `PLUTO/SCENES/terrain-intro_movie.4-0.dsc` and `old_SCION_RECYCLER/SCENES/fury-BASE_RECYCLER.1-0.dsc`: out-of-range material slots now use the placeholder with an explicit warning.
+
+The 14 remaining failures are the `ISDF_outro` `core_sequence-*` and `wormhole-flythru` cinematics. Their ROOT HRCs are not in the archive under any name: 13 scenes miss most or all roots, and `wormhole-flythru` binds 20 of 22 roots by exact name from `Splash/`, `Scion_outro/` and `wormhole_seq/` but still lacks two camera nulls. No successful scene needed a cross-group binding.
+
+Source warnings across successful scenes: 1,971 missing material pictures (253 scenes), 109 missing model-projection pictures (10 scenes), 4 out-of-range material-slot objects (2 scenes).
+
+Engine XSI totals: 4,120,710 triangles, 2,421 textures, zero missing texture files; 4,021 frames had scale/shear baked into geometry and 30 were mirrored; 16 staging ground grids were left out of unit models. The Stasis Truck export matches the shipped game file (see `docs/engine-xsi-export.md`).
+
+Blender 5.2 finishing was run on 10 representative bundles (Stasis v2/v4, Scavenger, hi-res tank, final walker, MIRE puff plant, PLUTO terrain, APC, ISDF base, Scion recycler): 10/10 pass after the finisher fixes listed under *Blender mode*. The finisher now ignores glTF materials that no primitive references and resolves duplicate node names by source identity.
+
 ## Recommended local commands
 
 List exact selectors once and reuse the persistent extraction cache:
@@ -216,14 +267,21 @@ python .\scripts\bz2_full_extract.py .\bz2_art.7z `
   --blender
 ```
 
-For a local full-corpus attempt:
+For a local full-corpus run:
 
 ```powershell
 python .\scripts\bz2_full_extract.py .\bz2_art.7z `
   --cache-dir .\.bz2-source-cache `
   --all `
   --keep-going `
+  --jobs 16 `
   --output .\artifacts\reconstructed
+```
+
+After improving the exporter, refresh every engine model without reconstructing:
+
+```powershell
+python .\scripts\bz2_xsi_export.py --batch .\artifacts\reconstructed\batch_reconstruction.json --jobs 16
 ```
 
 ## Remaining fidelity frontier

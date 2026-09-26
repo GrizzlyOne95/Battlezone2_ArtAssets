@@ -386,6 +386,39 @@ def _select_hierarchy_baseline(
     }
 
 
+def resolve_root_member(store, model_name: str, scene_prefix: str) -> tuple[str | None, dict | None]:
+    """Resolve a DSC ROOT model's HRC, allowing exact-name cross-group binding.
+
+    The scene's own ``<prefix>/MODELS`` always wins. Otherwise a root may bind
+    to a same-named HRC elsewhere in the *same* source store (never another
+    historical revision/ZIP) only when the versioned filename is exact and the
+    candidate is unique, or every candidate is byte-identical. The binding is
+    returned as provenance so it is never silent.
+    """
+    filename = model_name + ".hrc"
+    member = store.find_basename(filename, f"{scene_prefix}/MODELS")
+    if member:
+        return member, None
+    candidates = store.find_all_basename(filename)
+    if not candidates:
+        return None, None
+    payloads = {candidate: store.read(candidate) for candidate in candidates}
+    if len(set(payloads.values())) != 1:
+        return None, {
+            "model_name": model_name,
+            "status": "ambiguous_cross_group_candidates",
+            "candidates": candidates,
+        }
+    return candidates[0], {
+        "model_name": model_name,
+        "status": "exact_name_cross_group_binding",
+        "source_hrc": candidates[0],
+        "candidate_count": len(candidates),
+        "candidates_byte_identical": True,
+        "expected_location": f"{scene_prefix}/MODELS/{filename}",
+    }
+
+
 def assemble_scene(
     scene_dsc: Path,
     asset_source: Path,
@@ -434,16 +467,22 @@ def assemble_scene(
     output_buffer = bytearray()
     root_exports = []
     missing_roots = []
+    cross_group_bindings = []
+    ambiguous_cross_group = []
     root_export_failures = []
 
     with tempfile.TemporaryDirectory(prefix="bz2_dsc_roots_") as temp_dir_raw:
         temp_dir = Path(temp_dir_raw)
         for model_index in root_indices:
             model_name = models[model_index]["name"]
-            member = store.find_basename(model_name + ".hrc", f"{scene_prefix}/MODELS")
+            member, binding = resolve_root_member(store, model_name, scene_prefix)
+            if binding and binding["status"] != "exact_name_cross_group_binding":
+                ambiguous_cross_group.append(binding)
             if not member:
                 missing_roots.append(model_name)
                 continue
+            if binding:
+                cross_group_bindings.append(binding)
             source_hrc = temp_dir / (model_name + ".hrc")
             source_hrc.write_bytes(store.read(member))
             root_gltf = temp_dir / (model_name + ".gltf")
@@ -566,6 +605,13 @@ def assemble_scene(
         "resolved_root_count": len(root_exports),
         "missing_root_count": len(missing_roots),
         "missing_roots": missing_roots,
+        "missing_roots_absent_from_source": [
+            name for name in missing_roots
+            if name not in {item["model_name"] for item in ambiguous_cross_group}
+        ],
+        "cross_group_root_binding_count": len(cross_group_bindings),
+        "cross_group_root_bindings": cross_group_bindings,
+        "ambiguous_cross_group_roots": ambiguous_cross_group,
         "root_export_failure_count": len(root_export_failures),
         "root_export_failures": root_export_failures,
         "mapped_model_count": len(model_to_node),
@@ -587,6 +633,7 @@ def assemble_scene(
         "root_exports": root_exports,
         "notes": [
             "DSC MODELS entries marked ROOT are instantiated as scene roots; non-root model entries map to internal nodes of those HRC trees.",
+            "A ROOT HRC missing from <prefix>/MODELS binds to an exact versioned filename elsewhere in the same source store only when unique or byte-identical; each binding is listed in cross_group_root_bindings.",
             "Explicit DSC ENVIRONMENT SRT overrides the HRC root matrix exactly once; it is not multiplied on top of the HRC root transform.",
             "When an HRC admits multiple zero-run hierarchy baselines, DSC relation code 110 is used only as a context-specific tie-breaker; ambiguous/equivalent scores retain the standalone HRC default.",
             "DSC relation code 110 remains the hierarchy oracle used to regression-check the merged HRC trees after baseline selection.",

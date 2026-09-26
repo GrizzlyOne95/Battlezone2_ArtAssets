@@ -322,54 +322,119 @@ def _import_reconstructor():
     return reconstruct_scene
 
 
-def run_batch(modelsdirectory: Path, scenes: Sequence[SceneCandidate], output_root: Path, *, curve_steps: int, surface_steps_u: int, surface_steps_v: int, blender: str | None, keep_going: bool, clean_output: bool) -> dict:
-    recon = _import_reconstructor()
+def _import_xsi_exporter():
+    import bz2_xsi_export as xsi_export
+    return xsi_export
+
+
+def process_scene(recon, scene: SceneCandidate, out: Path, *, curve_steps: int, surface_steps_u: int, surface_steps_v: int, blender: str | None, xsi: bool, clean_output: bool) -> dict:
+    """Reconstruct one scene in this process and return its batch record."""
+    if clean_output and out.exists():
+        shutil.rmtree(out)
+    started = time.time()
+    item = {"scene": scene.relative, "selector": scene.selector, "source_label": scene.source_label, "asset_source": str(scene.asset_source), "prefix": scene.prefix, "output_dir": str(out.resolve())}
+    try:
+        manifest = recon.reconstruct(scene.path, scene.asset_source, scene.prefix, out, curve_steps=curve_steps, surface_steps_u=surface_steps_u, surface_steps_v=surface_steps_v)
+        render = out / "scene.render_state.json"
+        if not render.is_file():
+            render.write_text(json.dumps({"schema": "bz2-render-state-placeholder-v1", "status": "not_authored", "note": "DSC scene contains no resolved SETUP_SOFT record"}, indent=2), encoding="utf-8")
+        item.update({"status": "ok", "reconstruction_manifest": str((out / "reconstruction.json").resolve()), "source_warning_count": int(manifest.get("source_warning_count") or 0), "source_warnings": manifest.get("source_warnings") or [], "counts": {"nodes": manifest.get("final_node_count"), "meshes": manifest.get("final_mesh_count"), "primitives": manifest.get("final_primitive_count"), "materials": manifest.get("final_material_count"), "images": manifest.get("final_image_count")}})
+        if manifest.get("cross_group_bindings"):
+            item["cross_group_bindings"] = manifest["cross_group_bindings"]
+        if xsi:
+            xsi_export = _import_xsi_exporter()
+            try:
+                item["xsi"] = xsi_export.batch_summary(xsi_export.export_bundle(out))
+            except Exception as exc:  # noqa: BLE001 - recorded per scene
+                item["xsi"] = xsi_export.failure_summary(exc)
+        if blender:
+            item["blender"] = _run_blender(blender, out)
+            if item["blender"]["returncode"]:
+                raise PipelineError(f"Blender failed with exit code {item['blender']['returncode']}")
+    except Exception as exc:
+        item.update({"status": "error", "error": f"{type(exc).__name__}: {exc}"})
+    item["seconds"] = round(time.time() - started, 3)
+    return item
+
+
+def _scene_to_json(scene: SceneCandidate) -> dict:
+    return {"path": str(scene.path), "relative": scene.relative, "prefix": scene.prefix, "asset_source": str(scene.asset_source), "source_label": scene.source_label}
+
+
+def _run_isolated(scene: SceneCandidate, out: Path, options: dict, work_dir: Path, index: int) -> dict:
+    """Run one scene in a fresh interpreter so native crashes stay per-scene failures."""
+    request = work_dir / f"scene_{index:05d}.request.json"
+    result_path = work_dir / f"scene_{index:05d}.result.json"
+    request.write_text(json.dumps({"scene": _scene_to_json(scene), "out": str(out), "options": options, "result": str(result_path)}), encoding="utf-8")
+    started = time.time()
+    proc = subprocess.run([sys.executable, str(Path(__file__).resolve()), "--scene-worker", str(request)], capture_output=True, text=True, errors="replace", check=False)
+    if result_path.is_file():
+        return json.loads(result_path.read_text(encoding="utf-8"))
+    tail = (proc.stderr or proc.stdout or "")[-2000:]
+    return {"scene": scene.relative, "selector": scene.selector, "source_label": scene.source_label, "asset_source": str(scene.asset_source), "prefix": scene.prefix, "output_dir": str(out.resolve()), "status": "error", "error": f"WorkerCrash: scene worker exited with code {proc.returncode} without a result", "worker_output_tail": tail, "seconds": round(time.time() - started, 3)}
+
+
+def _scene_worker(request_path: Path) -> int:
+    request = json.loads(request_path.read_text(encoding="utf-8"))
+    data = request["scene"]
+    scene = SceneCandidate(Path(data["path"]), data["relative"], data["prefix"], Path(data["asset_source"]), data["source_label"])
+    item = process_scene(_import_reconstructor(), scene, Path(request["out"]), **request["options"])
+    Path(request["result"]).write_text(json.dumps(item), encoding="utf-8")
+    return 0
+
+
+def run_batch(modelsdirectory: Path, scenes: Sequence[SceneCandidate], output_root: Path, *, curve_steps: int, surface_steps_u: int, surface_steps_v: int, blender: str | None, keep_going: bool, clean_output: bool, xsi: bool = False, isolate: bool = False, jobs: int = 1) -> dict:
     output_root.mkdir(parents=True, exist_ok=True)
-    results = []
+    results: list[dict] = []
+    order = {scene.selector: i for i, scene in enumerate(scenes)}
     batch_started = time.time()
+    isolated = bool(isolate or jobs > 1)
+    options = {"curve_steps": curve_steps, "surface_steps_u": surface_steps_u, "surface_steps_v": surface_steps_v, "blender": blender, "xsi": xsi, "clean_output": clean_output}
 
     def snapshot() -> dict:
         # Qualification fix: persist progress after every scene so a long corpus
         # run remains diagnosable if interrupted by CI, sandbox limits, or user cancellation.
-        return {"schema": "bz2-full-extraction-batch-v1", "modelsdirectory": str(modelsdirectory.resolve()), "output_root": str(output_root.resolve()), "requested_scene_count": len(scenes), "processed_scene_count": len(results), "success_count": sum(r.get("status") == "ok" for r in results), "failure_count": sum(r.get("status") == "error" for r in results), "seconds": round(time.time() - batch_started, 3), "results": results}
+        ordered = sorted(results, key=lambda r: order.get(r.get("selector"), 0))
+        return {"schema": "bz2-full-extraction-batch-v2", "modelsdirectory": str(modelsdirectory.resolve()), "output_root": str(output_root.resolve()), "requested_scene_count": len(scenes), "processed_scene_count": len(results), "success_count": sum(r.get("status") == "ok" for r in results), "failure_count": sum(r.get("status") == "error" for r in results), "xsi_success_count": sum((r.get("xsi") or {}).get("status") == "ok" for r in results), "isolated_workers": isolated, "jobs": jobs, "seconds": round(time.time() - batch_started, 3), "results": ordered}
 
     def checkpoint() -> None:
         (output_root / "batch_reconstruction.json").write_text(json.dumps(snapshot(), indent=2), encoding="utf-8")
 
-    for i, scene in enumerate(scenes, 1):
-        out = output_root / _safe_output_name(scene.selector)
-        if clean_output and out.exists():
-            shutil.rmtree(out)
-        started = time.time()
-        print(f"[{i}/{len(scenes)}] {scene.selector}", flush=True)
-        item = {"scene": scene.relative, "selector": scene.selector, "source_label": scene.source_label, "asset_source": str(scene.asset_source), "prefix": scene.prefix, "output_dir": str(out.resolve())}
-        try:
-            manifest = recon.reconstruct(scene.path, scene.asset_source, scene.prefix, out, curve_steps=curve_steps, surface_steps_u=surface_steps_u, surface_steps_v=surface_steps_v)
-            render = out / "scene.render_state.json"
-            if not render.is_file():
-                render.write_text(json.dumps({"schema": "bz2-render-state-placeholder-v1", "status": "not_authored", "note": "DSC scene contains no resolved SETUP_SOFT record"}, indent=2), encoding="utf-8")
-            item.update({"status": "ok", "reconstruction_manifest": str((out / "reconstruction.json").resolve()), "source_warning_count": int(manifest.get("source_warning_count") or 0), "source_warnings": manifest.get("source_warnings") or [], "counts": {"nodes": manifest.get("final_node_count"), "meshes": manifest.get("final_mesh_count"), "primitives": manifest.get("final_primitive_count"), "materials": manifest.get("final_material_count"), "images": manifest.get("final_image_count")}})
-            if blender:
-                item["blender"] = _run_blender(blender, out)
-                if item["blender"]["returncode"]:
-                    raise PipelineError(f"Blender failed with exit code {item['blender']['returncode']}")
-        except Exception as exc:
-            item.update({"status": "error", "error": f"{type(exc).__name__}: {exc}"})
-            results.append(item)
-            item["seconds"] = round(time.time() - started, 3)
-            checkpoint()
-            if not keep_going:
-                break
-            continue
-        item["seconds"] = round(time.time() - started, 3)
+    def record(item: dict) -> bool:
         results.append(item)
+        status = item["status"] if item["status"] == "ok" else f"FAILED {item.get('error', '')[:160]}"
+        print(f"[{len(results)}/{len(scenes)}] {item['selector']}: {status}", flush=True)
         checkpoint()
+        return item["status"] == "ok"
+
+    if not isolated:
+        recon = _import_reconstructor()
+        for scene in scenes:
+            out = output_root / _safe_output_name(scene.selector)
+            if not record(process_scene(recon, scene, out, **options)) and not keep_going:
+                break
+        return snapshot()
+
+    import concurrent.futures
+
+    with tempfile.TemporaryDirectory(prefix="bz2-scene-workers-") as tmp:
+        work_dir = Path(tmp)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, jobs)) as pool:
+            futures = {
+                pool.submit(_run_isolated, scene, output_root / _safe_output_name(scene.selector), options, work_dir, i): scene
+                for i, scene in enumerate(scenes, 1)
+            }
+            for future in concurrent.futures.as_completed(futures):
+                if not record(future.result()) and not keep_going:
+                    for pending in futures:
+                        pending.cancel()
+                    break
     return snapshot()
 
 
 def _parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("source", type=Path, help="modelsdirectory/tree, .zip, or original .7z")
+    p.add_argument("source", type=Path, nargs="?", help="modelsdirectory/tree, .zip, or original .7z")
     p.add_argument("--scene", action="append", default=[])
     p.add_argument("--match", action="append", default=[])
     p.add_argument("--all", action="store_true")
@@ -385,11 +450,19 @@ def _parser() -> argparse.ArgumentParser:
     p.add_argument("--curve-steps", type=int, default=64)
     p.add_argument("--surface-steps-u", type=int, default=32)
     p.add_argument("--surface-steps-v", type=int, default=32)
+    p.add_argument("--no-xsi", action="store_true", help="skip the engine-ready dotXSI export stage")
+    p.add_argument("--jobs", type=int, default=1, help="parallel isolated scene workers")
+    p.add_argument("--isolate", action="store_true", help="run each scene in its own interpreter (implied for multi-scene batches and --jobs > 1)")
+    p.add_argument("--scene-worker", type=Path, help=argparse.SUPPRESS)
     return p
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
+    if args.scene_worker:
+        return _scene_worker(args.scene_worker)
+    if args.source is None:
+        _parser().error("the source argument is required")
     try:
         blender = _resolve_blender(args.blender)
         with prepared_source(args.source, cache_dir=args.cache_dir, seven_zip=args.seven_zip, refresh_cache=args.refresh_cache) as (models, source_info):
@@ -400,7 +473,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                     print(json.dumps({"source": source_info, "discovered_sources": sources, "scene_count": len(scenes), "scenes": [{"selector": s.selector, "path": s.relative, "prefix": s.prefix, "source_label": s.source_label} for s in scenes]}, indent=2))
                     return 0
                 selected = _select_scenes(scenes, args.scene, args.match, args.all)
-                batch = run_batch(models, selected, args.output.expanduser().resolve(), curve_steps=max(2, args.curve_steps), surface_steps_u=max(2, args.surface_steps_u), surface_steps_v=max(2, args.surface_steps_v), blender=blender, keep_going=args.keep_going, clean_output=not args.preserve_output)
+                batch = run_batch(models, selected, args.output.expanduser().resolve(), curve_steps=max(2, args.curve_steps), surface_steps_u=max(2, args.surface_steps_u), surface_steps_v=max(2, args.surface_steps_v), blender=blender, keep_going=args.keep_going, clean_output=not args.preserve_output, xsi=not args.no_xsi, isolate=args.isolate or len(selected) > 1, jobs=max(1, args.jobs))
                 batch.update({"source": source_info, "discovered_sources": sources})
                 path = args.output.expanduser().resolve() / "batch_reconstruction.json"
                 path.parent.mkdir(parents=True, exist_ok=True)

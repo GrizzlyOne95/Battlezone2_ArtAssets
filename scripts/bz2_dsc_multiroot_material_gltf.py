@@ -127,10 +127,10 @@ def bind_scene_materials(
         if not member:
             raise FileNotFoundError(f"ROOT HRC not found for {root_model}")
         data = store.read(member)
-        with tempfile.NamedTemporaryFile(suffix=".hrc") as handle:
-            handle.write(data)
-            handle.flush()
-            report = hrc_tree.probe(Path(handle.name))
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_hrc = Path(tmpdir) / "root.hrc"
+            tmp_hrc.write_bytes(data)
+            report = hrc_tree.probe(tmp_hrc)
         outer = dict(report.get("outer_model") or {})
         records = [dict(item) for item in report.get("tree", [])]
         if not outer:
@@ -141,6 +141,7 @@ def bind_scene_materials(
     class4_rebound = []
     class4_decode_failures = []
     slot_errors = []
+    out_of_range_slots = []
     unbound_source_materials = []
     inherited_materials = []
 
@@ -216,6 +217,27 @@ def bind_scene_materials(
                         "root_model": root_model,
                         "used_slots": used_slots,
                         "reason": "class4_without_authored_dsc_material",
+                    }
+                )
+                unresolved_slots = []
+            if unresolved_slots and material_indices:
+                # PATCH: polygons whose serialized slot exceeds the model's
+                # ordered code-300 list (seen on merged/imported objects whose
+                # extra materials were removed) keep their geometry on the
+                # explicit placeholder material. This is reported as a
+                # source-completeness warning; no material is guessed.
+                if mesh_index is not None:
+                    for primitive in gltf["meshes"][mesh_index].get("primitives", []):
+                        if primitive.get("material") is None:
+                            primitive["material"] = 0
+                out_of_range_slots.append(
+                    {
+                        "node": node.get("name"),
+                        "root_model": root_model,
+                        "used_slots": used_slots,
+                        "material_count": len(material_indices),
+                        "unresolved_slots": unresolved_slots,
+                        "resolution": "placeholder_material_0",
                     }
                 )
                 unresolved_slots = []
@@ -348,6 +370,8 @@ def bind_scene_materials(
         "class4_decode_failures": class4_decode_failures,
         "slot_error_count": len(slot_errors),
         "slot_errors": slot_errors,
+        "out_of_range_slot_count": len(out_of_range_slots),
+        "out_of_range_slots": out_of_range_slots,
         "unbound_source_material_count": len(unbound_source_materials),
         "unbound_source_materials": unbound_source_materials,
         "inherited_material_count": len(inherited_materials),

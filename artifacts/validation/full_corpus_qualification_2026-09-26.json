@@ -1,0 +1,140 @@
+{
+  "schema": "bz2-full-corpus-qualification-v1",
+  "date": "2026-09-26",
+  "source": "bz2_art.7z (515,756,693 bytes) via .bz2-source-cache; 1,139 primary + 41 Archival.zip scenes",
+  "environment": {
+    "python": "3.14",
+    "shapely": "2.1.2",
+    "blender": "5.2.2",
+    "jobs": 16,
+    "wall_seconds": 1393.698
+  },
+  "scenes": {
+    "requested": 1180,
+    "reconstructed": 1166,
+    "failed": 14,
+    "failures": [
+      {
+        "selector": "ISDF_outro/SCENES/core_sequence-dropship_seq.7-0.dsc",
+        "error": "SourceIncompleteError: 7/7 ROOT HRCs are absent from the source archive (no exact-name copy anywhere): ['cbcavee2-terrain.5-0', 'cbroad01_straight_top-terrain__e.9-0', 'cbroad01_straight_top1-terrain__e.3-0', 'dropship_seq-dummyroot__h_1.6-0', 'dropship_seq-main_body.2-0', 'dropship_seq-null1.4-0', 'dropship_seq-sphere5.3-0']"
+      },
+      {
+        "selector": "ISDF_outro/SCENES/core_sequence-dropship_seq_anim_1.2-0.dsc",
+        "error": "SourceIncompleteError: 9/9 ROOT HRCs are absent from the source archive (no exact-name copy anywhere): ['cbcavee2-terrain.5-0', 'cbroad01_straight_top-terrain__e.9-0', 'cbroad01_straight_top1-terrain__e.3-0', 'dropship_seq_anim_1-chn2.2-0', 'dropship_seq_anim_1-cyl1.1-0', 'dropship_seq_anim_1-dummyroot__h_1.2-0', 'dropship_seq_anim_1-null1.2-0', 'dropship_seq_anim_1-sphere5.1-0']"
+      },
+      {
+        "selector": "ISDF_outro/SCENES/core_sequence-dropship_seq_anim_1a.3-0.dsc",
+        "error": "SourceIncompleteError: 9/9 ROOT HRCs are absent from the source archive (no exact-name copy anywhere): ['cbcavee2-terrain.11-0', 'cbroad01_straight_top-terrain__e.11-0', 'cbroad01_straight_top1-terrain__e.5-0', 'dropship_seq_anim_1a-chn2.3-0', 'dropship_seq_anim_1a-cyl1.1-0', 'dropship_seq_anim_1a-dummyroot__h_1.3-0', 'dropship_seq_anim_1a-null1.3-0', 'dropship_seq_anim_1a-sphere5.3-0']"
+      },
+      {
+        "selector": "ISDF_outro/SCENES/core_sequence-dropship_seq_anim_1b.1-0.dsc",
+        "error": "SourceIncompleteError: 4/4 ROOT HRCs are absent from the source archive (no exact-name copy anywhere): ['cbcavee2-terrain.11-0', 'dropship_seq_anim_1b-cyl1.1-0', 'dropship_seq_anim_1b-dummyroot__h_1.1-0', 'dropship_seq_anim_1b-null1.1-0']"
+      },
+      {
+        "selector": "ISDF_outro/SCENES/core_sequence-dropship_seq_anim_2.7-0.dsc",
+        "error": "SourceIncompleteError: 9/9 ROOT HRCs are absent from the source archive (no exact-name copy anywhere): ['cbcavee2-terrain.5-0', 'cbroad01_straight_top-terrain__e.9-0', 'cbroad01_straight_top1-terrain__e.3-0', 'dropship_seq_anim_2-chn2.7-0', 'dropship_seq_anim_2-cyl1.1-0', 'dropship_seq_anim_2-dummyroot__h_1.7-0', 'dropship_seq_anim_2-null1.7-0', 'dropship_seq_anim_2-sphere5.1-0']"
+      },
+      {
+        "selector": "ISDF_outro/SCENES/core_sequence-dropship_seq_anim_2a.8-0.dsc",
+        "error": "SourceIncompleteError: 8/8 ROOT HRCs are absent from the source archive (no exact-name copy anywhere): ['cbcavee2-terrain.6-0', 'cbroad01_straight_top-terrain__e.10-0', 'cbroad01_straight_top1-terrain__e.4-0', 'dropship_seq_anim_2a-chn2.8-0', 'dropship_seq_anim_2a-dummyroot__h_1.8-0', 'dropship_seq_anim_2a-null1.8-0', 'dropship_seq_anim_2a-sphere5.1-0', 'dropship_seq1-null1.17-0']"
+      },
+      {
+        "selector": "ISDF_outro/SCENES/core_sequence-dropship_seq_anim_3.14-0.dsc",
+        "error": "SourceIncompleteError: 16/16 ROOT HRCs are absent from the source archive (no exact-name copy anywhere): ['cbcavee2-terrain.10-0', 'dropship_seq_anim_2a-dummyroot__h_1.22-0', 'dropship_seq_anim_2a-null1.22-0', 'dropship_seq_anim_2a-sphere5.5-0', 'dropship_seq_anim_3-energy_field.7-0', 'dropship_seq_anim_3-grid21.1-0', 'dropship_seq_anim_3-grid22.1-0', 'dropship_seq_anim_3-grid23.1-0']"
+      },
+      {
+        "selector": "ISDF_outro/SCENES/core_sequence-explode.4-0.dsc",
+        "error": "SourceIncompleteError: 5/7 ROOT HRCs are absent from the source archive (no exact-name copy anywhere): ['explode-null22.1-0', 'explode-null25.4-0', 'explode-sphere4.3-0', 'MIRE_hires-dummyroot__h_1.4-0', 'PLUTO-null2_1.1-0']"
+      },
+      {
+        "selector": "ISDF_outro/SCENES/core_sequence-scomp_seq.13-0.dsc",
+        "error": "SourceIncompleteError: 7/7 ROOT HRCs are absent from the source archive (no exact-name copy anywhere): ['cbroad01_straight_top-terrain__e.6-0', 'scomp_seq-null1.7-0', 'scomp_seq-nurbs2.5-0', 'scomp_seq-sphere5.6-0', 'scomp_seq-terrain__e.7-0', 'scomp_seq1-sphere5.2-0', 'super_comp5-terrain__e.9-0']"
+      },
+      {
+        "selector": "ISDF_outro/SCENES/core_sequence-scomp_seq2.7-0.dsc",
+        "error": "SourceIncompleteError: 8/8 ROOT HRCs are absent from the source archive (no exact-name copy anywhere): ['cbroad01_straight_top-terrain__e.15-0', 'cobigd2-hp_dummyroot.4-0', 'scomp_seq1-sphere5.6-0', 'scomp_seq2-null1.7-0', 'scomp_seq2-nurbs2.7-0', 'scomp_seq2-sphere5.7-0', 'scomp_seq2-terrain__e.5-0', 'super_comp5-terrain__e.14-0']"
+      },
+      {
+        "selector": "ISDF_outro/SCENES/core_sequence-the_end.1-0.dsc",
+        "error": "SourceIncompleteError: 6/7 ROOT HRCs are absent from the source archive (no exact-name copy anywhere): ['2nd_seq2-energy_field.1-0', '2nd_seq2-sphere5_1_5.1-0', 'MIRE_hires-hp_dummyroot_2_2.1-0', 'the_end-hp_dummyroot1.1-0', 'the_end-null18.1-0', 'the_end-nurbs4.1-0']"
+      },
+      {
+        "selector": "ISDF_outro/SCENES/core_sequence-the_end2.5-0.dsc",
+        "error": "SourceIncompleteError: 7/7 ROOT HRCs are absent from the source archive (no exact-name copy anywhere): ['2nd_seq2-energy_field.6-0', '2nd_seq2-sphere5_1_5.6-0', 'MIRE_hires-hp_dummyroot_2_2.6-0', 'PLUTO-null2_1_2.4-0', 'the_end2-hp_dummyroot1.5-0', 'the_end2-null18.5-0', 'the_end2-nurbs4.3-0']"
+      },
+      {
+        "selector": "ISDF_outro/SCENES/core_sequence-underground.2-0.dsc",
+        "error": "SourceIncompleteError: 3/4 ROOT HRCs are absent from the source archive (no exact-name copy anywhere): ['cbroad04_strghtshort-terrain__e.1-0', 'super_comp5-terrain__e.2-0', 'underground-terrain__e.2-0']"
+      },
+      {
+        "selector": "ISDF_outro/SCENES/wormhole-flythru.1-0.dsc",
+        "error": "SourceIncompleteError: 2/22 ROOT HRCs are absent from the source archive (no exact-name copy anywhere): ['title_sequence11-camera_null_3_2.1-0', 'title_sequence4-camera_null_4_2.1-0']"
+      }
+    ],
+    "previous_run_2026_08_26": {
+      "reconstructed": 1162,
+      "failed": 18
+    }
+  },
+  "source_warnings": {
+    "missing_material_picture_sources": {
+      "count": 1971,
+      "scenes": 253
+    },
+    "missing_model_projection_picture_sources": {
+      "count": 109,
+      "scenes": 10
+    },
+    "out_of_range_material_slots": {
+      "count": 4,
+      "scenes": 2
+    }
+  },
+  "cross_group_root_bindings": 0,
+  "engine_xsi": {
+    "status_counts": {
+      "ok": 1165,
+      "not_reconstructed": 14,
+      "skipped_no_geometry": 1
+    },
+    "triangles": 4120710,
+    "textures": 2421,
+    "frames_with_baked_scale": 4021,
+    "mirrored_frames": 30,
+    "uv_decisions": {
+      "untextured_source_uv": 9193,
+      "source_currentuv_with_live_txmp_effects": 5995,
+      "generated_projection_code_4": 1485,
+      "generated_projection_code_2": 650,
+      "model_local_code400_projection_generated": 399,
+      "generated_projection_code_1": 385,
+      "generated_projection_code_3": 343,
+      "special_material_mode_7_source_uv": 151,
+      "nonidentity_matrix_srt_fallback": 107,
+      "unsupported_projection_code_6_fallback": 70,
+      "special_material_mode_8_source_uv": 25,
+      "generated_projection_code_5": 5
+    },
+    "omitted_node_reasons": {
+      "camera": 1165,
+      "no_mesh_geometry": 5904,
+      "staging_ground_grid": 16
+    }
+  },
+  "ground_truth": {
+    "reference": "ISDF_vehicles/PICTURES/ivstas00.xsi",
+    "scene": "ISDF_STASISTRUCK/SCENES/version4-Stasis_Truck_t.2-0.dsc",
+    "result": "world matrices, vertex positions, authored UVs and SI_Material values identical for all shared frames except revision-moved hp_special_1; hardpoint UVs differ because the historical export wrote all-zero projection-dependent UVs"
+  },
+  "blender_finisher_sample": {
+    "blender": "5.2.2",
+    "scenes": 10,
+    "passed": 10,
+    "fixes": [
+      "script directory added to sys.path",
+      "projection math in native Y-up space",
+      "unreferenced glTF materials no longer counted missing",
+      "duplicate node names resolved by source identity"
+    ]
+  }
+}

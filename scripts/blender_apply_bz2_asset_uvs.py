@@ -24,12 +24,29 @@ except ImportError:  # pragma: no cover - Blender-only runtime
     bpy = None
 
 
-def _find_object(name: str):
-    obj = bpy.data.objects.get(name)
-    if obj is not None:
-        return obj
-    matches = [candidate for candidate in bpy.data.objects if candidate.name.startswith(name + ".")]
-    return matches[0] if matches else None
+def _find_object(name: str, extras: dict | None = None):
+    """Resolve a glTF node's Blender object.
+
+    Scene assembly can produce duplicate node names (Blender renames them
+    ``name.001``), so the node's source identity - root HRC plus record offset,
+    imported by Blender as custom properties - is matched first.
+    """
+    extras = extras or {}
+    root_model, offset = extras.get("bz2_root_hrc_model"), extras.get("source_offset")
+    if root_model is not None and offset is not None:
+        for candidate in bpy.data.objects:
+            if (
+                candidate.type == "MESH"
+                and candidate.get("bz2_root_hrc_model") == root_model
+                and candidate.get("source_offset") == offset
+            ):
+                return candidate
+    candidates = [bpy.data.objects.get(name)] + [
+        candidate for candidate in bpy.data.objects if candidate.name.startswith(name + ".")
+    ]
+    candidates = [candidate for candidate in candidates if candidate is not None]
+    meshes = [candidate for candidate in candidates if candidate.type == "MESH"]
+    return (meshes or candidates or [None])[0]
 
 
 def _safe_name(value: str, prefix: str = "BZ2") -> str:
@@ -63,8 +80,18 @@ def _load_image(record: dict, sidecar_dir: Path):
     return bpy.data.images.load(str(path), check_existing=True)
 
 
+def _softimage_point(co) -> tuple[float, float, float]:
+    """Undo Blender's glTF Y-up -> Z-up import conversion for projection math.
+
+    Blender stores imported glTF (x, y, z) as (x, -z, y). Softimage projection
+    supports (planar XY/XZ/YZ, +Y spherical/cylindrical pole) are defined in the
+    native Y-up object space, which is also the reconstructed glTF space.
+    """
+    return (float(co[0]), float(co[2]), -float(co[1]))
+
+
 def _bounds(mesh):
-    return projection_uv.bounds_from_points(tuple(vertex.co) for vertex in mesh.vertices)
+    return projection_uv.bounds_from_points(_softimage_point(vertex.co) for vertex in mesh.vertices)
 
 
 def _generate_uv_map(obj, projection: dict, uv_name: str) -> dict:
@@ -73,7 +100,7 @@ def _generate_uv_map(obj, projection: dict, uv_name: str) -> dict:
     if layer is None:
         layer = mesh.uv_layers.new(name=uv_name)
     prepared_points, bounds = projection_uv.prepare_projection_points(
-        [tuple(vertex.co) for vertex in mesh.vertices], projection
+        [_softimage_point(vertex.co) for vertex in mesh.vertices], projection
     )
     assigned = 0
     for polygon in mesh.polygons:
@@ -338,7 +365,7 @@ def apply_asset_uvs(gltf_path: Path, model_sidecar_path: Path, layer_sidecar_pat
             continue
         record = model_by_node.get(node_index, {})
         node_name = str(node.get("name") or "")
-        obj = _find_object(node_name)
+        obj = _find_object(node_name, node.get("extras"))
         if obj is None or getattr(obj, "type", None) != "MESH":
             missing_objects.append({"node_index": node_index, "node": node_name})
             continue
