@@ -32,10 +32,15 @@ import bz2_model_texture_projection as model_projection
 import bz2_uv_provenance_gltf as uv_provenance
 import bz2_fx_director_scene as fx_director
 import bz2_sts_render_state as sts_render_state
+import bz2_gltf_uv_convention as uv_convention
 
 
 class ReconstructionError(RuntimeError):
     pass
+
+
+class SourceIncompleteError(ReconstructionError):
+    """The DSC references ROOT HRCs whose bytes are absent from the whole source."""
 
 
 def _summary_error(name: str, summary: dict, fields: tuple[str, ...]) -> None:
@@ -146,6 +151,12 @@ def reconstruct(
         surface_steps_u=max(2, surface_steps_u),
         surface_steps_v=max(2, surface_steps_v),
     )
+    absent_roots = multi.get("missing_roots_absent_from_source") or []
+    if absent_roots:
+        raise SourceIncompleteError(
+            f"{len(absent_roots)}/{multi['root_count']} ROOT HRCs are absent from the source archive "
+            f"(no exact-name copy anywhere): {absent_roots[:8]}"
+        )
     _summary_error(
         "multi-root assembly",
         multi,
@@ -249,6 +260,11 @@ def reconstruct(
     _summary_error("FxDirector", fx, ("unresolved_count",))
     stages.append({"stage": "fx_director", "summary": fx})
 
+    # Final portable-product stage: every earlier stage and sidecar works in raw
+    # Softimage CurrentUV space; glTF consumers need top-left UV space.
+    convention = uv_convention.normalize(final_gltf)
+    stages.append({"stage": "uv_convention", "summary": convention})
+
     _sts_member, render_state = _resolve_setup_soft(
         scene_dsc,
         asset_source,
@@ -275,6 +291,14 @@ def reconstruct(
 
     final_doc = json.loads(final_gltf.read_text(encoding="utf-8"))
     source_warnings = _source_picture_warnings(layers, projections)
+    if materials.get("out_of_range_slot_count"):
+        source_warnings.append(
+            {
+                "kind": "out_of_range_material_slots",
+                "count": int(materials["out_of_range_slot_count"]),
+                "details": materials.get("out_of_range_slots", []),
+            }
+        )
     manifest = {
         "schema": "bz2-reconstructed-scene-bundle-v2",
         "scene_dsc": str(scene_dsc),
@@ -302,6 +326,7 @@ def reconstruct(
         "zero_uv_with_model_projection_count": uv.get("zero_uv_with_model_projection_count"),
         "source_warning_count": sum(int(item["count"]) for item in source_warnings),
         "source_warnings": source_warnings,
+        "cross_group_bindings": multi.get("cross_group_root_bindings") or [],
         "copied_stage_reports": copied_reports,
         "stage_summaries": [
             {
@@ -312,6 +337,7 @@ def reconstruct(
         ],
         "notes": [
             "scene.gltf is the portable reconstruction product; source-format sidecars remain alongside it for Blender and future decoder refinements",
+            "scene.gltf TEXCOORD_n/KHR_texture_transform are glTF top-left UV space; Softimage/dotXSI CurrentUV is (u, 1 - v) and all JSON sidecars remain in Softimage space",
             "source HRC polygon UVs are preserved; all-zero UVs that depend on projection state are explicitly annotated rather than treated as valid authored unwraps",
             "the Blender command now generates additive projection UV maps and restores confirmed texture scale/offset/crop while leaving source UVs intact",
             "missing source picture files are preserved as explicit source warnings rather than guessed, substituted, or treated as decoder failures",

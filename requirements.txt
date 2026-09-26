@@ -1,0 +1,5 @@
+# Reconstruction pipeline runtime dependencies.
+numpy>=1.26        # engine dotXSI export (rigid frame split, welding)
+Pillow>=10.0       # engine texture export (.tga)
+shapely>=2.1       # multi-contour class-4 polygon triangulation (required; polygons are never dropped)
+# Optional: py7zr lets bz2_full_extract.py read bz2_art.7z without a 7-Zip executable.

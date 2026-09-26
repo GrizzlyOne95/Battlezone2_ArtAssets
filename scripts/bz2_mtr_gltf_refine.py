@@ -84,9 +84,11 @@ def decode_mtr(data: bytes) -> dict:
     if not all(math.isfinite(value) for value in values):
         raise ValueError("non-finite MTR scalar")
     name = data[marker + 4 : name_end].decode("latin-1", errors="replace")
+    (shading_code,) = struct.unpack_from(">H", data, name_end + 1)
     return {
         "material_name": name,
         "scalar_offset": start,
+        "shading_model_code_u16": shading_code,
         "ambient_rgb": values[0:3],
         "diffuse_rgb": values[3:6],
         "specular_rgb": values[6:9],
@@ -96,6 +98,14 @@ def decode_mtr(data: bytes) -> dict:
         "refractive_index": values[12],
         "raw_13f": values,
     }
+
+
+# The u16 immediately after the MTRL name is the Softimage shading model.
+# Anchored against the shipped game file ISDF_vehicles/PICTURES/ivstas00.xsi:
+# code 1 -> dotXSI SI_Material shading 0 (constant, 4/4 materials) and
+# code 4 -> shading 2 (phong, 11/11). Codes 3 and 5 (~1.4% of the corpus) are
+# not independently anchored and are preserved raw.
+SHADING_CODE_TO_XSI = {1: 0, 4: 2}
 
 
 def phong_to_roughness(shininess: float) -> float:
@@ -140,7 +150,18 @@ def refine_material(material: dict, decoded: dict) -> list[str]:
         extensions["KHR_materials_ior"] = {"ior": ior}
         extensions_used.append("KHR_materials_ior")
 
+    shading_code = decoded.get("shading_model_code_u16")
+    if shading_code == 1:
+        # Constant shading: the colour/texture is displayed without lighting.
+        extensions["KHR_materials_unlit"] = {}
+        extensions_used.append("KHR_materials_unlit")
+
     material.setdefault("extras", {})["bz2_softimage_mtr"] = {
+        "shading_model_code_u16": shading_code,
+        "xsi_shading_type": SHADING_CODE_TO_XSI.get(shading_code),
+        "xsi_shading_type_status": (
+            "anchored_to_ivstas00_game_xsi" if shading_code in SHADING_CODE_TO_XSI else "unanchored_raw_code_preserved"
+        ),
         "ambient_rgb": decoded["ambient_rgb"],
         "diffuse_rgb": decoded["diffuse_rgb"],
         "specular_rgb": decoded["specular_rgb"],

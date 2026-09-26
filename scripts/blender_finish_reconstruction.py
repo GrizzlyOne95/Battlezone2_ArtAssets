@@ -19,7 +19,10 @@ import json
 import sys
 from pathlib import Path
 
-import blender_reconstruct_scene as base
+# Blender's --python does not put the script directory on sys.path.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import blender_reconstruct_scene as base  # noqa: E402
 import blender_apply_bz2_asset_uvs as asset_uvs
 
 try:
@@ -57,13 +60,26 @@ def apply_texture_layers(sidecar_path: Path) -> dict:
     payload = json.loads(sidecar_path.read_text(encoding="utf-8"))
     source_dir = Path(str(payload.get("output_gltf") or sidecar_path)).resolve().parent
     applied = overlays = 0
-    missing_materials, missing_images = [], []
+    missing_materials, missing_images, unreferenced_materials = [], [], []
+    gltf_path = source_dir / "scene.gltf"
+    referenced = None
+    if gltf_path.is_file():
+        document = json.loads(gltf_path.read_text(encoding="utf-8"))
+        referenced = {
+            primitive.get("material")
+            for mesh in document.get("meshes", [])
+            for primitive in mesh.get("primitives", [])
+        }
 
     for record in payload.get("materials") or []:
         material_name = str(record.get("material_name") or "")
         material = _find_material(material_name)
         if material is None:
-            missing_materials.append(material_name)
+            # Blender's glTF importer only creates materials some primitive uses.
+            if referenced is not None and record.get("gltf_material_index") not in referenced:
+                unreferenced_materials.append(material_name)
+            else:
+                missing_materials.append(material_name)
             continue
         layers = [item for item in (record.get("layers") or []) if item.get("uri")]
         if not layers:
@@ -147,6 +163,8 @@ def apply_texture_layers(sidecar_path: Path) -> dict:
     return {
         "applied_material_count": applied,
         "applied_alpha_overlay_count": overlays,
+        "unreferenced_material_count": len(unreferenced_materials),
+        "unreferenced_materials": unreferenced_materials,
         "missing_material_count": len(missing_materials),
         "missing_materials": missing_materials,
         "missing_image_count": len(missing_images),

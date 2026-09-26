@@ -48,18 +48,29 @@ class SourceStore:
     def find_basename(self, basename: str, prefix: str | None = None) -> str | None:
         raise NotImplementedError
 
+    def find_all_basename(self, basename: str) -> list[str]:
+        raise NotImplementedError
+
     def copy_to(self, path: str, destination: Path) -> None:
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_bytes(self.read(path))
 
 
+_DIRECTORY_INDEX: dict[Path, tuple[list[Path], dict[str, Path]]] = {}
+
+
 class DirectoryStore(SourceStore):
     def __init__(self, root: Path):
         self.root = root.resolve()
-        self._files = [path for path in self.root.rglob("*") if path.is_file()]
-        self._by_relative = {
-            path.relative_to(self.root).as_posix().lower(): path for path in self._files
-        }
+        # Every reconstruction stage opens the store; walking ~57k source files
+        # each time dominated per-scene runtime. The source tree is read-only
+        # for the life of a process, so the index is shared per root.
+        cached = _DIRECTORY_INDEX.get(self.root)
+        if cached is None:
+            files = [path for path in self.root.rglob("*") if path.is_file()]
+            by_relative = {path.relative_to(self.root).as_posix().lower(): path for path in files}
+            cached = _DIRECTORY_INDEX[self.root] = (files, by_relative)
+        self._files, self._by_relative = cached
 
     def read(self, path: str) -> bytes:
         resolved = self._by_relative.get(path.replace("\\", "/").lower())
@@ -81,6 +92,10 @@ class DirectoryStore(SourceStore):
                 continue
             candidates.append(path.relative_to(self.root).as_posix())
         return candidates[0] if candidates else None
+
+    def find_all_basename(self, basename: str) -> list[str]:
+        wanted = basename.lower()
+        return sorted(path.relative_to(self.root).as_posix() for path in self._files if path.name.lower() == wanted)
 
 
 class ZipStore(SourceStore):
@@ -113,6 +128,10 @@ class ZipStore(SourceStore):
                 continue
             candidates.append(actual)
         return candidates[0] if candidates else None
+
+    def find_all_basename(self, basename: str) -> list[str]:
+        wanted = basename.lower()
+        return sorted(actual for actual in self._by_relative.values() if Path(actual).name.lower() == wanted)
 
 
 def open_store(path: Path) -> SourceStore:
