@@ -318,6 +318,17 @@ def discover_records(data: bytes) -> list[dict]:
         class_id = int.from_bytes(data[payload : payload + 2], "big")
         subtype = int.from_bytes(data[payload + 2 : payload + 4], "big")
         zeros = zero_run_before(data, match.start())
+        pointer_residue = False
+        if class_id == 2 and zeros < 20 and (zeros + 4) >= 20 and not (zeros + 4) % 2:
+            # PATCH: consecutive class-2 FX records carry a 4-byte little-endian
+            # runtime pointer (e.g. 0x035a9b00) in the last four bytes of the
+            # depth padding. Counting that slot restores the serialized depth run.
+            # movieAssets APC_t-dummyroot_1 fx1..fx52 are then the DSC code-110
+            # siblings of fx53 instead of being dropped.
+            residue = data[match.start() - zeros - 4 : match.start() - zeros]
+            if len(residue) == 4 and residue[3] != 0 and data[match.start() - zeros - 1] != 0:
+                zeros += 4
+                pointer_residue = True
         if class_id not in KNOWN_CLASSES or zeros < 20 or zeros % 2:
             continue
         # Archive census: class 0 is a hierarchy transform/null only for
@@ -335,6 +346,8 @@ def discover_records(data: bytes) -> list[dict]:
             "subtype": subtype,
             "zero_run": zeros,
         }
+        if pointer_residue:
+            item["zero_run_pointer_residue"] = True
         _attach_srt(data, item, match.start(1))
         records.append(item)
     _attach_mesh_srt(data, records)

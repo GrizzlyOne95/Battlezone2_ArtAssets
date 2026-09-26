@@ -1,0 +1,567 @@
+{
+  "schema": "bz2-render-compare-summary-v1",
+  "date": "2026-09-26",
+  "tool": "scripts/bz2_render_compare.py --all artifacts/reconstructed --max-size 600",
+  "pairs_with_existing_reference": 114,
+  "aligned_pairs": 19,
+  "alignment_threshold": 0.2,
+  "note": "Unaligned pairs reuse an STS output name from another scene version and are not evidence. Scores include lighting, specular, reflection and glow the export cannot carry, so compare variants rather than reading absolutes.",
+  "aligned": [
+    {
+      "bundle": "Power_Ups__object-special.1-0",
+      "reference": "Power_Ups/RENDER_PICTURES/special_obj.1.pic",
+      "edge_alignment": 0.9219,
+      "gain_fit_error": 0.2048,
+      "chroma_error": 0.0,
+      "worst_parts": [
+        {
+          "part": "cyl4",
+          "pixels": 94181,
+          "gain_fit_error": 0.2048
+        }
+      ]
+    },
+    {
+      "bundle": "Archival.zip__adconcept__adconcept-tower.1-0",
+      "reference": "Archival.zip/adconcept/RENDER_PICTURES/tower.1.pic",
+      "edge_alignment": 0.8327,
+      "gain_fit_error": 0.167,
+      "chroma_error": 0.0412,
+      "worst_parts": [
+        {
+          "part": "cyl1_1",
+          "pixels": 16075,
+          "gain_fit_error": 0.0775
+        },
+        {
+          "part": "cyl3_6",
+          "pixels": 1893,
+          "gain_fit_error": 0.2832
+        },
+        {
+          "part": "cyl3_3_1_1",
+          "pixels": 1277,
+          "gain_fit_error": 0.1556
+        },
+        {
+          "part": "cyl3_4_1",
+          "pixels": 242,
+          "gain_fit_error": 0.4158
+        },
+        {
+          "part": "cube5",
+          "pixels": 422,
+          "gain_fit_error": 0.2113
+        }
+      ]
+    },
+    {
+      "bundle": "SCION_icons__icon-sspilo.1-0",
+      "reference": "ISDF_SOLDIER/RENDER_PICTURES/head2.1.pic",
+      "edge_alignment": 0.8097,
+      "gain_fit_error": 0.2755,
+      "chroma_error": 0.0,
+      "worst_parts": [
+        {
+          "part": "obj62",
+          "pixels": 379,
+          "gain_fit_error": 0.2755
+        }
+      ]
+    },
+    {
+      "bundle": "Power_Ups__object-gun.3-0",
+      "reference": "Power_Ups/RENDER_PICTURES/gun_obj.1.pic",
+      "edge_alignment": 0.7605,
+      "gain_fit_error": 0.3214,
+      "chroma_error": 0.0,
+      "worst_parts": [
+        {
+          "part": "cyl4",
+          "pixels": 12667,
+          "gain_fit_error": 0.3222
+        },
+        {
+          "part": "cyl1_2",
+          "pixels": 1077,
+          "gain_fit_error": 0.3451
+        },
+        {
+          "part": "cyl1_3",
+          "pixels": 1074,
+          "gain_fit_error": 0.3402
+        },
+        {
+          "part": "cyl1_4",
+          "pixels": 1072,
+          "gain_fit_error": 0.3353
+        },
+        {
+          "part": "cyl1_5",
+          "pixels": 1069,
+          "gain_fit_error": 0.3166
+        }
+      ]
+    },
+    {
+      "bundle": "Power_Ups__object-ammo.2-0",
+      "reference": "Power_Ups/RENDER_PICTURES/ammo_obj.1.pic",
+      "edge_alignment": 0.7413,
+      "gain_fit_error": 0.4779,
+      "chroma_error": 0.0,
+      "worst_parts": [
+        {
+          "part": "cyl1_3",
+          "pixels": 4528,
+          "gain_fit_error": 0.5098
+        },
+        {
+          "part": "cyl1_2",
+          "pixels": 4528,
+          "gain_fit_error": 0.4942
+        },
+        {
+          "part": "cyl1",
+          "pixels": 4539,
+          "gain_fit_error": 0.4773
+        },
+        {
+          "part": "cyl1_4",
+          "pixels": 4518,
+          "gain_fit_error": 0.4598
+        },
+        {
+          "part": "cyl1_5",
+          "pixels": 4535,
+          "gain_fit_error": 0.4403
+        }
+      ]
+    },
+    {
+      "bundle": "Archival.zip__adconcept__hi_res-ISDF_tank.1-0",
+      "reference": "Archival.zip/NewTank/NewTank/RENDER_PICTURES/TANK.1.pic",
+      "edge_alignment": 0.6806,
+      "gain_fit_error": 0.5449,
+      "chroma_error": 0.0484,
+      "worst_parts": [
+        {
+          "part": "bmerge5_default_2",
+          "pixels": 16862,
+          "gain_fit_error": 0.531
+        },
+        {
+          "part": "bmerge5_default_5_1",
+          "pixels": 6639,
+          "gain_fit_error": 0.5176
+        },
+        {
+          "part": "turret",
+          "pixels": 4891,
+          "gain_fit_error": 0.4933
+        },
+        {
+          "part": "bmerge14",
+          "pixels": 1716,
+          "gain_fit_error": 0.5027
+        },
+        {
+          "part": "gun_frame",
+          "pixels": 823,
+          "gain_fit_error": 0.9721
+        }
+      ]
+    },
+    {
+      "bundle": "Archival.zip__adconcept__pluto-straight_open.2-0",
+      "reference": "Archival.zip/adconcept/RENDER_PICTURES/pluto.1.pic",
+      "edge_alignment": 0.6763,
+      "gain_fit_error": 0.4173,
+      "chroma_error": 0.017,
+      "worst_parts": [
+        {
+          "part": "grid6",
+          "pixels": 211143,
+          "gain_fit_error": 0.3342
+        },
+        {
+          "part": "grid6_2",
+          "pixels": 14972,
+          "gain_fit_error": 0.3741
+        },
+        {
+          "part": "main_body",
+          "pixels": 8931,
+          "gain_fit_error": 0.3806
+        },
+        {
+          "part": "left_calf",
+          "pixels": 6597,
+          "gain_fit_error": 0.4203
+        },
+        {
+          "part": "left_arm",
+          "pixels": 3793,
+          "gain_fit_error": 0.5083
+        }
+      ]
+    },
+    {
+      "bundle": "Archival.zip__NewTank__NewTank__hires-tank2.17-0",
+      "reference": "Archival.zip/NewTank/NewTank/RENDER_PICTURES/TANK.1.pic",
+      "edge_alignment": 0.6749,
+      "gain_fit_error": 0.5487,
+      "chroma_error": 0.0496,
+      "worst_parts": [
+        {
+          "part": "bmerge5_default_2",
+          "pixels": 16862,
+          "gain_fit_error": 0.531
+        },
+        {
+          "part": "bmerge5_default_5_1",
+          "pixels": 6639,
+          "gain_fit_error": 0.5176
+        },
+        {
+          "part": "turret",
+          "pixels": 4891,
+          "gain_fit_error": 0.4933
+        },
+        {
+          "part": "gun_frame",
+          "pixels": 823,
+          "gain_fit_error": 0.9721
+        },
+        {
+          "part": "LEFT_FIN_default",
+          "pixels": 1343,
+          "gain_fit_error": 0.5509
+        }
+      ]
+    },
+    {
+      "bundle": "misceffects__effects__building-cursor.2-0",
+      "reference": "misceffects/effects/RENDER_PICTURES/cursor.0.pic",
+      "edge_alignment": 0.6595,
+      "gain_fit_error": 0.3788,
+      "chroma_error": 0.1824,
+      "worst_parts": [
+        {
+          "part": "obj15",
+          "pixels": 77,
+          "gain_fit_error": 0.5399
+        },
+        {
+          "part": "cone4",
+          "pixels": 81,
+          "gain_fit_error": 0.1988
+        }
+      ]
+    },
+    {
+      "bundle": "Archival.zip__walker_final__ISDF-walker_final_carey2.1-0",
+      "reference": "Archival.zip/walker_final/RENDER_PICTURES/walker.1.pic",
+      "edge_alignment": 0.4913,
+      "gain_fit_error": 0.69,
+      "chroma_error": 0.1272,
+      "worst_parts": [
+        {
+          "part": "age11bda_2_1",
+          "pixels": 8694,
+          "gain_fit_error": 0.5015
+        },
+        {
+          "part": "age11rcv24",
+          "pixels": 3924,
+          "gain_fit_error": 0.8192
+        },
+        {
+          "part": "bmerge1",
+          "pixels": 7485,
+          "gain_fit_error": 0.4238
+        },
+        {
+          "part": "cube4",
+          "pixels": 2698,
+          "gain_fit_error": 0.8858
+        },
+        {
+          "part": "cube1",
+          "pixels": 6793,
+          "gain_fit_error": 0.3119
+        }
+      ]
+    },
+    {
+      "bundle": "Archival.zip__adconcept__box_cover-walker.3-0",
+      "reference": "Archival.zip/adconcept/RENDER_PICTURES/walka.0.pic",
+      "edge_alignment": 0.4295,
+      "gain_fit_error": 0.6689,
+      "chroma_error": 0.1684,
+      "worst_parts": [
+        {
+          "part": "age11bda_2_1",
+          "pixels": 16816,
+          "gain_fit_error": 0.5273
+        },
+        {
+          "part": "age11rcv17",
+          "pixels": 21269,
+          "gain_fit_error": 0.2964
+        },
+        {
+          "part": "bmerge1",
+          "pixels": 7492,
+          "gain_fit_error": 0.6474
+        },
+        {
+          "part": "cube5",
+          "pixels": 5784,
+          "gain_fit_error": 0.5143
+        },
+        {
+          "part": "cube1",
+          "pixels": 4433,
+          "gain_fit_error": 0.6594
+        }
+      ]
+    },
+    {
+      "bundle": "Power_Ups__object-missile.3-0",
+      "reference": "Power_Ups/RENDER_PICTURES/missile_obj2.1.pic",
+      "edge_alignment": 0.3446,
+      "gain_fit_error": 0.2619,
+      "chroma_error": 0.0,
+      "worst_parts": [
+        {
+          "part": "cyl3",
+          "pixels": 5335,
+          "gain_fit_error": 0.2618
+        }
+      ]
+    },
+    {
+      "bundle": "Scion_outro__rend_dt-seq1_anim.5-0",
+      "reference": "Scion_outro/RENDER_PICTURES/rend_dt.1.pic",
+      "edge_alignment": 0.2983,
+      "gain_fit_error": 0.6843,
+      "chroma_error": 0.2574,
+      "worst_parts": [
+        {
+          "part": "obj52",
+          "pixels": 29761,
+          "gain_fit_error": 0.6431
+        },
+        {
+          "part": "sphere2",
+          "pixels": 9666,
+          "gain_fit_error": 0.9807
+        },
+        {
+          "part": "sphere__2_1",
+          "pixels": 11122,
+          "gain_fit_error": 0.3973
+        },
+        {
+          "part": "grid2",
+          "pixels": 4383,
+          "gain_fit_error": 0.4524
+        },
+        {
+          "part": "obj2",
+          "pixels": 14223,
+          "gain_fit_error": 0.1338
+        }
+      ]
+    },
+    {
+      "bundle": "Scion_outro__rend_dt2-seq1_anim.3-0",
+      "reference": "Scion_outro/RENDER_PICTURES/rend_dt.0.pic",
+      "edge_alignment": 0.2958,
+      "gain_fit_error": 0.587,
+      "chroma_error": 0.1555,
+      "worst_parts": [
+        {
+          "part": "obj52",
+          "pixels": 29761,
+          "gain_fit_error": 0.5962
+        },
+        {
+          "part": "sphere2",
+          "pixels": 9666,
+          "gain_fit_error": 0.4637
+        },
+        {
+          "part": "sphere__2_1",
+          "pixels": 11122,
+          "gain_fit_error": 0.3979
+        },
+        {
+          "part": "obj2",
+          "pixels": 14223,
+          "gain_fit_error": 0.152
+        },
+        {
+          "part": "grid2",
+          "pixels": 4383,
+          "gain_fit_error": 0.4499
+        }
+      ]
+    },
+    {
+      "bundle": "PLANETS__Loading_Screen-REND_hires.7-0",
+      "reference": "PLANETS/RENDER_PICTURES/rend_all.1.pic",
+      "edge_alignment": 0.2755,
+      "gain_fit_error": 0.8756,
+      "chroma_error": 0.4683,
+      "worst_parts": [
+        {
+          "part": "nebula4",
+          "pixels": 156764,
+          "gain_fit_error": 0.8025
+        },
+        {
+          "part": "giant_2",
+          "pixels": 47975,
+          "gain_fit_error": 0.7017
+        },
+        {
+          "part": "clouds1",
+          "pixels": 33326,
+          "gain_fit_error": 0.739
+        },
+        {
+          "part": "giant_1",
+          "pixels": 25806,
+          "gain_fit_error": 0.6281
+        },
+        {
+          "part": "obj69",
+          "pixels": 3266,
+          "gain_fit_error": 0.9517
+        }
+      ]
+    },
+    {
+      "bundle": "Scion_outro__mire_dt-seq1_anim.4-0",
+      "reference": "Scion_outro/RENDER_PICTURES/mire_dt.1.pic",
+      "edge_alignment": 0.2461,
+      "gain_fit_error": 0.8097,
+      "chroma_error": 0.1902,
+      "worst_parts": [
+        {
+          "part": "sphere2",
+          "pixels": 10112,
+          "gain_fit_error": 0.7718
+        },
+        {
+          "part": "sphere1",
+          "pixels": 16637,
+          "gain_fit_error": 0.3999
+        },
+        {
+          "part": "cube5__2_15_1",
+          "pixels": 6344,
+          "gain_fit_error": 0.9113
+        },
+        {
+          "part": "cyl11",
+          "pixels": 4495,
+          "gain_fit_error": 0.8233
+        },
+        {
+          "part": "obj1__2_15",
+          "pixels": 4194,
+          "gain_fit_error": 0.736
+        }
+      ]
+    },
+    {
+      "bundle": "PLANETS__Loading_Screen-CORE_hires.2-0",
+      "reference": "PLANETS/RENDER_PICTURES/core_load.1.pic",
+      "edge_alignment": 0.2415,
+      "gain_fit_error": 0.8521,
+      "chroma_error": 0.2731,
+      "worst_parts": [
+        {
+          "part": "nebula4",
+          "pixels": 165982,
+          "gain_fit_error": 0.6894
+        },
+        {
+          "part": "clouds1",
+          "pixels": 53110,
+          "gain_fit_error": 0.8023
+        },
+        {
+          "part": "obj72",
+          "pixels": 11190,
+          "gain_fit_error": 0.9483
+        },
+        {
+          "part": "obj76",
+          "pixels": 12161,
+          "gain_fit_error": 0.7996
+        },
+        {
+          "part": "obj69",
+          "pixels": 4701,
+          "gain_fit_error": 0.8762
+        }
+      ]
+    },
+    {
+      "bundle": "LOGO__LOGO-EARTHFLASH.9-0",
+      "reference": "LOGO/RENDER_PICTURES/FLASH.130.pic",
+      "edge_alignment": 0.2334,
+      "gain_fit_error": 0.574,
+      "chroma_error": 0.0886,
+      "worst_parts": [
+        {
+          "part": "sphere10",
+          "pixels": 39944,
+          "gain_fit_error": 0.5705
+        },
+        {
+          "part": "sphere11",
+          "pixels": 36824,
+          "gain_fit_error": null
+        }
+      ]
+    },
+    {
+      "bundle": "PLANETS__Loading_Screen-DARK_hires.10-0",
+      "reference": "PLANETS/RENDER_PICTURES/dark_load.1.pic",
+      "edge_alignment": 0.2328,
+      "gain_fit_error": 0.6672,
+      "chroma_error": 0.1855,
+      "worst_parts": [
+        {
+          "part": "clouds2",
+          "pixels": 82985,
+          "gain_fit_error": 0.6443
+        },
+        {
+          "part": "nurbs3",
+          "pixels": 82761,
+          "gain_fit_error": 0.4527
+        },
+        {
+          "part": "cube35_3",
+          "pixels": 34852,
+          "gain_fit_error": 0.6081
+        },
+        {
+          "part": "nebula",
+          "pixels": 27145,
+          "gain_fit_error": 0.599
+        },
+        {
+          "part": "obj76",
+          "pixels": 10351,
+          "gain_fit_error": 0.9029
+        }
+      ]
+    }
+  ]
+}

@@ -35,8 +35,11 @@ class Code401CurrentUVEffectsTests(unittest.TestCase):
             "si_texture2d_uv_offset":[0.1,-0.2],
         }
         u,v,w=uv.apply_current_uv_effects((1,0,0),p)
-        self.assertAlmostEqual(u,0.1,places=6)
-        self.assertAlmostEqual(v,5.8,places=6)
+        # (1,0) rotated 90 deg -> (0,1); repeat -> (0,3); texture scale/offset
+        # move the texture: u = (u - o) / s, and V is placed from the picture's
+        # top row: v = 1 - ((1 - v) - o) / s.
+        self.assertAlmostEqual(u,(0-0.1)/0.5,places=6)
+        self.assertAlmostEqual(v,1-((1-3)+0.2)/2,places=6)
         self.assertAlmostEqual(w,0,places=6)
 
     def test_unobserved_matrix_scale_is_rejected(self):
