@@ -270,16 +270,40 @@ def _triangulate(mesh: dict, contours: list[list[dict]]) -> list[list[dict]]:
     shell = loops_2d[shell_index]
     holes = [loop for index, loop in enumerate(loops_2d) if index != shell_index]
     polygon = Polygon(shell, holes)
-    if not polygon.is_valid:
-        raise RuntimeError("invalid projected multi-contour HRC polygon")
 
     corner_by_xy: dict[tuple[float, float], dict] = {}
     for contour, coordinates in zip(contours, loops_2d):
         for corner, xy in zip(contour, coordinates):
             corner_by_xy.setdefault((round(xy[0], 9), round(xy[1], 9)), corner)
 
+    parts = [polygon]
+    if not polygon.is_valid:
+        # PATCH: Softimage accepts rings that touch themselves at an existing
+        # vertex ("pinched" shells/holes); GEOS rejects them. Repair the region
+        # and accept the repair only when it introduces no new vertices, so every
+        # emitted triangle still uses original source corners/UVs/normals.
+        from shapely import make_valid
+
+        repaired = make_valid(polygon)
+        geoms = list(getattr(repaired, "geoms", [repaired]))
+        parts = []
+        while geoms:
+            geom = geoms.pop()
+            if geom.geom_type == "Polygon":
+                parts.append(geom)
+            elif hasattr(geom, "geoms"):
+                geoms.extend(geom.geoms)
+        repaired_keys = {
+            (round(x, 9), round(y, 9))
+            for part in parts
+            for ring in [part.exterior, *part.interiors]
+            for x, y in ring.coords
+        }
+        if not parts or not repaired_keys <= set(corner_by_xy):
+            raise RuntimeError("invalid projected multi-contour HRC polygon")
+
     triangles = []
-    for triangle in constrained_delaunay_triangles(polygon).geoms:
+    for triangle in (tri for part in parts for tri in constrained_delaunay_triangles(part).geoms):
         output = []
         for xy in list(triangle.exterior.coords)[:-1]:
             key = round(xy[0], 9), round(xy[1], 9)

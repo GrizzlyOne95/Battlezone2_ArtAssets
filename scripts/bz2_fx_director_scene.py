@@ -98,6 +98,33 @@ def parse_fx_director(data: bytes) -> dict | None:
     }
 
 
+def _nested_fx_record(gltf: dict, store, scene_prefix: str, model_index: int, model_name: str):
+    """Return (member label, record bytes, class, subtype) for an FX record nested in a ROOT HRC."""
+    import bz2_hrc_tree_probe as tree_probe
+
+    node_index = _find_model_node(gltf, model_index, model_name)
+    if node_index is None:
+        return None
+    extras = gltf["nodes"][node_index].get("extras") or {}
+    root_model, offset = extras.get("bz2_root_hrc_model"), extras.get("source_offset")
+    if not root_model or offset is None:
+        return None
+    root_member = store.find_basename(root_model + ".hrc", f"{scene_prefix}/MODELS") or next(
+        iter(store.find_all_basename(root_model + ".hrc")), None
+    )
+    if not root_member:
+        return None
+    data = store.read(root_member)
+    offset = int(offset)
+    following = sorted(
+        int(record["offset"]) - int(record["zero_run"])
+        for record in tree_probe.discover_records(data)
+        if int(record["offset"]) > offset
+    )
+    end = following[0] if following else len(data)
+    return f"{root_member}#{offset}", data[offset:end], extras.get("class_id"), extras.get("subtype")
+
+
 def _find_model_node(gltf: dict, model_index: int, model_name: str) -> int | None:
     for index, node in enumerate(gltf.get("nodes", [])):
         extras = node.get("extras") or {}
@@ -154,11 +181,17 @@ def attach_fx_directors(
             continue
         model_name = models[model_index]
         member = store.find_basename(model_name + ".hrc", f"{scene_prefix}/MODELS")
-        if not member:
-            unresolved.append({"model_name": model_name, "reason": "source_hrc_missing"})
-            continue
-        data = store.read(member)
-        class_id, subtype = _outer_class(data)
+        if member:
+            data = store.read(member)
+            class_id, subtype = _outer_class(data)
+        else:
+            # FX models may be nested class-2 records inside a ROOT HRC rather
+            # than standalone files; resolve them through the mapped scene node.
+            nested = _nested_fx_record(gltf, store, scene_prefix, model_index, model_name)
+            if nested is None:
+                unresolved.append({"model_name": model_name, "reason": "source_hrc_missing"})
+                continue
+            member, data, class_id, subtype = nested
         decoded = parse_fx_director(data)
         if class_id != 2 or decoded is None:
             unresolved.append(
