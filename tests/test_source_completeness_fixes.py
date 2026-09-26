@@ -106,3 +106,41 @@ class MtrShadingTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CropAwarePictureTests(unittest.TestCase):
+    def _pic(self, width, height):
+        # Minimal Softimage PIC header understood by softimage_pic.inspect_pic_bytes.
+        import struct
+        header = struct.pack(">I", 0x5380F634) + struct.pack(">f", 3.71) + b"\0" * 80 + b"PICT" + struct.pack(">HH", width, height)
+        return header + b"\0" * 64
+
+    def test_crop_size_selects_original_version_then_primary_tree(self):
+        import bz2_texture_layers_gltf as layers
+        import softimage_pic
+        probe = self._pic(10, 20)
+        if not softimage_pic.inspect_pic_bytes(probe).get("width"):
+            self.skipTest("synthetic PIC header not recognised by this decoder version")
+        scene = _Store({"adconcept/PICTURES/tankturret1.pic": self._pic(1000, 283)})
+        primary = _Store({"ISDF_vehicles/PICTURES/tankturret1.pic": self._pic(590, 167)})
+        scene.exists = lambda path: path in scene.files
+        crop = {"x0": 0, "x1": 589, "y0": 0, "y1": 166}
+        store, member, provenance = layers.resolve_picture_for_crop(
+            scene, "//SERVER/modelsdirectory/ISDF/PICTURES/tankturret1", "adconcept", crop, primary
+        )
+        self.assertIs(store, primary)
+        self.assertEqual(member, "ISDF_vehicles/PICTURES/tankturret1.pic")
+        self.assertEqual(provenance["picture_resolution"], "crop_size_match")
+
+
+class BranchTextureInheritanceTests(unittest.TestCase):
+    def test_mesh_children_inherit_nearest_ancestor_projection(self):
+        import bz2_model_texture_projection as projection
+        gltf = {"nodes": [{"name": "body", "mesh": 0, "children": [1, 2]}, {"name": "leg", "mesh": 1}, {"name": "hp", "mesh": 2}]}
+        records = [
+            {"model_name": "w-body.1-0", "gltf_node_index": 0, "local_texture_projections": [{"texture_object": "rusty"}]},
+            {"model_name": "w-hp.1-0", "gltf_node_index": 2, "local_texture_projections": [{"texture_object": "own"}]},
+        ]
+        added = projection._inherit_branch_textures(gltf, records)
+        self.assertEqual([record["gltf_node_index"] for record in added], [1])
+        self.assertEqual(added[0]["local_texture_projections"][0]["inherited_from_model"], "w-body.1-0")

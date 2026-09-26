@@ -220,7 +220,12 @@ def base_projection_uv(point: Sequence[float], bounds, projection_code: int) -> 
     if code == 2:
         return x, z
     if code == 3:
-        return y, z
+        # Looking down X: the picture's horizontal runs along Z, its vertical
+        # along Y. Anchor: adconcept/RENDER_PICTURES/pluto.1 -- the corridor
+        # walls' cementwall bands (pipes above, grille at the floor) run along
+        # the corridor; (y, z) turned them 90 degrees. Render-compare edge
+        # alignment 0.43 -> 0.67 (bz2_render_compare.py).
+        return z, y
 
     # Fit angular supports to the object's local bounding box. Converting each
     # axis to [-1,1] keeps non-uniform object dimensions from changing the seam
@@ -260,12 +265,32 @@ def apply_uv_repeats(uv: Sequence[float], repeats=None) -> tuple[float, float]:
     return float(uv[0]) * float(repeats[0]), float(uv[1]) * float(repeats[1])
 
 
+def _safe_scale(value) -> float:
+    value = float(value)
+    return value if abs(value) > EPSILON else 1.0
+
+
 def apply_uv_scale_offset(uv: Sequence[float], scale=None, offset=None) -> tuple[float, float]:
+    """Apply SI_Texture2D UScale/VScale and UOffset/VOffset (TXMP +6).
+
+    Softimage scales and moves the *texture*, so texture lookup coordinates are
+    ``(uv - offset) / scale`` (the counterpart of URepeat, which shrinks it),
+    with V measured from the top of the picture.
+    Anchor: the final NewTank hull layers (tank2-t2d2/t2d7/t2d8/t2d90) map to
+    picture windows such as u 0.306-0.694 (centred) and u 0.627-1.000 / v
+    0.475-1.000 (ending exactly at the picture edge) under this direction,
+    reproducing the emblem deck of NewTank/RENDER_PICTURES/TANK.1.pic, while
+    ``uv * scale + offset`` tiles the whole picture 2.7x across the deck.
+    """
     scale = scale if isinstance(scale, (list, tuple)) and len(scale) >= 2 else (1.0, 1.0)
     offset = offset if isinstance(offset, (list, tuple)) and len(offset) >= 2 else (0.0, 0.0)
+    # The window is measured in picture space from the top row (PIC scanline
+    # order), so V is flipped around the placement: identity windows are
+    # unchanged, and the NewTank nose plate (v window 0.741-1.0) selects the
+    # emblem strip at the bottom of tank.pic rather than the engine pods.
     return (
-        float(uv[0]) * float(scale[0]) + float(offset[0]),
-        float(uv[1]) * float(scale[1]) + float(offset[1]),
+        (float(uv[0]) - float(offset[0])) / _safe_scale(scale[0]),
+        1.0 - ((1.0 - float(uv[1])) - float(offset[1])) / _safe_scale(scale[1]),
     )
 
 
@@ -284,6 +309,10 @@ def apply_crop(uv: Sequence[float], crop: dict | None, image_size: Sequence[int]
         return float(uv[0]), float(uv[1])
     x0, x1 = float(crop.get("x0", 0)), float(crop.get("x1", width - 1))
     y0, y1 = float(crop.get("y0", 0)), float(crop.get("y1", height - 1))
+    # A crop authored on a larger version of the picture is clamped to the
+    # picture actually loaded (e.g. TANKTURRETTOP.1 crop 1656x2127 on 1000x1235).
+    x0, x1 = min(max(x0, 0.0), width - 1.0), min(max(x1, 0.0), width - 1.0)
+    y0, y1 = min(max(y0, 0.0), height - 1.0), min(max(y1, 0.0), height - 1.0)
     return (
         (x0 + float(uv[0]) * (x1 - x0)) / float(width - 1),
         (y0 + float(uv[1]) * (y1 - y0)) / float(height - 1),

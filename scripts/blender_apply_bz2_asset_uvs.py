@@ -196,15 +196,19 @@ def _combined_source_uv_transform(layer: dict) -> tuple[tuple[float, float], tup
     offset = layer.get("si_texture2d_uv_offset") or [0.0, 0.0]
     ru = float(repeats[0]) if len(repeats) >= 1 else 1.0
     rv = float(repeats[1]) if len(repeats) >= 2 else 1.0
-    su, sv = float(scale[0]) * ru, float(scale[1]) * rv
-    ou, ov = float(offset[0]), float(offset[1])
+    # SI_Texture2D scale/offset move the texture: lookup = (uv*repeat - offset)/scale.
+    scale_u = float(scale[0]) if abs(float(scale[0])) > 1.0e-9 else 1.0
+    scale_v = float(scale[1]) if abs(float(scale[1])) > 1.0e-9 else 1.0
+    su, sv = ru / scale_u, rv / scale_v
+    # V window measured from the picture's top row: v' = 1 - ((1 - v) - o) / s.
+    ou, ov = -float(offset[0]) / scale_u, 1.0 - (1.0 - float(offset[1])) / scale_v
     crop = layer.get("crop_rect_pixels_raw") or {}
     width, height = layer.get("width"), layer.get("height")
     if width and height and int(width) > 1 and int(height) > 1 and crop:
-        x0 = float(crop.get("x0", 0))
-        x1 = float(crop.get("x1", int(width) - 1))
-        y0 = float(crop.get("y0", 0))
-        y1 = float(crop.get("y1", int(height) - 1))
+        x0 = min(max(float(crop.get("x0", 0)), 0.0), int(width) - 1.0)
+        x1 = min(max(float(crop.get("x1", int(width) - 1)), 0.0), int(width) - 1.0)
+        y0 = min(max(float(crop.get("y0", 0)), 0.0), int(height) - 1.0)
+        y1 = min(max(float(crop.get("y1", int(height) - 1)), 0.0), int(height) - 1.0)
         crop_su = (x1 - x0) / float(int(width) - 1)
         crop_sv = (y1 - y0) / float(int(height) - 1)
         su, sv = su * crop_su, sv * crop_sv

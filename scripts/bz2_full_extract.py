@@ -327,14 +327,18 @@ def _import_xsi_exporter():
     return xsi_export
 
 
-def process_scene(recon, scene: SceneCandidate, out: Path, *, curve_steps: int, surface_steps_u: int, surface_steps_v: int, blender: str | None, xsi: bool, clean_output: bool) -> dict:
+def process_scene(recon, scene: SceneCandidate, out: Path, *, curve_steps: int, surface_steps_u: int, surface_steps_v: int, blender: str | None, xsi: bool, clean_output: bool, primary_source: str | None = None) -> dict:
     """Reconstruct one scene in this process and return its batch record."""
     if clean_output and out.exists():
         shutil.rmtree(out)
     started = time.time()
     item = {"scene": scene.relative, "selector": scene.selector, "source_label": scene.source_label, "asset_source": str(scene.asset_source), "prefix": scene.prefix, "output_dir": str(out.resolve())}
     try:
-        manifest = recon.reconstruct(scene.path, scene.asset_source, scene.prefix, out, curve_steps=curve_steps, surface_steps_u=surface_steps_u, surface_steps_v=surface_steps_v)
+        # Historical ZIP scenes may fall back to the primary tree for pictures,
+        # but only on an exact crop-size match (see resolve_picture_for_crop).
+        fallback = Path(primary_source) if primary_source and scene.source_label != "primary" else None
+        reconstruct_kwargs = {"picture_fallback_source": fallback} if fallback else {}
+        manifest = recon.reconstruct(scene.path, scene.asset_source, scene.prefix, out, curve_steps=curve_steps, surface_steps_u=surface_steps_u, surface_steps_v=surface_steps_v, **reconstruct_kwargs)
         render = out / "scene.render_state.json"
         if not render.is_file():
             render.write_text(json.dumps({"schema": "bz2-render-state-placeholder-v1", "status": "not_authored", "note": "DSC scene contains no resolved SETUP_SOFT record"}, indent=2), encoding="utf-8")
@@ -389,7 +393,7 @@ def run_batch(modelsdirectory: Path, scenes: Sequence[SceneCandidate], output_ro
     order = {scene.selector: i for i, scene in enumerate(scenes)}
     batch_started = time.time()
     isolated = bool(isolate or jobs > 1)
-    options = {"curve_steps": curve_steps, "surface_steps_u": surface_steps_u, "surface_steps_v": surface_steps_v, "blender": blender, "xsi": xsi, "clean_output": clean_output}
+    options = {"curve_steps": curve_steps, "surface_steps_u": surface_steps_u, "surface_steps_v": surface_steps_v, "blender": blender, "xsi": xsi, "clean_output": clean_output, "primary_source": str(modelsdirectory.resolve())}
 
     def snapshot() -> dict:
         # Qualification fix: persist progress after every scene so a long corpus

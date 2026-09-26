@@ -239,6 +239,101 @@ def resolve_picture(store: dscmat.SourceStore, raw_path: str, scene_prefix: str)
     )[1]
 
 
+def picture_size(store: dscmat.SourceStore, member: str) -> tuple[int, int] | None:
+    try:
+        info = softimage_pic.inspect_pic_bytes(store.read(member))
+    except Exception:  # noqa: BLE001 - unreadable candidates simply do not match
+        return None
+    if info.get("width") and info.get("height"):
+        return int(info["width"]), int(info["height"])
+    return None
+
+
+def _is_exact_reference(raw_path: str, member: str) -> bool:
+    """True when ``member`` is the file at the raw path's own modelsdirectory location."""
+    normalized = raw_path.replace("\\", "/").strip().lower()
+    marker = "/modelsdirectory/"
+    if marker not in normalized:
+        return False
+    tail = normalized[normalized.index(marker) + len(marker):]
+    return member.lower() in {candidate.lower() for candidate in _image_candidates(tail)}
+
+
+def resolve_picture_for_crop(
+    store: dscmat.SourceStore,
+    raw_path: str,
+    scene_prefix: str,
+    crop: dict | None,
+    fallback_store: dscmat.SourceStore | None = None,
+) -> tuple[dscmat.SourceStore, str | None, dict]:
+    """Resolve a TXMP picture, using its crop rectangle to pick the right version.
+
+    Artists re-rendered many pictures at new sizes under the same name. A TXMP
+    crop is stored in the pixels of the picture version it was authored on, so an
+    origin-anchored crop of W x H identifies that version exactly. Across the
+    corpus 6,531/6,784 crops are exactly their picture's full size; the 116
+    origin-anchored mismatches come from path resolution picking a later copy
+    (e.g. adconcept tankturret1 1000x283 while the crop is 590x167 and the
+    original ISDF_vehicles/PICTURES/tankturret1.pic is 590x167).
+
+    Order: the file at the raw path's exact modelsdirectory location, when it
+    exists, is always used (that is what Softimage loaded). Only when the
+    referenced location is absent (e.g. //SERVER/.../ISDF/PICTURES) and a
+    basename search is needed does the crop choose among same-named copies:
+    the path-resolved copy if it fits (+/-1 px), else an exact-size copy in the
+    scene's store, else (historical ZIP scenes only) in the primary tree.
+    """
+    preferred = resolve_picture(store, raw_path, scene_prefix)
+    provenance = {"picture_resolution": "path"}
+    if preferred and _is_exact_reference(raw_path, preferred):
+        # The referenced file itself exists: Softimage loaded exactly this
+        # picture at render time and applied the (possibly stale) crop to it.
+        # Anchor: NewTank/RENDER_PICTURES/TANK.1.pic shows the current 1000x1513
+        # adconcept tank.pic on a hull whose crop still says 1000x1325.
+        provenance["picture_resolution"] = "exact_reference"
+        size = picture_size(store, preferred)
+        if crop and size and (int(crop.get("x1", 0)) + 1 != size[0] or int(crop.get("y1", 0)) + 1 != size[1]):
+            provenance["picture_crop_mismatch"] = {
+                "crop_implied_size": [int(crop.get("x1", 0)) + 1, int(crop.get("y1", 0)) + 1],
+                "picture_size": list(size),
+                "handling": "crop applied in this picture's pixels, clamped to its bounds",
+            }
+        return store, preferred, provenance
+    if not crop or int(crop.get("x0", 0)) != 0 or int(crop.get("y0", 0)) != 0:
+        return store, preferred, provenance
+    wanted = (int(crop["x1"]) + 1, int(crop["y1"]) + 1)
+    if preferred:
+        size = picture_size(store, preferred)
+        if size is None or (abs(size[0] - wanted[0]) <= 1 and abs(size[1] - wanted[1]) <= 1):
+            # +/-1 px: inclusive/exclusive crop authoring noise, same picture.
+            return store, preferred, provenance
+    basename = Path(raw_path.replace("\\", "/").strip()).name
+    prefix = scene_prefix.strip("/").lower() + "/"
+    for label, candidate_store in (("scene_source", store), ("primary_tree", fallback_store)):
+        if candidate_store is None:
+            continue
+        matches = [
+            member
+            for name in _image_candidates(basename)
+            for member in candidate_store.find_all_basename(Path(name).name)
+            if picture_size(candidate_store, member) == wanted
+        ]
+        if matches:
+            member = max(
+                matches,
+                key=lambda item: (item.lower().startswith(prefix), "/pictures/" in item.lower(), item),
+            )
+            return candidate_store, member, {
+                "picture_resolution": "crop_size_match",
+                "picture_source_store": label,
+                "path_resolved_picture": preferred,
+                "crop_implied_size": list(wanted),
+            }
+    if preferred:
+        provenance["picture_crop_mismatch"] = {"crop_implied_size": list(wanted), "picture_size": list(picture_size(store, preferred) or [])}
+    return store, preferred, provenance
+
+
 def find_txt(store: dscmat.SourceStore, texture_name: str, scene_prefix: str) -> str | None:
     filename = texture_name + ".txt"
     preferred = f"{scene_prefix.strip('/')}/TEXTURES2D/{filename}"
@@ -295,15 +390,19 @@ def _portable_texture_transform(layer: dict) -> dict | None:
     repeats = layer.get("si_texture2d_repeat_uv") or [1, 1]
     ru = float(repeats[0]) if len(repeats) >= 1 else 1.0
     rv = float(repeats[1]) if len(repeats) >= 2 else 1.0
-    su, sv = float(scale[0]) * ru, float(scale[1]) * rv
-    ou, ov = float(offset[0]), float(offset[1])
+    # SI_Texture2D scale/offset move the texture: lookup = (uv*repeat - offset)/scale.
+    scale_u = float(scale[0]) if abs(float(scale[0])) > 1.0e-9 else 1.0
+    scale_v = float(scale[1]) if abs(float(scale[1])) > 1.0e-9 else 1.0
+    su, sv = ru / scale_u, rv / scale_v
+    # V window measured from the picture's top row: v' = 1 - ((1 - v) - o) / s.
+    ou, ov = -float(offset[0]) / scale_u, 1.0 - (1.0 - float(offset[1])) / scale_v
     crop = layer.get("crop_rect_pixels_raw") or {}
     width, height = layer.get("width"), layer.get("height")
     if width and height and int(width) > 1 and int(height) > 1 and crop:
-        x0 = float(crop.get("x0", 0))
-        x1 = float(crop.get("x1", int(width) - 1))
-        y0 = float(crop.get("y0", 0))
-        y1 = float(crop.get("y1", int(height) - 1))
+        x0 = min(max(float(crop.get("x0", 0)), 0.0), int(width) - 1.0)
+        x1 = min(max(float(crop.get("x1", int(width) - 1)), 0.0), int(width) - 1.0)
+        y0 = min(max(float(crop.get("y0", 0)), 0.0), int(height) - 1.0)
+        y1 = min(max(float(crop.get("y1", int(height) - 1)), 0.0), int(height) - 1.0)
         crop_su = (x1 - x0) / float(int(width) - 1)
         crop_sv = (y1 - y0) / float(int(height) - 1)
         su, sv = su * crop_su, sv * crop_sv
@@ -327,9 +426,11 @@ def restore_layers(
     asset_source: Path,
     scene_prefix: str,
     output_gltf: Path,
+    picture_fallback_source: Path | None = None,
 ) -> dict:
     gltf = json.loads(input_gltf.read_text(encoding="utf-8"))
     chapters, relations = dscmat.parse_dsc(scene_dsc)
+    fallback_store = dscmat.open_store(picture_fallback_source) if picture_fallback_source else None
     scene_materials = chapters.get("MATERIALS", [])
     texture_objects = chapters.get("TEXTURES2D", [])
     store = dscmat.open_store(asset_source)
@@ -382,12 +483,14 @@ def restore_layers(
             if txt:
                 try:
                     layer.update(parse_txmp(store.read(txt)))
-                    picture = resolve_picture(
-                        store, layer["raw_source_path"], scene_prefix
+                    picture_store, picture, provenance = resolve_picture_for_crop(
+                        store, layer["raw_source_path"], scene_prefix,
+                        layer.get("crop_rect_pixels_raw"), fallback_store,
                     )
                     layer["resolved_picture"] = picture
+                    layer.update(provenance)
                     if picture:
-                        layer.update(export_pic(store, picture, tex_name, texture_dir))
+                        layer.update(export_pic(picture_store, picture, tex_name, texture_dir))
                         uri = layer.get("uri")
                         if uri:
                             if uri not in image_by_uri:
