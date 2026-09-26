@@ -187,18 +187,26 @@ def _sample(image: np.ndarray, uv: np.ndarray) -> np.ndarray:
     return top * (1 - fy) + bottom * fy
 
 
+def blend_mask(rgb: np.ndarray, alpha: np.ndarray, blending_type: int) -> np.ndarray:
+    """Softimage texture blending mask (TXMP +86): 1 alpha, 2 intensity, 3 none.
+
+    Intensity is luminance times alpha. Plain luminance, mean RGB and max RGB
+    scored within noise of it against walker_final/walker.1, the only aligned
+    reference render that uses intensity masks.
+    """
+    if blending_type == 2:
+        return (rgb @ np.array([0.299, 0.587, 0.114]))[..., None] * alpha
+    if blending_type == 1:
+        return alpha
+    # Type 3 "no mask": the picture's alpha channel is ignored.
+    return np.ones_like(alpha)
+
+
 def composite(base_rgb, texels: list[np.ndarray], layers: list[Layer]) -> np.ndarray:
     colour = np.broadcast_to(np.asarray(base_rgb, dtype=np.float64), (texels[0].shape[0], 3)).copy()
     for texel, layer in zip(texels, layers):
         rgb, alpha = texel[:, :3], texel[:, 3:4]
-        if layer.blending_type == 2:
-            mask = (rgb @ np.array([0.299, 0.587, 0.114]))[:, None] * alpha
-        elif layer.blending_type == 1:
-            mask = alpha
-        else:
-            # Type 3 "no mask": the picture's alpha channel is ignored.
-            mask = np.ones_like(alpha)
-        mask = np.clip(mask * layer.blending, 0.0, 1.0)
+        mask = np.clip(blend_mask(rgb, alpha, layer.blending_type) * layer.blending, 0.0, 1.0)
         colour = colour * (1.0 - mask) + np.clip(rgb * layer.diffuse, 0.0, 1.0) * mask
     return np.clip(colour, 0.0, 1.0)
 

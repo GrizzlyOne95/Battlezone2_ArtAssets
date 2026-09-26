@@ -176,6 +176,25 @@ def apply_current_uv_effects(uvw, projection: dict):
     return result[0], result[1], w
 
 
+LIVE_PLANAR_CODES = {1, 2, 3}
+
+
+def prefers_live_projection(layer: dict) -> bool:
+    """True when a layer's live planar projection overrides the HRC's stored UVs.
+
+    Stored class-4 UVs are a snapshot. On NewTank's merged hull
+    (bmerge5_default_2) and fins they no longer match the planar projections
+    Softimage rendered: generating codes 1-3 live took the per-part
+    render-compare error from 0.75 to 0.53 (hull) and 0.99 to 0.55 (fin)
+    against TANK.1, and left all 20 other aligned reference scenes unchanged.
+    Spherical/cylindrical layers keep their stored UVs: regenerating them broke
+    the Pluto walker (body error 0.38 -> 0.92). The stored UVs stay in the
+    glTF as the preserved source UV set.
+    """
+    code = int(layer.get("projection_or_mapping_code_candidate") or 0)
+    return code in LIVE_PLANAR_CODES and (matrix_srt_is_identity(layer) or projection_rotation_supported(layer))
+
+
 def projection_type_name(code: int | None) -> str | None:
     return WORKING_PROJECTION_TYPES.get(int(code)) if code is not None else None
 
@@ -294,25 +313,45 @@ def apply_uv_scale_offset(uv: Sequence[float], scale=None, offset=None) -> tuple
     )
 
 
+def effective_crop(crop: dict | None, width: int, height: int) -> tuple[float, float, float, float] | None:
+    """The pixel window (x0, x1, y0, y1) Softimage samples, or None for the whole picture.
+
+    A crop is stored in the pixels of the picture as it was when the crop was
+    authored. When the picture file was later replaced by a resized or
+    extended version, a crop starting at 0,0 that no longer matches the
+    picture is a stale full-frame crop and selects the whole current picture.
+    Anchors (render-compare, 2026-09-26): walker_final/walker.1 edge alignment
+    0.30 -> 0.49 (tankturret1 590x167 crop on the 1000x283 picture), and the
+    NewTank nose deck error 0.65 -> 0.52 (tank.pic 1325-row crop on 1513 rows).
+    Clamping the stale crop, or counting its rows from the top, both
+    score worse. Crops that do not start at 0,0 are real windows and are
+    clamped to the picture.
+    """
+    if not crop or width <= 1 or height <= 1:
+        return None
+    x0, x1 = float(crop.get("x0", 0)), float(crop.get("x1", width - 1))
+    y0, y1 = float(crop.get("y0", 0)), float(crop.get("y1", height - 1))
+    if x0 == 0 and y0 == 0 and (int(x1) + 1 != width or int(y1) + 1 != height):
+        return None
+    x0, x1 = min(max(x0, 0.0), width - 1.0), min(max(x1, 0.0), width - 1.0)
+    y0, y1 = min(max(y0, 0.0), height - 1.0), min(max(y1, 0.0), height - 1.0)
+    return x0, x1, y0, y1
+
+
 def apply_crop(uv: Sequence[float], crop: dict | None, image_size: Sequence[int] | None) -> tuple[float, float]:
     """Map normalized UV into an inclusive source-pixel crop rectangle.
 
     Full-image rectangles such as 0..W-1 / 0..H-1 remain an identity mapping.
-    Softimage documents the picture's bottom-left as the texture transform pivot,
-    so this reconstruction keeps V increasing upward instead of inserting an
-    unexplained image flip.
+    Crop rows count from the picture's bottom (Softimage's texture pivot);
+    counting them from the top scored worse against the archived renders.
     """
     if not crop or not image_size or len(image_size) < 2:
         return float(uv[0]), float(uv[1])
     width, height = int(image_size[0]), int(image_size[1])
-    if width <= 1 or height <= 1:
+    window = effective_crop(crop, width, height)
+    if window is None:
         return float(uv[0]), float(uv[1])
-    x0, x1 = float(crop.get("x0", 0)), float(crop.get("x1", width - 1))
-    y0, y1 = float(crop.get("y0", 0)), float(crop.get("y1", height - 1))
-    # A crop authored on a larger version of the picture is clamped to the
-    # picture actually loaded (e.g. TANKTURRETTOP.1 crop 1656x2127 on 1000x1235).
-    x0, x1 = min(max(x0, 0.0), width - 1.0), min(max(x1, 0.0), width - 1.0)
-    y0, y1 = min(max(y0, 0.0), height - 1.0), min(max(y1, 0.0), height - 1.0)
+    x0, x1, y0, y1 = window
     return (
         (x0 + float(uv[0]) * (x1 - x0)) / float(width - 1),
         (y0 + float(uv[1]) * (y1 - y0)) / float(height - 1),

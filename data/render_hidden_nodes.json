@@ -1,0 +1,16 @@
+{
+  "schema": "bz2-render-hidden-nodes-v1",
+  "description": "Models that are hidden in the scene's original Softimage render but have no decodable hidden flag in the DSC, HRC, MTR or STS. The engine XSI and its glTF twin omit them. The reconstructed scene.gltf/.blend keeps them for source fidelity. Add an entry only with render-compare evidence.",
+  "entries": [
+    {
+      "scene": "hires-tank2.17-0",
+      "model": "Main_tank-gun.4-0",
+      "evidence": "NewTank/RENDER_PICTURES/TANK.1: a 48-triangle octagonal box root carried over from the older Main_tank scene. It encloses the detailed twin-barrel gun (bmerge14), which is what the render shows. Removing it raises edge alignment 0.6476 -> 0.6532 and lowers error 0.5569 -> 0.5513 (bz2_render_compare.py)."
+    },
+    {
+      "scene": "hi_res-ISDF_tank.1-0",
+      "model": "Main_tank-gun.1-0",
+      "evidence": "Same render (TANK.1) and the same proxy box, bound from an earlier Main_tank-gun version."
+    }
+  ]
+}

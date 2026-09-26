@@ -204,11 +204,9 @@ def _combined_source_uv_transform(layer: dict) -> tuple[tuple[float, float], tup
     ou, ov = -float(offset[0]) / scale_u, 1.0 - (1.0 - float(offset[1])) / scale_v
     crop = layer.get("crop_rect_pixels_raw") or {}
     width, height = layer.get("width"), layer.get("height")
-    if width and height and int(width) > 1 and int(height) > 1 and crop:
-        x0 = min(max(float(crop.get("x0", 0)), 0.0), int(width) - 1.0)
-        x1 = min(max(float(crop.get("x1", int(width) - 1)), 0.0), int(width) - 1.0)
-        y0 = min(max(float(crop.get("y0", 0)), 0.0), int(height) - 1.0)
-        y1 = min(max(float(crop.get("y1", int(height) - 1)), 0.0), int(height) - 1.0)
+    window = projection_uv.effective_crop(crop, int(width), int(height)) if width and height else None
+    if window is not None:
+        x0, x1, y0, y1 = window
         crop_su = (x1 - x0) / float(int(width) - 1)
         crop_sv = (y1 - y0) / float(int(height) - 1)
         su, sv = su * crop_su, sv * crop_sv
@@ -452,15 +450,16 @@ def apply_asset_uvs(gltf_path: Path, model_sidecar_path: Path, layer_sidecar_pat
                     and source_uv.get("active_uv_all_zero") is False
                     and not source_uv_is_parametric_placeholder
                 )
+                prefer_live = projection_uv.prefers_live_projection(layer)
                 can_generate_missing_projection = (
-                    not source_uv_usable
+                    (not source_uv_usable or prefer_live)
                     and projection_uv.projection_type_name(code) is not None
                     and (
                         projection_uv.matrix_srt_is_identity(layer)
                         or projection_uv.projection_rotation_supported(layer)
                     )
                 )
-                if source_uv_usable:
+                if source_uv_usable and not prefer_live:
                     # Preserve authored HRC CurrentUV. Build a separate effective UV
                     # layer with the recovered live TXMP transformation/effects.
                     uv_name = _safe_name(f"EFFECT_{texture_object}", "BZ2")
