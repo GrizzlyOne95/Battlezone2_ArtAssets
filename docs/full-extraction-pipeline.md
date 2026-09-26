@@ -4,6 +4,16 @@
 
 The driver does not replace the format decoders. Its purpose is to make the complete archive-to-scene path safe, repeatable, and auditable.
 
+## Setup
+
+```powershell
+python -m pip install -r requirements.txt
+```
+
+`numpy`, `Pillow` and `shapely>=2.1` are required. Shapely triangulates multi-contour source polygons, and the pipeline refuses to drop them. `py7zr` is optional.
+
+Each reconstructed scene bundle under `artifacts/reconstructed/<scene>/` now also contains `engine/<scene>.xsi`, `engine/<picture>.tga` and `engine/xsi_export.json` (see `docs/engine-xsi-export.md`). `scene.gltf` uses glTF's top-left UV convention; all JSON sidecars keep Softimage's bottom-left UV space.
+
 ## Source preparation
 
 The driver accepts:
