@@ -58,10 +58,14 @@ The archive contains Softimage's own renders of several showcase scenes (`walker
 
 Artists re-rendered many pictures under the same name, so a TXMP crop rectangle (stored in the pixels of the picture it was authored on) can disagree with the picture now in the archive. Two cases, both anchored on original renders:
 
-- **The referenced file exists at its own path** (e.g. `//Server/.../adconcept/PICTURES/tank`): that is the file Softimage loaded at render time, and it applied the stale crop to it, clamped to the picture. `NewTank/RENDER_PICTURES/TANK.1.pic` shows the current 1000×1513 `tank.pic` on a hull whose crop still says 1000×1325. Recorded as `picture_resolution: exact_reference` plus `picture_crop_mismatch`.
+- **The referenced file exists at its own path** (e.g. `//Server/.../adconcept/PICTURES/tank`): that is the file Softimage loaded at render time. `NewTank/RENDER_PICTURES/TANK.1.pic` shows the current 1000×1513 `tank.pic` on a hull whose crop still says 1000×1325. Recorded as `picture_resolution: exact_reference` plus `picture_crop_mismatch`.
 - **The referenced location is absent** (e.g. `//SERVER/.../ISDF/PICTURES/…`, which is not in the archive) and a basename search is required: the crop chooses among same-named copies — the path-resolved copy if it fits (±1 px), else an exact-size copy in the scene's store, else (historical ZIP scenes only) in the primary tree. `adconcept-tankstuff` crops of 590×167, 204×434 and 302×400 match the originals in `ISDF_vehicles/PICTURES/` exactly, where the other copies are 1000×283, 1000×1235 and 378×473. Recorded as `picture_resolution: crop_size_match`.
 
-Crops larger than the loaded picture are clamped to it in every UV path.
+**A stale full-frame crop selects the whole current picture** (`bz2_projection_uv.effective_crop`, used by every UV path). A stale crop is one that starts at 0,0 but no longer matches the picture's size. Crops that don't start at 0,0 are real windows, clamped to the picture, with rows counted from the bottom. Measured with the render harness:
+- the final walker (`tankturret1`: crop 590×167 on the 1000×283 picture) went from 0.30 to 0.49 edge alignment;
+- the NewTank nose deck error went from 0.65 to 0.52.
+
+Clamping the stale crop, or counting rows from the top, scored worse in both.
 
 ### Texture scale/offset direction
 
@@ -121,12 +125,26 @@ Findings so far:
 - **Softimage `fov_radians` is the vertical angle.** On `NewTank/TANK.1`, edge correlation peaks at the recovered camera with zero pixel offset for the vertical axis only.
 - **Lighting explains colour that textures don't.** The adconcept tower is grey material under an orange (1, 0.5, 0) light. Adding the recovered lights took its error from 0.49 to 0.17 (edge alignment 0.84), and `Power_Ups/special` reaches 0.93 edge alignment.
 - **Generated projection code 3 (planar YZ) maps U along Z and V along Y.** The previous `(y, z)` turned the `pluto.1` corridor walls' `cementwall` bands 90°. With `(z, y)`, edge alignment rose from 0.43 to 0.67 and error fell from 0.57 to 0.42. Code 2's `(x, z)` was confirmed by the same test: every alternative scored worse, down to 0.39.
-- Of 114 bundles whose STS output file exists, about 20 actually align with it. The rest reuse an output name from another scene version (edge alignment ≈ 0), so only aligned pairs are evidence.
+- **Code 3 is confirmed a second time** on NewTank's gun (`bmerge14`, `turret.pic`): `(z, y)` gives a part error of 0.54, while the alternatives score 0.85–0.98.
+- Corpus result (`artifacts/validation/render_compare_2026-09-26.json`): 19 of 114 bundles align with their reference render. The final NewTank went from 0.505 to 0.675 edge alignment and from 0.682 to 0.549 error.
+- Of 114 bundles whose STS output file exists, only 19 actually align with it. The rest reuse an output name from another scene version (edge alignment ≈ 0), so only aligned pairs are evidence.
+
+### Live planar projections
+
+For planar layers (codes 1–3), the projection is regenerated live instead of using the UVs stored in the class-4 HRC (`bz2_projection_uv.prefers_live_projection`). The stored UVs are a snapshot. On NewTank's merged hull and fins they no longer match what Softimage rendered: going live took the hull's part error from 0.75 to 0.53 and the fin's from 0.99 to 0.55, restoring the grey side panels with red lights and the IS-47 markings. The other 20 aligned scenes were unchanged. Spherical and cylindrical layers keep their stored UVs, because regenerating them broke the Pluto walker (body error 0.38 → 0.92). The stored UVs remain in `scene.gltf`.
+
+### Nodes hidden in the source render
+
+Softimage render visibility is not decodable from the DSC, HRC, MTR or STS. `data/render_hidden_nodes.json` is a curated list of models that are demonstrably hidden in their scene's original render. The engine export omits them with reason `hidden_in_source_render`. The only entries so far are the NewTank proxy gun boxes (`Main_tank-gun`): a 48-triangle root left over from an older scene, enclosing the real twin-barrel gun. Add entries only with harness evidence.
+
+### glTF twin
+
+Every engine export also writes `<scene>.gltf` next to the `.xsi`. It is the same flattened model: the frame hierarchy, rigid matrices, meshes, and one baked texture per material as PNG, with V flipped to glTF's top-left convention and Softimage-native Y-up axes. Blender's glTF importer renders it through the recovered TANK.1 camera with 0.9999 coverage IoU against the harness render. glTF, Blender and FBX workflows therefore get exactly what the engine gets, while `scene.gltf` stays the source-fidelity reconstruction.
 
 ### Still open
 
-- The NewTank hull's side panels (`bmerge5_default_2`) and the gun: the render shows grey panels framed in orange with red lights (the side triangles of `tank.pic`) and an orange double-barrelled gun; the export places other parts of the picture there. The geometry is symmetric and aligned, so this is texture placement, now measurable per part with the harness.
-
-- Reflection maps (special modes 7/8, diffuse factor 0 — e.g. the walker visor's orange `cavern` reflection) are not reproduced; the engines' own environment/reflection material setup is the natural target.
-- Glow/luminous effects beyond texture colour are not reproduced.
-- The glTF still binds unbaked base textures; the blend semantics are recorded in the sidecars but only the XSI export bakes them.
+- **Reflection maps** (special modes 7/8, diffuse factor 0, e.g. the walker visor's orange `cavern` reflection) are not reproduced. The engines' own environment/reflection material setup is the natural target.
+- **Glow/luminous effects beyond texture colour** are not reproduced. This includes the walker's blue foot glow: every intensity-mask definition tested (luminance × alpha, luminance, mean RGB, max RGB) scored within noise against `walker.1`.
+- **Procedural 3D textures** (`TEXTURES3D`, relation 501: `cloudy`, `clouds`, `stars`) are not evaluated. They occur in 46 of 1139 scenes, all cinematic (outros, wormhole, loading/splash screens), never in a unit or building model.
+- **Poses from animated frames**: `walka.0` (box-cover walker) and `walker.1` (a later Carey revision) differ in pose, not texture.
+- **Pictures absent from the archive** (e.g. `dropship/PICTURES/ivdrop00`, `CORE_BUILDINGS/cbextw02`) stay untextured.

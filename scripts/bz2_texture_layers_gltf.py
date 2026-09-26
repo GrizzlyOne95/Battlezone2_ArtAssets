@@ -22,6 +22,7 @@ import struct
 from pathlib import Path
 
 import bz2_dsc_material_gltf as dscmat
+import bz2_projection_uv as projection_uv
 import softimage_pic
 
 PIC_EXTS = (".pic", ".PIC", ".png", ".PNG", ".tga", ".TGA")
@@ -287,16 +288,20 @@ def resolve_picture_for_crop(
     provenance = {"picture_resolution": "path"}
     if preferred and _is_exact_reference(raw_path, preferred):
         # The referenced file itself exists: Softimage loaded exactly this
-        # picture at render time and applied the (possibly stale) crop to it.
-        # Anchor: NewTank/RENDER_PICTURES/TANK.1.pic shows the current 1000x1513
-        # adconcept tank.pic on a hull whose crop still says 1000x1325.
+        # picture at render time (NewTank/RENDER_PICTURES/TANK.1.pic shows the
+        # current 1000x1513 tank.pic on a hull whose crop still says 1000x1325).
+        # A stale crop's handling is projection_uv.effective_crop.
         provenance["picture_resolution"] = "exact_reference"
         size = picture_size(store, preferred)
         if crop and size and (int(crop.get("x1", 0)) + 1 != size[0] or int(crop.get("y1", 0)) + 1 != size[1]):
             provenance["picture_crop_mismatch"] = {
                 "crop_implied_size": [int(crop.get("x1", 0)) + 1, int(crop.get("y1", 0)) + 1],
                 "picture_size": list(size),
-                "handling": "crop applied in this picture's pixels, clamped to its bounds",
+                "handling": (
+                    "stale full-frame crop: whole picture"
+                    if int(crop.get("x0", 0)) == 0 and int(crop.get("y0", 0)) == 0
+                    else "crop window clamped to this picture"
+                ),
             }
         return store, preferred, provenance
     if not crop or int(crop.get("x0", 0)) != 0 or int(crop.get("y0", 0)) != 0:
@@ -398,11 +403,9 @@ def _portable_texture_transform(layer: dict) -> dict | None:
     ou, ov = -float(offset[0]) / scale_u, 1.0 - (1.0 - float(offset[1])) / scale_v
     crop = layer.get("crop_rect_pixels_raw") or {}
     width, height = layer.get("width"), layer.get("height")
-    if width and height and int(width) > 1 and int(height) > 1 and crop:
-        x0 = min(max(float(crop.get("x0", 0)), 0.0), int(width) - 1.0)
-        x1 = min(max(float(crop.get("x1", int(width) - 1)), 0.0), int(width) - 1.0)
-        y0 = min(max(float(crop.get("y0", 0)), 0.0), int(height) - 1.0)
-        y1 = min(max(float(crop.get("y1", int(height) - 1)), 0.0), int(height) - 1.0)
+    window = projection_uv.effective_crop(crop, int(width), int(height)) if width and height else None
+    if window is not None:
+        x0, x1, y0, y1 = window
         crop_su = (x1 - x0) / float(int(width) - 1)
         crop_sv = (y1 - y0) / float(int(height) - 1)
         su, sv = su * crop_su, sv * crop_sv

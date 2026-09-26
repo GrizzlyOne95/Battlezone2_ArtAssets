@@ -37,6 +37,19 @@ class ProjectionConventionTests(unittest.TestCase):
         self.assertEqual(projection_uv.base_projection_uv((0.0, 0.0, 32.0), bounds, 3), (1.0, 0.0))
         self.assertEqual(projection_uv.base_projection_uv((0.0, 8.0, 0.0), bounds, 3), (0.0, 1.0))
 
+    def test_stale_full_frame_crop_selects_whole_picture(self):
+        # tankturret1: crop authored on 590x167, picture now 1000x283.
+        crop = {"x0": 0, "x1": 589, "y0": 0, "y1": 166}
+        self.assertIsNone(projection_uv.effective_crop(crop, 1000, 283))
+        self.assertEqual(projection_uv.apply_crop((0.5, 0.5), crop, (1000, 283)), (0.5, 0.5))
+
+    def test_real_crop_window_is_clamped_bottom_up(self):
+        crop = {"x0": 100, "x1": 2000, "y0": 0, "y1": 49}
+        self.assertEqual(projection_uv.effective_crop(crop, 1000, 100), (100.0, 999.0, 0.0, 49.0))
+        u, v = projection_uv.apply_crop((0.0, 1.0), crop, (1000, 100))
+        self.assertAlmostEqual(u, 100 / 999)
+        self.assertAlmostEqual(v, 49 / 99)
+
     def test_planar_xz_is_unchanged(self):
         bounds = ((0.0, 0.0, 0.0), (2.0, 1.0, 4.0))
         self.assertEqual(projection_uv.base_projection_uv((2.0, 0.0, 0.0), bounds, 2), (1.0, 0.0))
@@ -115,3 +128,43 @@ class ScoreTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class GltfTwinTests(unittest.TestCase):
+    def test_matrix_rows_and_v_flip(self):
+        import json
+        import tempfile
+
+        sys.path.insert(0, str(ROOT / "tools" / "io_scene_bz2xsi"))
+        import bz2xsi
+        import bz2_xsi_to_gltf
+
+        xsi = bz2xsi.XSI()
+        frame = xsi.add_frame("root")
+        frame.transform = bz2xsi.Matrix(posit=(1.0, 2.0, 3.0, 1.0))
+        mesh = bz2xsi.Mesh("root")
+        mesh.vertices = [(0, 0, 0), (1, 0, 0), (0, 1, 0)]
+        mesh.faces = [(0, 1, 2)]
+        mesh.uv_vertices = [(0.0, 0.25), (1.0, 0.25), (0.0, 1.0)]
+        mesh.uv_faces = [(0, 1, 2)]
+        mesh.face_materials = [bz2xsi.Material(shading_type=0)]
+        frame.mesh = mesh
+        with tempfile.TemporaryDirectory() as temp:
+            out = Path(temp) / "t.gltf"
+            report = bz2_xsi_to_gltf.convert(xsi, Path(temp), out)
+            gltf = json.loads(out.read_text())
+            self.assertEqual(gltf["nodes"][0]["matrix"][12:15], [1.0, 2.0, 3.0])
+            accessor = gltf["accessors"][gltf["meshes"][0]["primitives"][0]["attributes"]["TEXCOORD_0"]]
+            view = gltf["bufferViews"][accessor["bufferView"]]
+            data = np.frombuffer((Path(temp) / "t.bin").read_bytes(), np.float32, count=6, offset=view["byteOffset"]).reshape(3, 2)
+            np.testing.assert_allclose(data[:, 1], [0.75, 0.75, 0.0])
+            self.assertIn("KHR_materials_unlit", gltf["extensionsUsed"])
+            self.assertEqual(report["winding_reversed_meshes"], [])
+
+
+class HiddenNodeOverrideTests(unittest.TestCase):
+    def test_curated_entries_are_scoped_to_their_scene(self):
+        import bz2_xsi_export
+
+        self.assertEqual(bz2_xsi_export.render_hidden_models("hires-tank2.17-0"), {"Main_tank-gun.4-0"})
+        self.assertEqual(bz2_xsi_export.render_hidden_models("hires-tank.3-0"), set())

@@ -56,6 +56,7 @@ sys.path.insert(0, str(SCRIPT_DIR.parent / "tools" / "io_scene_bz2xsi"))
 
 import bz2_projection_uv as projection_uv  # noqa: E402
 import bz2_texture_bake as texture_bake  # noqa: E402
+import bz2_xsi_to_gltf as xsi_to_gltf  # noqa: E402
 import bz2xsi  # noqa: E402
 
 bz2xsi.ALLOW_PRINT = False
@@ -254,7 +255,7 @@ def effective_uvs(
         code = int(layer.get("projection_or_mapping_code_candidate") or 0)
         if code in {7, 8}:
             return source_corner_uv, f"special_material_mode_{code}_source_uv"
-        if node_uv_usable and source_corner_uv is not None:
+        if node_uv_usable and source_corner_uv is not None and not projection_uv.prefers_live_projection(layer):
             try:
                 flat = source_corner_uv.reshape(-1, 2)
                 out = np.array([projection_uv.apply_current_uv_effects((u, v, 0.0), layer)[:2] for u, v in flat])
@@ -440,14 +441,7 @@ def _bake_blend(image, blend: tuple):
     mode, blending, diffuse, material_rgb = blend
     pixels = np.asarray(image, dtype=np.float64) / 255.0
     rgb, alpha = pixels[..., :3], pixels[..., 3:4]
-    if mode == 1:
-        mask = alpha
-    elif mode == 2:
-        luminance = (rgb @ np.array([0.299, 0.587, 0.114]))[..., None]
-        mask = luminance * alpha
-    else:
-        mask = np.ones_like(alpha)
-    mask = np.clip(mask * blending, 0.0, 1.0)
+    mask = np.clip(texture_bake.blend_mask(rgb, alpha, mode) * blending, 0.0, 1.0)
     out = np.array(material_rgb)[None, None, :] * (1.0 - mask) + np.clip(rgb * diffuse, 0.0, 1.0) * mask
     baked = np.concatenate([np.clip(out, 0.0, 1.0), np.ones_like(alpha)], axis=-1)
     return Image.fromarray((baked * 255.0 + 0.5).astype(np.uint8), "RGBA")
@@ -503,6 +497,17 @@ def _index_list(values: list[tuple]) -> tuple[list[tuple], list[int]]:
             unique.append(value)
         indices.append(index)
     return unique, indices
+
+
+HIDDEN_NODES_PATH = SCRIPT_DIR.parent / "data" / "render_hidden_nodes.json"
+
+
+def render_hidden_models(scene_stem: str) -> set[str]:
+    """Curated DSC model names hidden in this scene's original render."""
+    if not HIDDEN_NODES_PATH.is_file():
+        return set()
+    entries = json.loads(HIDDEN_NODES_PATH.read_text(encoding="utf-8")).get("entries") or []
+    return {entry["model"] for entry in entries if entry.get("scene") == scene_stem}
 
 
 def _is_staging_ground(node: dict) -> bool:
@@ -573,7 +578,19 @@ def export_bundle(
 
     subtree_vertices: dict[int, int] = {}
 
+    hidden_models = render_hidden_models(Path(str(manifest.get("scene_dsc") or "")).stem)
+    hidden = {
+        index
+        for index, node in enumerate(nodes)
+        if ((node.get("extras") or {}).get("bz2_dsc_model_name")) in hidden_models
+    }
+
     def measure(index: int) -> int:
+        if index in hidden:
+            subtree_vertices[index] = 0
+            for child in nodes[index].get("children", []):
+                measure(int(child))
+            return 0
         total = vertex_count(index) + sum(measure(int(c)) for c in nodes[index].get("children", []))
         subtree_vertices[index] = total
         return total
@@ -593,6 +610,7 @@ def export_bundle(
             "node": nodes[i].get("name"),
             "reason": (
                 "camera" if nodes[i].get("camera") is not None
+                else "hidden_in_source_render" if i in hidden
                 else "staging_ground_grid" if i in staging and not include_staging
                 else "no_mesh_geometry"
             ),
@@ -863,6 +881,7 @@ def export_bundle(
     parsed_meshes = list(parsed.get_all_meshes())
     if len(parsed.frames) != 1 or len(parsed_meshes) != stats["meshes"]:
         raise ExportError("written XSI failed round-trip structure check")
+    gltf_twin = xsi_to_gltf.convert(parsed, out_dir, xsi_path.with_suffix(".gltf"))
 
     report = {
         "schema": SCHEMA,
@@ -877,14 +896,16 @@ def export_bundle(
         "textures": textures.records,
         "missing_texture_files": sorted(set(textures.missing)),
         "uv_decisions": uv_decisions,
+        "gltf_twin": gltf_twin,
         "skipped_non_triangle_primitives": skipped_primitives,
         "omitted_nodes": omitted,
         "frames_detail": report_nodes,
         "notes": [
             "Axes/units are Softimage-native (identical to the reconstructed glTF); no axis conversion is applied.",
             "Frame matrices are rigid; any scale/shear/mirror is baked into that frame's mesh (winding reversed when mirrored).",
-            "Each material exports its bound base texture layer only; overlay/bump layers remain in the glTF/Blender reconstruction.",
-            "UVs are the effective base-layer UVs in Softimage bottom-left space, matching the Blender asset-fidelity stage decisions.",
+            "Multi-layer materials are baked to one atlas texture per primitive; single-layer materials export their bound layer (blend pre-applied). Bump layers are not baked.",
+            "UVs are in Softimage bottom-left space, matching the Blender asset-fidelity stage decisions.",
+            "The .gltf next to the .xsi is the same flattened model in glTF 2.0 (PNG textures, top-left V).",
         ],
     }
     (out_dir / "xsi_export.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
