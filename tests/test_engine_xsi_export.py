@@ -198,3 +198,30 @@ class XsiExportTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TextureBlendTests(unittest.TestCase):
+    def test_intensity_mask_blends_against_material_colour(self):
+        from PIL import Image
+        image = Image.new("RGBA", (2, 1))
+        image.putdata([(255, 255, 255, 255), (0, 0, 0, 255)])
+        baked = xsi_export._bake_blend(image, (2, 1.0, 1.0, (0.2, 0.4, 0.6)))
+        bright, dark = baked.getpixel((0, 0)), baked.getpixel((1, 0))
+        self.assertEqual(bright[:3], (255, 255, 255))
+        self.assertEqual(dark[:3], (51, 102, 153))
+
+    def test_plain_replace_needs_no_bake_and_zero_diffuse_is_reflection_only(self):
+        plain = {"field_u16_be_86": 3, "field_f32_be_26_54_raw": [0.75, 1.0, 0, 0, 0, 1.0, 0, 1.0]}
+        self.assertIsNone(xsi_export._blend_spec(plain, None))
+        reflection = {"field_u16_be_86": 3, "field_f32_be_26_54_raw": [0.0, 0.0, 0, 0, 0, 1.0, 0, 0.0]}
+        self.assertFalse(xsi_export._drives_diffuse(reflection))
+
+
+class UvTileTests(unittest.TestCase):
+    def test_single_tile_is_shifted_and_tiling_is_kept(self):
+        mirrored = np.array([[[-0.895, 0.0], [0.0, 0.5], [-0.5, 0.864]]])
+        shifted = xsi_export._normalize_uv_tile(mirrored)
+        np.testing.assert_allclose(shifted[..., 0], [[0.105, 1.0, 0.5]])
+        np.testing.assert_allclose(shifted[..., 1], mirrored[..., 1])
+        tiled = np.array([[[0.0, 0.0], [2.5, 0.0], [0.0, 3.0]]])
+        np.testing.assert_allclose(xsi_export._normalize_uv_tile(tiled), tiled)

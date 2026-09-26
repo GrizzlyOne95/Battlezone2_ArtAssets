@@ -98,16 +98,64 @@ def export_picture(
     }
 
 
+def _inherit_branch_textures(gltf: dict, records: list[dict]) -> list[dict]:
+    """Propagate code-400 textures from a model to descendants without their own.
+
+    Softimage applies a branch-selected texture to the whole hierarchy while the
+    DSC serializes the code-400 relation only on the model it was applied to,
+    exactly like the proven nearest-ancestor code-300 material inheritance.
+    Anchor: the final walker (walker_final/RENDER_PICTURES/walker_final_lowres)
+    shows rusty.pic grain on 40 gun-metal child meshes whose only code-400
+    relation is on an ancestor. Each inherited projection is fitted to the
+    child's own geometry and marked ``inherited_from_model``.
+    """
+    nodes = gltf.get("nodes", [])
+    parent = {int(child): index for index, node in enumerate(nodes) for child in node.get("children", [])}
+    owners = {
+        int(record["gltf_node_index"]): record
+        for record in records
+        if record.get("gltf_node_index") is not None and record.get("local_texture_projections")
+    }
+    added = []
+    for index, node in enumerate(nodes):
+        if node.get("mesh") is None or index in owners:
+            continue
+        ancestor = parent.get(index)
+        while ancestor is not None and ancestor not in owners:
+            ancestor = parent.get(ancestor)
+        if ancestor is None:
+            continue
+        source = owners[ancestor]
+        projections = [
+            {**projection, "inherited_from_model": source.get("model_name"), "inherited_from_gltf_node": ancestor}
+            for projection in source["local_texture_projections"]
+        ]
+        record = {
+            "model_name": (node.get("extras") or {}).get("bz2_dsc_model_name") or node.get("name"),
+            "gltf_node_index": index,
+            "gltf_node_name": node.get("name"),
+            "binding": "inherited_branch_texture",
+            "inherited_from_model": source.get("model_name"),
+            "local_texture_projections": projections,
+        }
+        node.setdefault("extras", {})["bz2_model_texture_projections"] = projections
+        records.append(record)
+        added.append(record)
+    return added
+
+
 def augment_model_projections(
     input_gltf: Path,
     scene_dsc: Path,
     asset_source: Path,
     scene_prefix: str,
     output_gltf: Path,
+    picture_fallback_source: Path | None = None,
 ) -> dict:
     gltf = json.loads(input_gltf.read_text(encoding="utf-8"))
     chapters, relations = dscmat.parse_dsc(scene_dsc)
     store = dscmat.open_store(asset_source)
+    fallback_store = dscmat.open_store(picture_fallback_source) if picture_fallback_source else None
 
     models = chapters.get("MODELS", [])
     materials = chapters.get("MATERIALS", [])
@@ -178,15 +226,18 @@ def augment_model_projections(
             if texture_member:
                 try:
                     projection.update(parse_projection(store.read(texture_member)))
-                    picture = texture_layers.resolve_picture(
+                    picture_store, picture, provenance = texture_layers.resolve_picture_for_crop(
                         store,
                         projection["raw_source_path"],
                         scene_prefix,
+                        projection.get("crop_rect_pixels_raw"),
+                        fallback_store,
                     )
                     projection["resolved_picture"] = picture
+                    projection.update(provenance)
                     if picture:
                         projection.update(
-                            export_picture(store, picture, texture_name, texture_dir)
+                            export_picture(picture_store, picture, texture_name, texture_dir)
                         )
                     else:
                         missing_pictures.append(
@@ -211,6 +262,8 @@ def augment_model_projections(
             ]
         records.append(record)
 
+    inherited = _inherit_branch_textures(gltf, records)
+
     output_gltf.parent.mkdir(parents=True, exist_ok=True)
     output_gltf.write_text(json.dumps(gltf, indent=2), encoding="utf-8")
     result = {
@@ -224,11 +277,13 @@ def augment_model_projections(
         "code400_edge_count": sum(len(items) for items in model_textures.values()),
         "resolved_gltf_node_count": resolved_nodes,
         "unresolved_gltf_node_count": len(model_textures) - resolved_nodes,
+        "inherited_branch_texture_node_count": len(inherited),
         "unresolved_picture_count": len(missing_pictures),
         "unresolved_pictures": missing_pictures,
         "models": records,
         "notes": [
             "DSC relation code 400 is preserved as model-local TEXTURES2D/projection state and is distinct from material-level code 401.",
+            "Mesh descendants without their own code-400 relation inherit the nearest ancestor's model-local textures (binding=inherited_branch_texture), mirroring code-300 material inheritance.",
             "No model projection overwrites source TEXCOORD_0; projection-dependent all-zero UVs remain distinguishable from authored polygon UVs.",
             "Model-local and material-level TXMP records use the same shared decoder for repeat, scale/offset, crop, raw operator state, aligned auxiliary/layer words and +90 texture-matrix SRT.",
             "TXMP +2/+4 are recovered URepeat/VRepeat and +6 is recovered UScale/VScale/UOffset/VOffset image-space placement.",

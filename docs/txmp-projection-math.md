@@ -56,6 +56,8 @@ projection/operator coordinates
     -> source-pixel crop          (+60..+66)
 ```
 
+Direction (corrected 2026-09-26): scale/offset move the texture, so the lookup is `u' = (u - offset) / scale` and, with V placed from the picture's top row, `v' = 1 - ((1 - v) - offset) / scale`. The earlier `uv * scale + offset` was never anchored (the reference sample was identity) and tiled the final NewTank hull textures; see `docs/engine-xsi-export.md`.
+
 ### Crop rectangle: `+60..+66`
 
 The crop rectangle is four big-endian source-pixel coordinates:
@@ -176,12 +178,12 @@ That subset produced a useful working table for practical high-resolution recons
 ```text
 1   Planar XY candidate
 2   Planar XZ candidate
-3   Planar YZ candidate
+3   Planar YZ candidate   (u along Z, v along Y; render-anchored 2026-09-26)
 4   Spherical anchor/candidate
 5   Cylindrical candidate in this subset
 ```
 
-Code `2` has particularly strong high-resolution evidence: the walker floor is an exact XZ grid and carries `+24=2`.
+Code `2` has particularly strong high-resolution evidence: the walker floor is an exact XZ grid and carries `+24=2`. Codes `2` and `3` were later confirmed against `adconcept/RENDER_PICTURES/pluto.1` with `scripts/bz2_render_compare.py`. Code 2 keeps `(u, v) = (x, z)`. Code 3 is `(z, y)`: the picture's horizontal runs along Z and its vertical along Y. The earlier `(y, z)` rotated the corridor wall texture by 90°.
 
 ### Full outer `bz2_art.7z` census
 

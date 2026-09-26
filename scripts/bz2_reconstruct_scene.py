@@ -132,7 +132,14 @@ def reconstruct(
     curve_steps: int = 64,
     surface_steps_u: int = 32,
     surface_steps_v: int = 32,
+    picture_fallback_source: Path | None = None,
 ) -> dict:
+    """Reconstruct one scene.
+
+    ``picture_fallback_source`` (the primary modelsdirectory, for scenes from an
+    isolated historical ZIP) is consulted only for pictures whose exact pixel
+    size matches a TXMP crop rectangle; see resolve_picture_for_crop.
+    """
     scene_dsc = scene_dsc.resolve()
     asset_source = asset_source.resolve()
     output_dir = output_dir.resolve()
@@ -204,6 +211,7 @@ def reconstruct(
         asset_source,
         scene_prefix,
         final_gltf,
+        picture_fallback_source,
     )
     # Missing picture bytes are corpus-completeness warnings; TXMP state remains preserved.
     _summary_error(
@@ -239,6 +247,7 @@ def reconstruct(
         asset_source,
         scene_prefix,
         final_gltf,
+        picture_fallback_source,
     )
     # Missing code-400 picture bytes are likewise preserved as source warnings.
     stages.append({"stage": "model_projections", "summary": projections})

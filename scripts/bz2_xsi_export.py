@@ -55,6 +55,7 @@ sys.path.insert(0, str(SCRIPT_DIR))
 sys.path.insert(0, str(SCRIPT_DIR.parent / "tools" / "io_scene_bz2xsi"))
 
 import bz2_projection_uv as projection_uv  # noqa: E402
+import bz2_texture_bake as texture_bake  # noqa: E402
 import bz2xsi  # noqa: E402
 
 bz2xsi.ALLOW_PRINT = False
@@ -68,6 +69,10 @@ _SAFE_NAME = re.compile(r"[^A-Za-z0-9_-]")
 
 
 class ExportError(RuntimeError):
+    pass
+
+
+class _AlreadyBaked(Exception):
     pass
 
 
@@ -186,8 +191,8 @@ def _combined_source_transform(uv: np.ndarray, layer: dict) -> np.ndarray:
     repeats = layer.get("si_texture2d_repeat_uv") or [1, 1]
     scale = layer.get("si_texture2d_uv_scale") or [1.0, 1.0]
     offset = layer.get("si_texture2d_uv_offset") or [0.0, 0.0]
-    out = uv * np.array([float(repeats[0]), float(repeats[1])]) * np.array([float(scale[0]), float(scale[1])])
-    out = out + np.array([float(offset[0]), float(offset[1])])
+    out = uv * np.array([float(repeats[0]), float(repeats[1])])
+    out = np.array([projection_uv.apply_uv_scale_offset(item, scale, offset) for item in out]) if len(out) else out
     size = (layer.get("width"), layer.get("height"))
     if size[0] and size[1]:
         out = np.array([projection_uv.apply_crop(tuple(item), layer.get("crop_rect_pixels_raw"), size) for item in out])
@@ -213,6 +218,25 @@ def _can_generate(projection: dict) -> bool:
     return projection_uv.projection_type_name(code) is not None and (
         projection_uv.matrix_srt_is_identity(projection) or projection_uv.projection_rotation_supported(projection)
     )
+
+
+def _normalize_uv_tile(corner_uv: np.ndarray, tolerance: float = 1.0e-4) -> np.ndarray:
+    """Shift UVs by whole tiles when a primitive lies within one tile per axis.
+
+    Texture-matrix rotations (e.g. the pi-Y mirror on the NewTank hull) yield
+    coordinates such as u in [-0.895, 0]; that samples the same texels as
+    [0.105, 1] under wrap addressing but shows nothing under clamp. Primitives
+    that genuinely span several tiles (authored repeats) are left unchanged.
+    """
+    if corner_uv.size == 0:
+        return corner_uv
+    out = corner_uv.copy()
+    for axis in (0, 1):
+        low, high = float(out[..., axis].min()), float(out[..., axis].max())
+        tile = np.floor(low + tolerance)
+        if tile != 0.0 and high <= tile + 1.0 + tolerance:
+            out[..., axis] -= tile
+    return out
 
 
 def effective_uvs(
@@ -268,8 +292,39 @@ class TextureLibrary:
         self.used_names: set[str] = set()
         self.records: list[dict] = []
         self.missing: list[str] = []
+        self._images: dict[str, np.ndarray | None] = {}
 
-    def filename_for(self, uri: str | None, source_picture: str | None) -> str | None:
+    def load(self, uri: str | None) -> np.ndarray | None:
+        """Layer image as (H, W, 4) floats in 0..1, cached per URI."""
+        if not uri:
+            return None
+        if uri not in self._images:
+            path = (self.bundle_dir / uri).resolve()
+            if not path.is_file():
+                self.missing.append(uri)
+                self._images[uri] = None
+            else:
+                from PIL import Image
+
+                with Image.open(path) as image:
+                    self._images[uri] = np.asarray(image.convert("RGBA"), dtype=np.float64) / 255.0
+        return self._images[uri]
+
+    def write_baked(self, stem: str, pixels: np.ndarray, layers: list[dict]) -> str:
+        from PIL import Image
+
+        name, index = f"{safe_name(stem)}.tga", 2
+        while name.lower() in self.used_names:
+            name, index = f"{safe_name(stem)}_{index}.tga", index + 1
+        self.used_names.add(name.lower())
+        self.out_dir.mkdir(parents=True, exist_ok=True)
+        Image.fromarray(pixels, "RGB").save(self.out_dir / name)
+        self.records.append(
+            {"file": name, "size": [int(pixels.shape[1]), int(pixels.shape[0])], "alpha": False, "baked_layer_stack": layers}
+        )
+        return name
+
+    def filename_for(self, uri: str | None, source_picture: str | None, blend: tuple | None = None) -> str | None:
         if not uri:
             return None
         path = (self.bundle_dir / uri).resolve()
@@ -280,10 +335,19 @@ class TextureLibrary:
 
         with Image.open(path) as image:
             image = image.convert("RGBA")
+            if blend is not None:
+                image = _bake_blend(image, blend)
+            else:
+                # Blending type 3 ("no mask") ignores the picture's alpha channel;
+                # exporting it would make engines/importers render the surface
+                # see-through (hi-res tank tank.pic / TANKTURRETTOP.pic).
+                image = Image.merge("RGBA", (*image.convert("RGB").split(), Image.new("L", image.size, 255)))
             digest = hashlib.sha1(image.tobytes() + repr(image.size).encode()).hexdigest()
             if digest in self.by_hash:
                 return self.by_hash[digest]
             stem = safe_name(Path(source_picture).stem if source_picture else path.stem.split("__")[-1])
+            if blend is not None:
+                stem = f"{stem}_{digest[:6]}"
             name, index = f"{stem}.tga", 2
             while name.lower() in self.used_names:
                 name, index = f"{stem}_{index}.tga", index + 1
@@ -294,9 +358,99 @@ class TextureLibrary:
             (image.convert("RGB") if opaque else image).save(self.out_dir / name)
             self.by_hash[digest] = name
             self.records.append(
-                {"file": name, "source_picture": source_picture, "bundle_png": uri, "size": list(image.size), "alpha": not opaque}
+                {
+                    "file": name,
+                    "source_picture": source_picture,
+                    "bundle_png": uri,
+                    "size": list(image.size),
+                    "alpha": not opaque,
+                    "baked_blend": dict(zip(("blending_type", "blending", "diffuse_factor", "material_rgb"), blend)) if blend else None,
+                }
             )
             return name
+
+
+# ---------------------------------------------------------------------------
+# Softimage texture blending
+#
+# The shipped ivstas00.xsi SI_Texture2D tail (blendingType 3; blending 1;
+# ambient 0.75; diffuse 1; specular 0; ...) lines up with TXMP +86 (u16) and
+# the +26 float block [ambient, diffuse, specular, ?, ?, blending, ?, ?]:
+#   blending type 3 = no mask (texture replaces the material diffuse colour)
+#                 2 = intensity mask (texture shows where it is bright)
+#                 1 = alpha mask
+# Diffuse factor 0 marks a texture that does not drive surface colour at all
+# (the reflection maps of special modes 7/8). The engines take one plain
+# texture, so masked/scaled textures are baked against the material colour.
+
+
+def _texture_blend(layer: dict | None) -> tuple[int, float, float]:
+    raw = (layer or {}).get("field_f32_be_26_54_raw") or []
+    mode = int((layer or {}).get("field_u16_be_86") or 3)
+    diffuse = float(raw[1]) if len(raw) > 1 else 1.0
+    blending = float(raw[5]) if len(raw) > 5 else 1.0
+    return mode, blending, diffuse
+
+
+def _drives_diffuse(layer: dict | None) -> bool:
+    return layer is not None and _texture_blend(layer)[2] > 1.0e-6
+
+
+def _layer_stack(layer_record: dict | None, model_record: dict | None) -> list[tuple[str, dict]]:
+    """Colour-contributing layers bottom to top: model-local (code 400) then material (code 401).
+
+    The cross-scope order is not serialized; model-local textures act as the
+    base and the ordered material layers (stripes, glow, decals) composite on
+    top, which matches the original walker render.
+    """
+    stack: list[tuple[str, dict]] = []
+    for projection in (model_record or {}).get("local_texture_projections") or []:
+        if (
+            projection.get("role_candidate") != "bump_candidate"
+            and projection.get("uri")
+            and _drives_diffuse(projection)
+            and _can_generate(projection)
+        ):
+            stack.append(("code400", projection))
+    layers = sorted((layer_record or {}).get("layers") or [], key=lambda item: int(item.get("order") or 0))
+    for layer in layers:
+        if layer.get("role_candidate") != "bump_candidate" and layer.get("uri") and _drives_diffuse(layer):
+            stack.append(("code401", layer))
+    return stack
+
+
+def _material_rgb(material: dict | None) -> tuple[float, float, float]:
+    mtr = ((material or {}).get("extras") or {}).get("bz2_softimage_mtr") or {}
+    rgb = mtr.get("diffuse_rgb") or ((material or {}).get("pbrMetallicRoughness") or {}).get("baseColorFactor", [0.7, 0.7, 0.7])[:3]
+    return tuple(float(c) for c in rgb[:3])
+
+
+def _blend_spec(layer: dict, material: dict | None) -> tuple | None:
+    mode, blending, diffuse = _texture_blend(layer)
+    if mode == 3 and abs(blending - 1.0) < 1.0e-6 and abs(diffuse - 1.0) < 1.0e-6:
+        return None
+    mtr = ((material or {}).get("extras") or {}).get("bz2_softimage_mtr") or {}
+    rgb = mtr.get("diffuse_rgb") or ((material or {}).get("pbrMetallicRoughness") or {}).get("baseColorFactor", [0.7, 0.7, 0.7])[:3]
+    return mode, round(blending, 6), round(diffuse, 6), tuple(round(float(c), 6) for c in rgb[:3])
+
+
+def _bake_blend(image, blend: tuple):
+    from PIL import Image
+
+    mode, blending, diffuse, material_rgb = blend
+    pixels = np.asarray(image, dtype=np.float64) / 255.0
+    rgb, alpha = pixels[..., :3], pixels[..., 3:4]
+    if mode == 1:
+        mask = alpha
+    elif mode == 2:
+        luminance = (rgb @ np.array([0.299, 0.587, 0.114]))[..., None]
+        mask = luminance * alpha
+    else:
+        mask = np.ones_like(alpha)
+    mask = np.clip(mask * blending, 0.0, 1.0)
+    out = np.array(material_rgb)[None, None, :] * (1.0 - mask) + np.clip(rgb * diffuse, 0.0, 1.0) * mask
+    baked = np.concatenate([np.clip(out, 0.0, 1.0), np.ones_like(alpha)], axis=-1)
+    return Image.fromarray((baked * 255.0 + 0.5).astype(np.uint8), "RGBA")
 
 
 # ---------------------------------------------------------------------------
@@ -363,6 +517,7 @@ def export_bundle(
     name: str | None = None,
     *,
     include_staging: bool = False,
+    bake_layers: bool = True,
 ) -> dict:
     bundle_dir = bundle_dir.resolve()
     gltf_path = bundle_dir / "scene.gltf"
@@ -455,7 +610,7 @@ def export_bundle(
     report_nodes: list[dict] = []
     uv_decisions: dict[str, int] = {}
     skipped_primitives: list[dict] = []
-    stats = {"frames": 0, "meshes": 0, "triangles": 0, "degenerate_triangles_dropped": 0, "baked_residual_frames": 0, "mirrored_frames": 0}
+    stats = {"baked_composite_textures": 0, "frames": 0, "meshes": 0, "triangles": 0, "degenerate_triangles_dropped": 0, "baked_residual_frames": 0, "mirrored_frames": 0}
 
     def unique_name(raw: str) -> str:
         base = safe_name(raw)
@@ -464,6 +619,50 @@ def export_bundle(
             name, index = f"{base}_{index}", index + 1
         used_names.add(name.lower())
         return name
+
+    def bake_stack(stack, positions, triangles, corner_uv, node_points, node_uv_usable, material, frame_name, p_index):
+        """Composite a multi-layer stack into a per-primitive atlas; None falls back to one layer."""
+        bake_layers_in: list[texture_bake.Layer] = []
+        described = []
+        for kind, item in stack:
+            image = textures.load(item.get("uri"))
+            if image is None:
+                continue
+            try:
+                layer_uv, _decision = effective_uvs(
+                    source_corner_uv=corner_uv,
+                    positions=positions,
+                    triangles=triangles,
+                    node_points=node_points,
+                    node_uv_usable=node_uv_usable,
+                    layer=item if kind == "code401" else None,
+                    model_projection=item if kind == "code400" else None,
+                )
+            except ValueError:
+                continue
+            if layer_uv is None:
+                continue
+            mode, blending, diffuse = _texture_blend(item)
+            bake_layers_in.append(
+                texture_bake.Layer(image, np.asarray(layer_uv, dtype=np.float64), mode, blending, diffuse, item.get("texture_object", ""))
+            )
+            described.append(
+                {
+                    "scope": kind,
+                    "texture_object": item.get("texture_object"),
+                    "picture": item.get("resolved_picture"),
+                    "blending_type": mode,
+                    "blending": blending,
+                    "diffuse_factor": diffuse,
+                    "inherited_from_model": item.get("inherited_from_model"),
+                }
+            )
+        if len(bake_layers_in) < 2:
+            return None
+        corners = positions[triangles].astype(np.float64)
+        pixels, atlas_uv = texture_bake.bake(corners, bake_layers_in, _material_rgb(material))
+        name = textures.write_baked(f"{frame_name}_{p_index}_bake", pixels, described)
+        return name, atlas_uv
 
     def build_mesh(index: int, residual: np.ndarray, frame_name: str) -> bz2xsi.Mesh | None:
         node = nodes[index]
@@ -500,7 +699,8 @@ def export_bundle(
             (
                 projection
                 for projection in model_record.get("local_texture_projections") or []
-                if projection.get("role_candidate") == "base_or_default_candidate"
+                if projection.get("role_candidate") != "bump_candidate"
+                and _drives_diffuse(projection)
                 and projection.get("uri")
                 and _can_generate(projection)
             ),
@@ -518,18 +718,37 @@ def export_bundle(
         for p_index, primitive, positions, triangles, normals, uv in primitives:
             material_index = primitive.get("material")
             material = materials[material_index] if material_index is not None else None
-            layer = _base_layer(layer_records.get(material_index)) if material_index is not None else None
-            texture_file = None
-            if layer is not None:
-                texture_file = textures.filename_for(layer.get("uri"), layer.get("resolved_picture") or layer.get("source_picture"))
-            projection = None
-            if layer is None and model_base is not None and not (
-                (material or {}).get("pbrMetallicRoughness") or {}
-            ).get("baseColorTexture"):
-                projection = model_base
-                texture_file = textures.filename_for(model_base.get("uri"), model_base.get("resolved_picture"))
             corner_uv = uv[triangles] if uv is not None else None
+            baked = None
+            stack = _layer_stack(layer_records.get(material_index), model_record) if bake_layers else []
+            if len(stack) >= 2:
+                baked = bake_stack(stack, positions, triangles, corner_uv, node_points, node_uv_usable, material, frame_name, p_index)
+            if baked is not None:
+                texture_file, tri_uv = baked
+                uv_decisions["baked_layer_composite"] = uv_decisions.get("baked_layer_composite", 0) + 1
+                stats["baked_composite_textures"] += 1
+                layer = None
+            else:
+                layer = _base_layer(layer_records.get(material_index)) if material_index is not None else None
+            if baked is None and layer is not None and not _drives_diffuse(layer):
+                # Reflection-only map (diffuse factor 0): keep the material colour.
+                uv_decisions["reflection_only_layer_not_baked"] = uv_decisions.get("reflection_only_layer_not_baked", 0) + 1
+                layer = None
+            if baked is None:
+                texture_file = None
+            if baked is None and layer is not None:
+                texture_file = textures.filename_for(
+                    layer.get("uri"), layer.get("resolved_picture") or layer.get("source_picture"), _blend_spec(layer, material)
+                )
+            projection = None
+            if baked is None and layer is None and model_base is not None:
+                projection = model_base
+                texture_file = textures.filename_for(
+                    model_base.get("uri"), model_base.get("resolved_picture"), _blend_spec(model_base, material)
+                )
             try:
+                if baked is not None:
+                    raise _AlreadyBaked
                 tri_uv, decision = effective_uvs(
                     source_corner_uv=corner_uv,
                     positions=positions,
@@ -539,9 +758,12 @@ def export_bundle(
                     layer=layer if texture_file else None,
                     model_projection=projection if texture_file else None,
                 )
+            except _AlreadyBaked:
+                decision = None
             except ValueError as exc:
                 tri_uv, decision = corner_uv, f"uv_generation_error_source_uv:{exc}"
-            uv_decisions[decision] = uv_decisions.get(decision, 0) + 1
+            if decision:
+                uv_decisions[decision] = uv_decisions.get(decision, 0) + 1
             if texture_file is None and layer is not None:
                 uv_decisions["textured_material_picture_missing"] = uv_decisions.get("textured_material_picture_missing", 0) + 1
 
@@ -560,6 +782,7 @@ def export_bundle(
             corner_nrm = np.divide(corner_nrm, length, out=np.zeros_like(corner_nrm), where=length > 1.0e-12)
             if tri_uv is None:
                 tri_uv = np.zeros((len(triangles), 3, 2))
+            tri_uv = _normalize_uv_tile(np.asarray(tri_uv, dtype=np.float64))
             if mirrored:
                 corner_pos, corner_nrm, tri_uv = corner_pos[:, ::-1], corner_nrm[:, ::-1], tri_uv[:, ::-1]
             positions_out.append(corner_pos)
@@ -688,21 +911,21 @@ def failure_summary(exc: Exception) -> dict:
     return {"status": status, "error": f"{type(exc).__name__}: {exc}"}
 
 
-def _export_record(bundle: str, include_staging: bool) -> dict:
+def _export_record(bundle: str, include_staging: bool, bake_layers: bool = True) -> dict:
     try:
-        return batch_summary(export_bundle(Path(bundle), include_staging=include_staging))
+        return batch_summary(export_bundle(Path(bundle), include_staging=include_staging, bake_layers=bake_layers))
     except Exception as exc:  # noqa: BLE001 - recorded per scene
         return failure_summary(exc)
 
 
-def refresh_batch(batch_path: Path, *, jobs: int = 1, include_staging: bool = False) -> dict:
+def refresh_batch(batch_path: Path, *, jobs: int = 1, include_staging: bool = False, bake_layers: bool = True) -> dict:
     """Re-export XSI for every successful scene of a batch and update its records."""
     import concurrent.futures
 
     batch = json.loads(batch_path.read_text(encoding="utf-8"))
     targets = [item for item in batch.get("results", []) if item.get("status") == "ok"]
     with concurrent.futures.ProcessPoolExecutor(max_workers=max(1, jobs)) as pool:
-        futures = {pool.submit(_export_record, item["output_dir"], include_staging): item for item in targets}
+        futures = {pool.submit(_export_record, item["output_dir"], include_staging, bake_layers): item for item in targets}
         for done, future in enumerate(concurrent.futures.as_completed(futures), 1):
             item = futures[future]
             item["xsi"] = future.result()
@@ -721,9 +944,10 @@ def main() -> int:
     parser.add_argument("--out", type=Path, help="output directory (single bundle only; default <bundle>/engine)")
     parser.add_argument("--keep-going", action="store_true")
     parser.add_argument("--include-staging", action="store_true", help="keep class-1 ROOT ground grids in multi-root scenes")
+    parser.add_argument("--no-bake", action="store_true", help="export each material's bound base layer only instead of baking multi-layer stacks")
     args = parser.parse_args()
     if args.batch:
-        batch = refresh_batch(args.batch, jobs=args.jobs, include_staging=args.include_staging)
+        batch = refresh_batch(args.batch, jobs=args.jobs, include_staging=args.include_staging, bake_layers=not args.no_bake)
         statuses: dict[str, int] = {}
         for item in batch.get("results", []):
             key = (item.get("xsi") or {}).get("status", "not_reconstructed")
@@ -737,7 +961,7 @@ def main() -> int:
     failures = 0
     for bundle in args.bundles:
         try:
-            report = export_bundle(bundle, args.out, include_staging=args.include_staging)
+            report = export_bundle(bundle, args.out, include_staging=args.include_staging, bake_layers=not args.no_bake)
             print(json.dumps({k: report[k] for k in ("xsi", "frames", "meshes", "triangles", "texture_count", "uv_decisions")}))
         except Exception as exc:  # noqa: BLE001 - batch reporting
             failures += 1
