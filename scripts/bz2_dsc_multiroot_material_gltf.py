@@ -127,10 +127,10 @@ def bind_scene_materials(
         if not member:
             raise FileNotFoundError(f"ROOT HRC not found for {root_model}")
         data = store.read(member)
-        with tempfile.NamedTemporaryFile(suffix=".hrc") as handle:
-            handle.write(data)
-            handle.flush()
-            report = hrc_tree.probe(Path(handle.name))
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_hrc = Path(tmpdir) / "root.hrc"
+            tmp_hrc.write_bytes(data)
+            report = hrc_tree.probe(tmp_hrc)
         outer = dict(report.get("outer_model") or {})
         records = [dict(item) for item in report.get("tree", [])]
         if not outer:
