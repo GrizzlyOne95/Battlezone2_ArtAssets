@@ -156,11 +156,17 @@ def apply_current_uv_effects(uvw, projection: dict):
     """
     u, v = float(uvw[0]), float(uvw[1])
     w = float(uvw[2]) if len(uvw) >= 3 else 0.0
-    rotation = projection.get("si_texture2d_matrix_rotation_xyz_radians") or [0.0, 0.0, 0.0]
-    if not all(abs(float(value)) <= MATRIX_IDENTITY_TOLERANCE for value in rotation):
-        if not projection_rotation_supported(projection):
-            raise ValueError("non-identity CurrentUV matrix scale/translation is not corpus-proven")
-        u, v, w = _mul3(_rotation_matrix_xyz(rotation), (u, v, w))
+    # The texture-matrix rotation is NOT applied to a stored CurrentUV: the
+    # stored UVs already include it. Anchor: the shipped retail .msh models
+    # (bz2_msh_compare.py). With the rotation applied, the pi-Y mirror left
+    # the worm, Scion satchel, grenade launcher and APC wreck textured
+    # mirror-reversed (colour correlation -0.05 / -0.09 / 0.33 / 0.27);
+    # without it they reach 0.90 / 0.83 / 0.99 / 0.94. 22 of 74 textured
+    # shipped models improve and none get worse; median 0.58 -> 0.71. The
+    # BZ2 engines likewise ignore SI_Texture2D matrices. Generated
+    # projections still apply the matrix (projection_space_point).
+    if not projection_rotation_supported(projection) and not matrix_srt_is_identity(projection):
+        raise ValueError("non-identity CurrentUV matrix scale/translation is not corpus-proven")
     result = apply_uv_repeats((u, v), projection.get("si_texture2d_repeat_uv"))
     result = apply_uv_scale_offset(
         result,

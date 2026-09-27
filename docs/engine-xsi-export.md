@@ -147,4 +147,5 @@ Every engine export also writes `<scene>.gltf` next to the `.xsi`. It is the sam
 - **Glow/luminous effects beyond texture colour** are not reproduced. This includes the walker's blue foot glow: every intensity-mask definition tested (luminance × alpha, luminance, mean RGB, max RGB) scored within noise against `walker.1`.
 - **Procedural 3D textures** (`TEXTURES3D`, relation 501: `cloudy`, `clouds`, `stars`) are not evaluated. They occur in 46 of 1139 scenes, all cinematic (outros, wormhole, loading/splash screens), never in a unit or building model.
 - **Poses from animated frames**: `walka.0` (box-cover walker) and `walker.1` (a later Carey revision) differ in pose, not texture.
-- **Pictures absent from the archive** (e.g. `dropship/PICTURES/ivdrop00`, `CORE_BUILDINGS/cbextw02`) stay untextured.
+- **Pictures absent from the archive**: 46 of 88 missing names are now filled from the shipped game's textures (`docs/retail-ground-truth.md`). The remaining 42 are Softimage library pictures or unshipped prototype art.
+- **Stored UVs vs the texture matrix**: the shipped `.msh` models show that stored CurrentUVs already include the `SI_Texture2D` rotation, which is therefore no longer applied a second time (`docs/retail-ground-truth.md`).
