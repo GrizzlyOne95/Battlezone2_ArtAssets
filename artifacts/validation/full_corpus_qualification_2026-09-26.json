@@ -145,5 +145,12 @@
    "adconcept/pluto.1": "edges 0.43 -> 0.68 after code-3 axis fix",
    "walker_final/walker.1": "edges 0.30 -> 0.49 after stale-crop rule"
   }
+ },
+ "retail_ground_truth": {
+  "summary": "artifacts/validation/msh_compare_2026-09-26.json",
+  "doc": "docs/retail-ground-truth.md",
+  "retail_pictures_filled_names": 46,
+  "retail_pictures_scenes_gaining_textures": 219,
+  "msh_colour_correlation_median": 0.714
  }
 }
