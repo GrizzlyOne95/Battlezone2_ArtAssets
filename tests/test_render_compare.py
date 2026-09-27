@@ -168,3 +168,24 @@ class HiddenNodeOverrideTests(unittest.TestCase):
 
         self.assertEqual(bz2_xsi_export.render_hidden_models("hires-tank2.17-0"), {"Main_tank-gun.4-0"})
         self.assertEqual(bz2_xsi_export.render_hidden_models("hires-tank.3-0"), set())
+
+
+class RetailPictureSupplementTests(unittest.TestCase):
+    def test_archive_first_then_retail_ranked_data_before_smtex(self):
+        import tempfile
+
+        import bz2_texture_layers_gltf as layers
+
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            for member in ("smtex/ivdrop00.pic", "data/objects/ivdrop/ivdrop00.pic", "data/objects/ivdrop/ivdrop00.tga"):
+                (root / member).parent.mkdir(parents=True, exist_ok=True)
+                (root / member).write_bytes(b"x")
+            saved = (layers.RETAIL_PICTURES_ROOT, layers._RETAIL_INDEX)
+            layers.RETAIL_PICTURES_ROOT, layers._RETAIL_INDEX = root, None
+            try:
+                store, member = layers.resolve_retail_picture("//SERVER/Battlezone/modelsdirectory/dropship/PICTURES/ivdrop00")
+                self.assertEqual(member, "data/objects/ivdrop/ivdrop00.pic")
+                self.assertIsNone(layers.resolve_retail_picture("//SERVER/x/PICTURES/not_shipped"))
+            finally:
+                layers.RETAIL_PICTURES_ROOT, layers._RETAIL_INDEX = saved

@@ -1,0 +1,3159 @@
+{
+ "schema": "bz2-msh-compare-summary-v1",
+ "date": "2026-09-26",
+ "tool": "scripts/bz2_msh_compare.py",
+ "retail_source": "_Battlezone_II_1.0.7z data.pak (671 .msh)",
+ "pairs": 209,
+ "geometry_within_1pct": 60,
+ "geometry_within_3pct": 88,
+ "textured_geometry_matched": 74,
+ "colour_correlation_median": 0.714,
+ "colour_correlation_quartiles": [
+  0.409,
+  0.714,
+  0.899
+ ],
+ "before_stored_uv_rotation_fix_median": 0.583,
+ "known_non_pipeline_differences": {
+  "rbextf00": "shipped copy recoloured (structure corr 0.998)",
+  "mire": "shipped picture is a different image",
+  "ivwalk_* pose variants": "bind pose differs from scene pose"
+ },
+ "pairs_detail": [
+  {
+   "msh": "apammo00.msh",
+   "bundle": "Power_Ups__version2-aprepair.4-0",
+   "node_jaccard": 0.667,
+   "msh_scale": 0.75773,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.09159,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.0504,
+   "texture_samples": 8
+  },
+  {
+   "msh": "aprepa00.msh",
+   "bundle": "Power_Ups__version2-aprepair.4-0",
+   "node_jaccard": 0.667,
+   "msh_scale": 0.97367,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.01439,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.875,
+   "texture_samples": 80
+  },
+  {
+   "msh": "apserv00.msh",
+   "bundle": "Power_Ups__version2-aprepair.4-0",
+   "node_jaccard": 0.667,
+   "msh_scale": 0.75773,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.09159,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.0504,
+   "texture_samples": 8
+  },
+  {
+   "msh": "bane.msh",
+   "bundle": "PLANETS__LORES-bane.4-0",
+   "node_jaccard": 1.0,
+   "msh_scale": 1.0,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.0,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.957,
+   "texture_samples": 1920
+  },
+  {
+   "msh": "bbdest01.msh",
+   "bundle": "rend_environs__isdf0x-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 0.73837,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.13236,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "bbdest05.msh",
+   "bundle": "pluto_environs__isdf01-porocks01_t.3-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 3.13094,
+   "axis_flips": [
+    1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.24975,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "bbruin03.msh",
+   "bundle": "REND__rend-planet.2-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 69.31263,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.12284,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": -0.0473,
+   "texture_samples": 8
+  },
+  {
+   "msh": "bbsubw01.msh",
+   "bundle": "REND__isdf0x-berocks02.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 2.06167,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.06675,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "bebrg06.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 6.30431,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.13711,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.0172,
+   "texture_samples": 90
+  },
+  {
+   "msh": "bebrig01.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 6.53686,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.08024,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.0707,
+   "texture_samples": 87
+  },
+  {
+   "msh": "bepool01.msh",
+   "bundle": "misceffects__effects__environment-biometal_pool.2-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 0.96257,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.02058,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.1605,
+   "texture_samples": 7
+  },
+  {
+   "msh": "bocryst02.msh",
+   "bundle": "pluto_environs__isdf01-porocks02_t.8-0",
+   "node_jaccard": 0.6,
+   "msh_scale": 0.25951,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.09428,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.1012,
+   "texture_samples": 7
+  },
+  {
+   "msh": "burns_ship.msh",
+   "bundle": "SCION_TUG__version1-cockpit.3-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 1.5039,
+   "axis_flips": [
+    -1.0,
+    -1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.16308,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": 0.0836,
+   "texture_samples": 8
+  },
+  {
+   "msh": "bvault01.msh",
+   "bundle": "Multiplayer__Loot-Bank_Vault.14-0",
+   "node_jaccard": 0.6,
+   "msh_scale": 0.94564,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.01686,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": 0.6624,
+   "texture_samples": 316
+  },
+  {
+   "msh": "cbcavec1.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 2.5116,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.08785,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": -0.0982,
+   "texture_samples": 14
+  },
+  {
+   "msh": "cbcavec2.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 1.97774,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.13667,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.3734,
+   "texture_samples": 8
+  },
+  {
+   "msh": "cbcaves1.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 3.00947,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.10602,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": 0.17,
+   "texture_samples": 20
+  },
+  {
+   "msh": "cbcaves2.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 2.45939,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.09949,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": 0.2026,
+   "texture_samples": 22
+  },
+  {
+   "msh": "cepool01.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 0.75141,
+   "axis_flips": [
+    1.0,
+    -1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.18096,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": -0.3785,
+   "texture_samples": 6
+  },
+  {
+   "msh": "core.msh",
+   "bundle": "PLANETS__LORES-core.2-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 1.0,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.0,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.5689,
+   "texture_samples": 960
+  },
+  {
+   "msh": "dark.msh",
+   "bundle": "PLANETS__LORES-dark.6-0",
+   "node_jaccard": 0.759,
+   "msh_scale": 1.02107,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00296,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.4858,
+   "texture_samples": 1230
+  },
+  {
+   "msh": "dbruin02.msh",
+   "bundle": "Multiplayer__test-tunnels.1-0",
+   "node_jaccard": 0.667,
+   "msh_scale": 0.10195,
+   "axis_flips": [
+    1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.20832,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "depool00.msh",
+   "bundle": "misceffects__effects__environment-biometal_pool.2-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 0.96257,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.02062,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.4556,
+   "texture_samples": 7
+  },
+  {
+   "msh": "eepool01.msh",
+   "bundle": "misceffects__effects__environment-biometal_pool.2-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 0.96257,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.02061,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": -0.2394,
+   "texture_samples": 7
+  },
+  {
+   "msh": "fbdowe00.msh",
+   "bundle": "SCION_RENDER__render_only-dower.1-0",
+   "node_jaccard": 0.571,
+   "msh_scale": 1.95363,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.03495,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": -0.1895,
+   "texture_samples": 60
+  },
+  {
+   "msh": "fbkilnl1.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 1.29008,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.1473,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.0,
+   "texture_samples": 1
+  },
+  {
+   "msh": "fbscav_deploy.msh",
+   "bundle": "SCION_SCAVENGER__render_only-SCAVENGER_DEPLOY_t.1-0",
+   "node_jaccard": 0.867,
+   "msh_scale": 1.72061,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.03124,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": 0.0477,
+   "texture_samples": 416
+  },
+  {
+   "msh": "fbscav_upgrd.msh",
+   "bundle": "SCION_SCAVENGER__render_only-SCAVENGER_DEPLOY_t.1-0",
+   "node_jaccard": 0.611,
+   "msh_scale": 1.36963,
+   "axis_flips": [
+    1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.02552,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": -0.0353,
+   "texture_samples": 497
+  },
+  {
+   "msh": "fbstro00.msh",
+   "bundle": "SCION_RENDER__render_only-stronghold.2-0",
+   "node_jaccard": 0.571,
+   "msh_scale": 1.10895,
+   "axis_flips": [
+    1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.0618,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": -0.1094,
+   "texture_samples": 36
+  },
+  {
+   "msh": "fbstrol1.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 0.64381,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.11231,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": -0.4772,
+   "texture_samples": 8
+  },
+  {
+   "msh": "foflag01.msh",
+   "bundle": "Multiplayer__Loot-flag.1-0",
+   "node_jaccard": 1.0,
+   "msh_scale": 0.99777,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.00425,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "fvartl_skel.msh",
+   "bundle": "SCION_ARTILLERY__version2-artillery.17-0",
+   "node_jaccard": 0.6,
+   "msh_scale": 1.23659,
+   "axis_flips": [
+    1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.14938,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": -0.4071,
+   "texture_samples": 7
+  },
+  {
+   "msh": "fvburn00.msh",
+   "bundle": "SCION_BURNS__burns-ship.29-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 0.99938,
+   "axis_flips": [
+    -1.0,
+    -1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.05677,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": 0.0645,
+   "texture_samples": 110
+  },
+  {
+   "msh": "fvscav_skel.msh",
+   "bundle": "SCION_SCAVENGER__render_only-SCAVENGER_DEPLOY_t.1-0",
+   "node_jaccard": 0.571,
+   "msh_scale": 0.46898,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.04063,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": -0.0695,
+   "texture_samples": 128
+  },
+  {
+   "msh": "fvsent_cockpit.msh",
+   "bundle": "Multiplayer__test-tunnels.1-0",
+   "node_jaccard": 1.0,
+   "msh_scale": 0.00245,
+   "axis_flips": [
+    1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.25429,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "fvtank_cockpit.msh",
+   "bundle": "SCION_WARRIOR__version1-cockpit.6-0",
+   "node_jaccard": 0.667,
+   "msh_scale": 1.04549,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.0166,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.8693,
+   "texture_samples": 44
+  },
+  {
+   "msh": "fvtitan_cockpit.msh",
+   "bundle": "SCION_TITAN__version1-cockpit.3-0",
+   "node_jaccard": 0.75,
+   "msh_scale": 0.96411,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.02452,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.6382,
+   "texture_samples": 58
+  },
+  {
+   "msh": "fvtug_cockpit.msh",
+   "bundle": "SCION_TUG__version1-cockpit.3-0",
+   "node_jaccard": 0.667,
+   "msh_scale": 0.98,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00916,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.4737,
+   "texture_samples": 44
+  },
+  {
+   "msh": "fvturr_asf.msh",
+   "bundle": "SCION_GUARDIAN__version3-TURRET_DEPLOY.3-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 0.81742,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.06301,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.022,
+   "texture_samples": 61
+  },
+  {
+   "msh": "fvturr_asn.msh",
+   "bundle": "SCION_GUARDIAN__version3-TURRET_DEPLOY.3-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 0.81742,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.06301,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.022,
+   "texture_samples": 61
+  },
+  {
+   "msh": "fvturr_asr.msh",
+   "bundle": "SCION_GUARDIAN__version3-TURRET_DEPLOY.3-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 0.81742,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.06301,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.022,
+   "texture_samples": 61
+  },
+  {
+   "msh": "fvturr_deploy.msh",
+   "bundle": "SCION_GUARDIAN__version3-TURRET_DEPLOY.3-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 0.81742,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.06301,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.022,
+   "texture_samples": 61
+  },
+  {
+   "msh": "fvturr_skel.msh",
+   "bundle": "SCION_GUARDIAN__version3-TURRET_DEPLOY.3-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 0.81742,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.06301,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.022,
+   "texture_samples": 61
+  },
+  {
+   "msh": "gspstab.msh",
+   "bundle": "misceffects__effects__weapon-spstab.1-0",
+   "node_jaccard": 1.0,
+   "msh_scale": 1.0,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.0,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.9879,
+   "texture_samples": 52
+  },
+  {
+   "msh": "ibbstrl1.msh",
+   "bundle": "shell__interface___HUD-reticle_7.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 141.61997,
+   "axis_flips": [
+    1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 10.86553,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "ibgtowl1.msh",
+   "bundle": "shell__interface___HUD-reticle_7.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 95.53319,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 10.86779,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "ibnav00.msh",
+   "bundle": "PLUTO_BUILDINGS__version2-debris_computer.2-0",
+   "node_jaccard": 0.667,
+   "msh_scale": 0.37227,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.12072,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "ibpgenl1.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 0.64216,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.11217,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.2173,
+   "texture_samples": 9
+  },
+  {
+   "msh": "ibscav00.msh",
+   "bundle": "ISDF_SCAVENGER__version2-Scavenger_loop_s2.4-0",
+   "node_jaccard": 0.667,
+   "msh_scale": 1.28604,
+   "axis_flips": [
+    1.0,
+    -1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.03983,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": 0.055,
+   "texture_samples": 333
+  },
+  {
+   "msh": "ibscav01.msh",
+   "bundle": "ISDF_SCAVENGER__version2-Scavenger_loop_s2.4-0",
+   "node_jaccard": 0.667,
+   "msh_scale": 0.95982,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00886,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.5793,
+   "texture_samples": 919
+  },
+  {
+   "msh": "ibscup00.msh",
+   "bundle": "ISDF_SCAVENGER__version2-Scavenger_loop_s2.4-0",
+   "node_jaccard": 0.692,
+   "msh_scale": 1.00011,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00083,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.8709,
+   "texture_samples": 988
+  },
+  {
+   "msh": "ibscup01.msh",
+   "bundle": "ISDF_SCAVENGER__version2-Scavenger_loop_s2.4-0",
+   "node_jaccard": 0.692,
+   "msh_scale": 0.96238,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00873,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.5883,
+   "texture_samples": 919
+  },
+  {
+   "msh": "ibwseg00.msh",
+   "bundle": "shell__interface___HUD-reticle_7.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 117.37102,
+   "axis_flips": [
+    1.0,
+    -1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 10.90591,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "ibwseg01.msh",
+   "bundle": "shell__interface___HUD-reticle_7.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 153.74434,
+   "axis_flips": [
+    1.0,
+    -1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 10.94254,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "ibwstr00.msh",
+   "bundle": "shell__interface___HUD-reticle_8.2-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 127.46397,
+   "axis_flips": [
+    1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 13.70429,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "ibwstr01.msh",
+   "bundle": "shell__interface___HUD-reticle_8.2-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 182.2821,
+   "axis_flips": [
+    1.0,
+    -1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 13.77254,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "iggren00.msh",
+   "bundle": "isdf_pack__isdf-grenade.3-0",
+   "node_jaccard": 1.0,
+   "msh_scale": 0.12,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.0,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.9893,
+   "texture_samples": 689
+  },
+  {
+   "msh": "igjetp00.msh",
+   "bundle": "isdf_pack__isdf-jetpack.5-0",
+   "node_jaccard": 0.667,
+   "msh_scale": 0.07088,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.06922,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.2689,
+   "texture_samples": 36
+  },
+  {
+   "msh": "igsatc00.msh",
+   "bundle": "isdf_pack__isdf-satchel.4-0",
+   "node_jaccard": 1.0,
+   "msh_scale": 0.12004,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 9e-05,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.9262,
+   "texture_samples": 501
+  },
+  {
+   "msh": "igsnip_deploy.msh",
+   "bundle": "ISDF_SOLD_RIFLE__docking_gun-igsnip00_anim.1-0",
+   "node_jaccard": 0.778,
+   "msh_scale": 0.87509,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.0526,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.3296,
+   "texture_samples": 55
+  },
+  {
+   "msh": "igsnip_skel.msh",
+   "bundle": "ISDF_SOLD_RIFLE__docking_gun-igsnip00_anim.1-0",
+   "node_jaccard": 0.778,
+   "msh_scale": 0.10501,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.0526,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.3296,
+   "texture_samples": 55
+  },
+  {
+   "msh": "igsnip_stand.msh",
+   "bundle": "ISDF_SOLD_RIFLE__docking_gun-igsnip00_anim.1-0",
+   "node_jaccard": 0.778,
+   "msh_scale": 0.87509,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.0526,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.3296,
+   "texture_samples": 55
+  },
+  {
+   "msh": "iochnk03.msh",
+   "bundle": "rend_environs__isdf0x-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 0.06173,
+   "axis_flips": [
+    -1.0,
+    -1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.16225,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "iochnk05.msh",
+   "bundle": "Multiplayer__loot-city_streat.2-0",
+   "node_jaccard": 0.667,
+   "msh_scale": 0.03754,
+   "axis_flips": [
+    1.0,
+    -1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.13113,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "iocmet00.msh",
+   "bundle": "shell__interface___HUD-reticle_7.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 3.72321,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 10.40777,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "iocmet01.msh",
+   "bundle": "shell__interface___HUD-reticle_7.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 7.44642,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 10.40777,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "ioflag01.msh",
+   "bundle": "Multiplayer__Loot-flag.1-0",
+   "node_jaccard": 1.0,
+   "msh_scale": 0.99777,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.00425,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "ipdrop01.msh",
+   "bundle": "PLUTO_BUILDINGS__version2-debris_computer.2-0",
+   "node_jaccard": 0.667,
+   "msh_scale": 0.30895,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.11097,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "ispilo_rifle_run.msh",
+   "bundle": "ISDF_SOLD_RIFLE__docking_gun-igsnip00_anim.1-0",
+   "node_jaccard": 0.636,
+   "msh_scale": 2.88719,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.2076,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": -0.1027,
+   "texture_samples": 16
+  },
+  {
+   "msh": "ispilo_rifle_talkloop.msh",
+   "bundle": "ISDF_SOLD_RIFLE__docking_gun-igsnip00_anim.1-0",
+   "node_jaccard": 0.636,
+   "msh_scale": 0.28756,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.20578,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": -0.1025,
+   "texture_samples": 16
+  },
+  {
+   "msh": "ivatnkl1.msh",
+   "bundle": "shell__interface___HUD-reticle_7.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 28.77876,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 10.81351,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "ivatnkl2.msh",
+   "bundle": "REND__rend-planet.2-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 9.69833,
+   "axis_flips": [
+    -1.0,
+    -1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.14575,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": -0.0266,
+   "texture_samples": 3
+  },
+  {
+   "msh": "ivbsub00.msh",
+   "bundle": "ISDF_vehicles__SEAL-Ballistic_Sub.5-0",
+   "node_jaccard": 0.917,
+   "msh_scale": 1.00004,
+   "axis_flips": [
+    -1.0,
+    -1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.0625,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "ivrcktl1.msh",
+   "bundle": "Multiplayer__test-tunnels.1-0",
+   "node_jaccard": 1.0,
+   "msh_scale": 0.02842,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.18185,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "ivrcktl2.msh",
+   "bundle": "ISDF_ROCKETTANK__LOD_1-rocket_tank_t.10-0",
+   "node_jaccard": 1.0,
+   "msh_scale": 0.99998,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 1e-05,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.9928,
+   "texture_samples": 154
+  },
+  {
+   "msh": "ivscavl1.msh",
+   "bundle": "Multiplayer__test-tunnels.1-0",
+   "node_jaccard": 1.0,
+   "msh_scale": 0.02253,
+   "axis_flips": [
+    1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.16568,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "ivscavl2.msh",
+   "bundle": "ISDF_SCAVENGER__LOD_1-Scavenger_t.7-0",
+   "node_jaccard": 1.0,
+   "msh_scale": 0.74999,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 1e-05,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.9895,
+   "texture_samples": 95
+  },
+  {
+   "msh": "ivscout_cockpit.msh",
+   "bundle": "ISDF_SCOUT__version3-cockpit.10-0",
+   "node_jaccard": 0.75,
+   "msh_scale": 1.01399,
+   "axis_flips": [
+    1.0,
+    -1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.82702,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "ivserv_cockpit.msh",
+   "bundle": "ISDF_SERVICETRUCK__version1-cockpit.1-0",
+   "node_jaccard": 0.8,
+   "msh_scale": 0.77006,
+   "axis_flips": [
+    -1.0,
+    -1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.25716,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "ivservl1.msh",
+   "bundle": "ISDF_SERVICETRUCK__LOD_2-SERVICE_TRUCK_t.5-0",
+   "node_jaccard": 1.0,
+   "msh_scale": 1.0,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.0,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.9379,
+   "texture_samples": 514
+  },
+  {
+   "msh": "ivturr00.msh",
+   "bundle": "ISDF_TURRET__LOD_2-Turret_t.2-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 1.71691,
+   "axis_flips": [
+    1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.06926,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.5077,
+   "texture_samples": 139
+  },
+  {
+   "msh": "ivwalk00.msh",
+   "bundle": "ISDF_vehicles__ATTACK-Walker_t.8-0",
+   "node_jaccard": 0.765,
+   "msh_scale": 0.98331,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.0116,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.7121,
+   "texture_samples": 644
+  },
+  {
+   "msh": "ivwalk01.msh",
+   "bundle": "ISDF_vehicles__ATTACK-Walker_t.8-0",
+   "node_jaccard": 0.906,
+   "msh_scale": 0.99774,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00096,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.9175,
+   "texture_samples": 800
+  },
+  {
+   "msh": "ivwalk02.msh",
+   "bundle": "ISDF_vehicles__ATTACK-Walker_t.8-0",
+   "node_jaccard": 0.906,
+   "msh_scale": 1.08089,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.05061,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.3988,
+   "texture_samples": 177
+  },
+  {
+   "msh": "ivwalk_death.msh",
+   "bundle": "ISDF_vehicles__ATTACK-Walker_t.8-0",
+   "node_jaccard": 0.879,
+   "msh_scale": 0.72837,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.02348,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.3952,
+   "texture_samples": 397
+  },
+  {
+   "msh": "ivwalk_death2.msh",
+   "bundle": "ISDF_vehicles__ATTACK-Walker_t.8-0",
+   "node_jaccard": 0.879,
+   "msh_scale": 0.72834,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.02346,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.3908,
+   "texture_samples": 397
+  },
+  {
+   "msh": "ivwalk_death3.msh",
+   "bundle": "ISDF_vehicles__ATTACK-Walker_t.8-0",
+   "node_jaccard": 0.879,
+   "msh_scale": 0.72834,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.02346,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.3908,
+   "texture_samples": 397
+  },
+  {
+   "msh": "ivwalk_idle.msh",
+   "bundle": "ISDF_vehicles__ATTACK-Walker_t.8-0",
+   "node_jaccard": 0.686,
+   "msh_scale": 0.7235,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.02358,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.3951,
+   "texture_samples": 411
+  },
+  {
+   "msh": "ivwalk_sitdown.msh",
+   "bundle": "ISDF_vehicles__ATTACK-Walker_t.8-0",
+   "node_jaccard": 0.853,
+   "msh_scale": 0.72402,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.02342,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.4036,
+   "texture_samples": 409
+  },
+  {
+   "msh": "ivwalk_skel.msh",
+   "bundle": "ISDF_vehicles__ATTACK-Walker_t.8-0",
+   "node_jaccard": 0.537,
+   "msh_scale": 0.72495,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.02332,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.4006,
+   "texture_samples": 405
+  },
+  {
+   "msh": "ivwalk_turn.msh",
+   "bundle": "ISDF_vehicles__ATTACK-Walker_t.8-0",
+   "node_jaccard": 0.853,
+   "msh_scale": 0.7124,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.03082,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.3571,
+   "texture_samples": 254
+  },
+  {
+   "msh": "ivwalk_walk.msh",
+   "bundle": "ISDF_vehicles__ATTACK-Walker_t.8-0",
+   "node_jaccard": 0.853,
+   "msh_scale": 0.73785,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.04029,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.3449,
+   "texture_samples": 237
+  },
+  {
+   "msh": "mapool01.msh",
+   "bundle": "misceffects__effects__environment-biometal_pool.2-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 0.96257,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.02061,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": 0.2413,
+   "texture_samples": 7
+  },
+  {
+   "msh": "mbdata00.msh",
+   "bundle": "MIRE_BUILDINGS__building-data_transfer_t.8-0",
+   "node_jaccard": 0.882,
+   "msh_scale": 1.00376,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00113,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.409,
+   "texture_samples": 802
+  },
+  {
+   "msh": "mbruin03.msh",
+   "bundle": "MIRE_BUILDINGS__building-mbruin03_d01.17-0",
+   "node_jaccard": 0.6,
+   "msh_scale": 1.00264,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.06104,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": 0.0733,
+   "texture_samples": 118
+  },
+  {
+   "msh": "mbruin04.msh",
+   "bundle": "MIRE_BUILDINGS__building-mbruin04_d01_2a.7-0",
+   "node_jaccard": 0.625,
+   "msh_scale": 1.00252,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00077,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.4197,
+   "texture_samples": 408
+  },
+  {
+   "msh": "mbwall01.msh",
+   "bundle": "MIRE_BUILDINGS__building-mbwall01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 1.55216,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.13623,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "mbwall02.msh",
+   "bundle": "MIRE_BUILDINGS__building-mbwall02.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 1.34757,
+   "axis_flips": [
+    1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.11818,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "mbwall03.msh",
+   "bundle": "MIRE_BUILDINGS__building-mbwall03.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 1.18646,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.07165,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "mcwing_fly.msh",
+   "bundle": "MIRE_CREATURES__version2-wing_skel.1-0",
+   "node_jaccard": 0.667,
+   "msh_scale": 1.02182,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00247,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.9512,
+   "texture_samples": 266
+  },
+  {
+   "msh": "mcwing_skel.msh",
+   "bundle": "MIRE_CREATURES__version2-wing_skel.1-0",
+   "node_jaccard": 0.667,
+   "msh_scale": 0.10218,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00247,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.9588,
+   "texture_samples": 264
+  },
+  {
+   "msh": "mecoll01.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 3.87279,
+   "axis_flips": [
+    1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.10366,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.1451,
+   "texture_samples": 34
+  },
+  {
+   "msh": "mepool01.msh",
+   "bundle": "misceffects__effects__environment-biometal_pool.2-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 0.96257,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.02061,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": -0.0582,
+   "texture_samples": 7
+  },
+  {
+   "msh": "meslida1.msh",
+   "bundle": "MIRE_environments__version2-meslida2.9-0",
+   "node_jaccard": 0.733,
+   "msh_scale": 0.98536,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00723,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.3837,
+   "texture_samples": 656
+  },
+  {
+   "msh": "meslida2.msh",
+   "bundle": "MIRE_environments__version2-meslida2.9-0",
+   "node_jaccard": 0.733,
+   "msh_scale": 0.9877,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00578,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": 0.349,
+   "texture_samples": 653
+  },
+  {
+   "msh": "meslida3.msh",
+   "bundle": "MIRE_environments__version2-meslida2.9-0",
+   "node_jaccard": 0.733,
+   "msh_scale": 0.99521,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00808,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.2328,
+   "texture_samples": 560
+  },
+  {
+   "msh": "meslida4.msh",
+   "bundle": "MIRE_environments__version2-meslida2.9-0",
+   "node_jaccard": 0.733,
+   "msh_scale": 0.99737,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00682,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.3799,
+   "texture_samples": 580
+  },
+  {
+   "msh": "mire.msh",
+   "bundle": "PLANETS__LORES-mire.2-0",
+   "node_jaccard": 1.0,
+   "msh_scale": 1.0,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.0,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.6743,
+   "texture_samples": 1440
+  },
+  {
+   "msh": "morock01.msh",
+   "bundle": "PLUTO__OBJECT-storage_crate.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 16.17107,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.16577,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "morock02.msh",
+   "bundle": "PLUTO__OBJECT-storage_crate.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 11.04869,
+   "axis_flips": [
+    1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.26165,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "mouprt00.msh",
+   "bundle": "rend_environs__isdf0x-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 0.58629,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.0857,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "nepool01.msh",
+   "bundle": "misceffects__effects__environment-biometal_pool.2-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 0.99783,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.0006,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.8828,
+   "texture_samples": 40
+  },
+  {
+   "msh": "pbatun03.msh",
+   "bundle": "PLUTO__ACCESS-entranceway.16-0",
+   "node_jaccard": 0.6,
+   "msh_scale": 1.02269,
+   "axis_flips": [
+    1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.03877,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.3336,
+   "texture_samples": 50
+  },
+  {
+   "msh": "pbcomm00.msh",
+   "bundle": "PLUTO_BUILDINGS__version4-comm_building.8-0",
+   "node_jaccard": 0.667,
+   "msh_scale": 1.00742,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00223,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.6285,
+   "texture_samples": 980
+  },
+  {
+   "msh": "pbdebr01.msh",
+   "bundle": "PLUTO_BUILDINGS__version2-debris_computer.2-0",
+   "node_jaccard": 1.0,
+   "msh_scale": 1.00458,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00162,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.8334,
+   "texture_samples": 64
+  },
+  {
+   "msh": "pbhall00.msh",
+   "bundle": "PLUTO_BUILDINGS__version2-residence_hall.4-0",
+   "node_jaccard": 0.667,
+   "msh_scale": 0.99932,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00036,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.855,
+   "texture_samples": 309
+  },
+  {
+   "msh": "pbones00.msh",
+   "bundle": "PLUTO__building-one_story_2.2-0",
+   "node_jaccard": 0.75,
+   "msh_scale": 1.00277,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00069,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": 0.7414,
+   "texture_samples": 196
+  },
+  {
+   "msh": "pbones01.msh",
+   "bundle": "PLUTO_BUILDINGS__building-one_story_2_d01.11-0",
+   "node_jaccard": 0.818,
+   "msh_scale": 1.00409,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00096,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.7333,
+   "texture_samples": 216
+  },
+  {
+   "msh": "pbsbay00.msh",
+   "bundle": "PLUTO__building-service_bay_2.1-0",
+   "node_jaccard": 0.8,
+   "msh_scale": 0.99806,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.03456,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.5465,
+   "texture_samples": 57
+  },
+  {
+   "msh": "pbsbay01.msh",
+   "bundle": "PLUTO__building-service_bay_2.1-0",
+   "node_jaccard": 0.8,
+   "msh_scale": 1.01495,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.03589,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": 0.2454,
+   "texture_samples": 62
+  },
+  {
+   "msh": "pbscen01.msh",
+   "bundle": "PLUTO_BUILDINGS__ruin_bits-scene01_guytable.4-0",
+   "node_jaccard": 0.75,
+   "msh_scale": 0.9985,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00154,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.9627,
+   "texture_samples": 632
+  },
+  {
+   "msh": "pbscen02.msh",
+   "bundle": "PLUTO_BUILDINGS__ruin_bits-scene02_guylocker.3-0",
+   "node_jaccard": 0.667,
+   "msh_scale": 0.96947,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00875,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.4092,
+   "texture_samples": 394
+  },
+  {
+   "msh": "pbscen06.msh",
+   "bundle": "PLUTO_BUILDINGS__ruin_bits-scene06_guybeds.4-0",
+   "node_jaccard": 0.667,
+   "msh_scale": 1.00104,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.0009,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.9557,
+   "texture_samples": 630
+  },
+  {
+   "msh": "pbscen07.msh",
+   "bundle": "PLUTO_BUILDINGS__ruin_bits-scene07_guybed2.4-0",
+   "node_jaccard": 0.75,
+   "msh_scale": 0.97822,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.0077,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.7951,
+   "texture_samples": 447
+  },
+  {
+   "msh": "pbscen08.msh",
+   "bundle": "PLUTO_BUILDINGS__ruin_bits-scene08_guydesk.2-0",
+   "node_jaccard": 0.667,
+   "msh_scale": 0.9909,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00432,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.8403,
+   "texture_samples": 592
+  },
+  {
+   "msh": "pbscen09.msh",
+   "bundle": "PLUTO_BUILDINGS__ruin_bits-scene09_bed.4-0",
+   "node_jaccard": 0.667,
+   "msh_scale": 1.01802,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.0223,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.9926,
+   "texture_samples": 50
+  },
+  {
+   "msh": "pbscen10.msh",
+   "bundle": "PLUTO_BUILDINGS__ruin_bits-scene10_GuyMislTank.2-0",
+   "node_jaccard": 0.917,
+   "msh_scale": 1.00318,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00119,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.8879,
+   "texture_samples": 1076
+  },
+  {
+   "msh": "pbtele04.msh",
+   "bundle": "shell__interface___HUD-reticle_8.2-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 62.97567,
+   "axis_flips": [
+    1.0,
+    -1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 13.56242,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "pbtunn03.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 2.3872,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.10432,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": -0.6841,
+   "texture_samples": 10
+  },
+  {
+   "msh": "pbtunn04.msh",
+   "bundle": "REND_CREATURES__REND-sulfer_sifter.2-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 7.69422,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.09844,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": -0.1043,
+   "texture_samples": 16
+  },
+  {
+   "msh": "pbtwos00.msh",
+   "bundle": "PLUTO_BUILDINGS__building-two_story_2_d01.14-0",
+   "node_jaccard": 0.727,
+   "msh_scale": 1.00038,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 9e-05,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.8152,
+   "texture_samples": 306
+  },
+  {
+   "msh": "pbtwos01.msh",
+   "bundle": "PLUTO_BUILDINGS__building-two_story_2_d01.14-0",
+   "node_jaccard": 0.818,
+   "msh_scale": 1.00071,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00016,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.9088,
+   "texture_samples": 303
+  },
+  {
+   "msh": "pbwcor01.msh",
+   "bundle": "PLUTO_BUILDINGS__version2-wall_corner.6-0",
+   "node_jaccard": 1.0,
+   "msh_scale": 0.99465,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00193,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.7156,
+   "texture_samples": 66
+  },
+  {
+   "msh": "pbwseg02.msh",
+   "bundle": "PLUTO_BUILDINGS__version2-wall_segment_2.14-0",
+   "node_jaccard": 0.778,
+   "msh_scale": 0.99737,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00094,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.7788,
+   "texture_samples": 154
+  },
+  {
+   "msh": "pbwseg03.msh",
+   "bundle": "PLUTO_BUILDINGS__version2-wall_segment_3.11-0",
+   "node_jaccard": 0.778,
+   "msh_scale": 0.99894,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00039,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.7853,
+   "texture_samples": 121
+  },
+  {
+   "msh": "pbwseg04.msh",
+   "bundle": "PLUTO_BUILDINGS__version2-wall_segment_4.12-0",
+   "node_jaccard": 0.667,
+   "msh_scale": 1.01154,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.0051,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.4391,
+   "texture_samples": 145
+  },
+  {
+   "msh": "pbwseg05.msh",
+   "bundle": "PLUTO_BUILDINGS__version2-wall_segment_5.14-0",
+   "node_jaccard": 0.571,
+   "msh_scale": 1.01383,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00583,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.2394,
+   "texture_samples": 79
+  },
+  {
+   "msh": "peapc00.msh",
+   "bundle": "PLUTO_BUILDINGS__WRECK-APC_t2.5-0",
+   "node_jaccard": 0.714,
+   "msh_scale": 0.99788,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00079,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.942,
+   "texture_samples": 624
+  },
+  {
+   "msh": "peclif01.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 3.53302,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.13237,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.094,
+   "texture_samples": 50
+  },
+  {
+   "msh": "peclif02.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 3.16725,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.13419,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": 0.1179,
+   "texture_samples": 24
+  },
+  {
+   "msh": "peclif03.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 4.36832,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.13643,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": -0.0389,
+   "texture_samples": 47
+  },
+  {
+   "msh": "peclif04.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 3.03784,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.11372,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.0117,
+   "texture_samples": 20
+  },
+  {
+   "msh": "peclif05.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 3.70756,
+   "axis_flips": [
+    1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.12613,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": 0.3951,
+   "texture_samples": 31
+  },
+  {
+   "msh": "peclif06.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 2.41604,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.12405,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": -0.0862,
+   "texture_samples": 21
+  },
+  {
+   "msh": "peclif07.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 2.0968,
+   "axis_flips": [
+    1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.12565,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.4143,
+   "texture_samples": 10
+  },
+  {
+   "msh": "peclif08.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 2.85739,
+   "axis_flips": [
+    1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.13915,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": 0.2664,
+   "texture_samples": 34
+  },
+  {
+   "msh": "peclif09.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 4.37995,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.13929,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": -0.0367,
+   "texture_samples": 78
+  },
+  {
+   "msh": "peclif10.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 2.01102,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.19971,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": 0.4344,
+   "texture_samples": 24
+  },
+  {
+   "msh": "peclif11.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 4.18131,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.15123,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": 0.1926,
+   "texture_samples": 66
+  },
+  {
+   "msh": "peclif12.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 3.91037,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.15695,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.0964,
+   "texture_samples": 76
+  },
+  {
+   "msh": "peclif13.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 3.14844,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.13166,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.363,
+   "texture_samples": 20
+  },
+  {
+   "msh": "peclif14.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 2.79984,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.13365,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.4324,
+   "texture_samples": 19
+  },
+  {
+   "msh": "peclif15.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 3.2282,
+   "axis_flips": [
+    1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.14783,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": -0.0817,
+   "texture_samples": 20
+  },
+  {
+   "msh": "peclif16.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 4.32894,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.13488,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.131,
+   "texture_samples": 42
+  },
+  {
+   "msh": "peclif17.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 2.80112,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.12638,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": 0.0328,
+   "texture_samples": 21
+  },
+  {
+   "msh": "peclif18.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 3.7378,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.11265,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": 0.2619,
+   "texture_samples": 39
+  },
+  {
+   "msh": "peclif19.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 3.26586,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.12373,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.2523,
+   "texture_samples": 31
+  },
+  {
+   "msh": "peclif20.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 2.51362,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.12849,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": -0.2066,
+   "texture_samples": 16
+  },
+  {
+   "msh": "peclif22.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 2.40156,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.1178,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": 0.2102,
+   "texture_samples": 20
+  },
+  {
+   "msh": "pecrack01.msh",
+   "bundle": "rend_environs__isdf0x-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 0.6798,
+   "axis_flips": [
+    1.0,
+    -1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.11861,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "pecrack02.msh",
+   "bundle": "rend_environs__isdf0x-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 1.26863,
+   "axis_flips": [
+    -1.0,
+    -1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.10481,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "pecrev01.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 2.48153,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.14937,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": 0.3387,
+   "texture_samples": 22
+  },
+  {
+   "msh": "pecrys04.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 1.96971,
+   "axis_flips": [
+    1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.1611,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": 0.2519,
+   "texture_samples": 14
+  },
+  {
+   "msh": "pepool01.msh",
+   "bundle": "misceffects__effects__environment-biometal_pool.2-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 0.96257,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.02059,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": 0.6726,
+   "texture_samples": 7
+  },
+  {
+   "msh": "perock01.msh",
+   "bundle": "pluto_environs__isdf01-perocks01.4-0",
+   "node_jaccard": 0.917,
+   "msh_scale": 1.09213,
+   "axis_flips": [
+    -1.0,
+    -1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.06573,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "petank00.msh",
+   "bundle": "PLUTO_BUILDINGS__WRECK-Main_tank_d01.9-0",
+   "node_jaccard": 0.667,
+   "msh_scale": 1.00549,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00135,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.9211,
+   "texture_samples": 468
+  },
+  {
+   "msh": "pluto.msh",
+   "bundle": "PLANETS__LORES-pluto.2-0",
+   "node_jaccard": 1.0,
+   "msh_scale": 1.0,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.0,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.9753,
+   "texture_samples": 480
+  },
+  {
+   "msh": "pspwn_1.msh",
+   "bundle": "PLUTO_BUILDINGS__version2-debris_computer.2-0",
+   "node_jaccard": 0.667,
+   "msh_scale": 0.33892,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.1088,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "rbdata00.msh",
+   "bundle": "REND_BUILDINGS__version2-RBdata_t.7-0",
+   "node_jaccard": 0.667,
+   "msh_scale": 1.0004,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.0001,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.6011,
+   "texture_samples": 1056
+  },
+  {
+   "msh": "rbruin01.msh",
+   "bundle": "REND_BUILDINGS__version2-RBRUIN01.1-0",
+   "node_jaccard": 0.667,
+   "msh_scale": 0.99442,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.0042,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.2141,
+   "texture_samples": 215
+  },
+  {
+   "msh": "rbruin02.msh",
+   "bundle": "REND_BUILDINGS__version2-RBRUIN02.1-0",
+   "node_jaccard": 0.571,
+   "msh_scale": 0.97887,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.01061,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": 0.1132,
+   "texture_samples": 103
+  },
+  {
+   "msh": "rbruin07.msh",
+   "bundle": "REND_BUILDINGS__version2-RBRUIN07.1-0",
+   "node_jaccard": 0.571,
+   "msh_scale": 0.9519,
+   "axis_flips": [
+    1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.16089,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "rcworm01.msh",
+   "bundle": "REND_CREATURES__low_res-worm.10-0",
+   "node_jaccard": 1.0,
+   "msh_scale": 1.0,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.0,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.896,
+   "texture_samples": 544
+  },
+  {
+   "msh": "rend.msh",
+   "bundle": "PLANETS__LORES-rend.5-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 1.0,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.0,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.4754,
+   "texture_samples": 960
+  },
+  {
+   "msh": "repool01.msh",
+   "bundle": "misceffects__effects__environment-biometal_pool.2-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 0.96257,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.02058,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": -0.1146,
+   "texture_samples": 7
+  },
+  {
+   "msh": "reslid01.msh",
+   "bundle": "rend_environs__isdf20-reslida1.23-0",
+   "node_jaccard": 0.812,
+   "msh_scale": 1.03143,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.01871,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.0783,
+   "texture_samples": 423
+  },
+  {
+   "msh": "reslida1.msh",
+   "bundle": "rend_environs__isdf20-reslida1.23-0",
+   "node_jaccard": 0.812,
+   "msh_scale": 1.0263,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.01701,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.048,
+   "texture_samples": 440
+  },
+  {
+   "msh": "retunn00.msh",
+   "bundle": "rend_environs__ISDF_14-retunnA0.3-0",
+   "node_jaccard": 0.727,
+   "msh_scale": 0.99365,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00786,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.288,
+   "texture_samples": 523
+  },
+  {
+   "msh": "ropilr01.msh",
+   "bundle": "PLUTO__prototype-terain_texture_test2.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 0.22003,
+   "axis_flips": [
+    1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.26765,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.0,
+   "texture_samples": 1
+  },
+  {
+   "msh": "rorock05.msh",
+   "bundle": "rend_environs__rocks-group_rocks.4-0",
+   "node_jaccard": 0.917,
+   "msh_scale": 0.99974,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 7e-05,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.8513,
+   "texture_samples": 240
+  },
+  {
+   "msh": "rorock06.msh",
+   "bundle": "rend_environs__rocks-group2_rocks.3-0",
+   "node_jaccard": 0.833,
+   "msh_scale": 0.99993,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.06134,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.117,
+   "texture_samples": 13
+  },
+  {
+   "msh": "sepool01.msh",
+   "bundle": "REND__version2-rerock01.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 0.75141,
+   "axis_flips": [
+    1.0,
+    -1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.18096,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": -0.3956,
+   "texture_samples": 6
+  },
+  {
+   "msh": "sgbzka_stand.msh",
+   "bundle": "Scion_GUN__version_lores-sgbzka_stand.4-0",
+   "node_jaccard": 0.75,
+   "msh_scale": 0.11919,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00307,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.8884,
+   "texture_samples": 231
+  },
+  {
+   "msh": "sggren00.msh",
+   "bundle": "SCION_PACK__grenade-sggren00_t.8-0",
+   "node_jaccard": 1.0,
+   "msh_scale": 0.11993,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00014,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.9559,
+   "texture_samples": 164
+  },
+  {
+   "msh": "sgjetp00.msh",
+   "bundle": "SCION_PACK__jetpack-sgjetp00_t.11-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 0.08673,
+   "axis_flips": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.0528,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.2139,
+   "texture_samples": 19
+  },
+  {
+   "msh": "sgsatc00.msh",
+   "bundle": "Scion_GUN__COCKPIT-satchel2_t.5-0",
+   "node_jaccard": 1.0,
+   "msh_scale": 0.12,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.0,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.8309,
+   "texture_samples": 183
+  },
+  {
+   "msh": "sgsatc01.msh",
+   "bundle": "Scion_GUN__COCKPIT-lowpol_satch.6-0",
+   "node_jaccard": 0.8,
+   "msh_scale": 0.0274,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.06153,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": 0.0691,
+   "texture_samples": 32
+  },
+  {
+   "msh": "slight02.msh",
+   "bundle": "PLUTO__OBJECT-storage_crate.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 7.44525,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.87417,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "soflag01.msh",
+   "bundle": "Multiplayer__Loot-flag.1-0",
+   "node_jaccard": 1.0,
+   "msh_scale": 0.99777,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.00425,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "spawn01.msh",
+   "bundle": "PLUTO_BUILDINGS__version2-debris_computer.2-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 0.31037,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 0.10536,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "sspilo_bazooka_crouch.msh",
+   "bundle": "SCION_icons__icon-sspilo.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 1.99397,
+   "axis_flips": [
+    1.0,
+    -1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.29283,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "sspilo_bazooka_death01.msh",
+   "bundle": "SCION_icons__icon-sspilo.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 1.99397,
+   "axis_flips": [
+    1.0,
+    -1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.29283,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "sspilo_bazooka_jump.msh",
+   "bundle": "SCION_icons__icon-sspilo.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 1.99397,
+   "axis_flips": [
+    1.0,
+    -1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.29283,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "sspilo_bazooka_run.msh",
+   "bundle": "SCION_icons__icon-sspilo.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 1.99397,
+   "axis_flips": [
+    1.0,
+    -1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.29283,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "sspilo_bazooka_skel.msh",
+   "bundle": "SCION_icons__icon-sspilo.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 1.99397,
+   "axis_flips": [
+    1.0,
+    -1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.29283,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "sspilo_rifle_crouch.msh",
+   "bundle": "SCION_icons__icon-sspilo.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 1.99397,
+   "axis_flips": [
+    1.0,
+    -1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.29283,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "sspilo_rifle_death01.msh",
+   "bundle": "SCION_icons__icon-sspilo.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 1.99397,
+   "axis_flips": [
+    1.0,
+    -1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.29283,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "sspilo_rifle_jump.msh",
+   "bundle": "SCION_icons__icon-sspilo.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 1.99397,
+   "axis_flips": [
+    1.0,
+    -1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.29283,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "sspilo_rifle_run.msh",
+   "bundle": "SCION_icons__icon-sspilo.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 1.99397,
+   "axis_flips": [
+    1.0,
+    -1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.29283,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "sspilo_rifle_skel.msh",
+   "bundle": "SCION_icons__icon-sspilo.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 0.23855,
+   "axis_flips": [
+    -1.0,
+    -1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.29494,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "swbzka_cockpit_stand.msh",
+   "bundle": "Scion_GUN__version3-bazooka_stand_t.1-0",
+   "node_jaccard": 0.667,
+   "msh_scale": 0.11732,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.01224,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.611,
+   "texture_samples": 574
+  },
+  {
+   "msh": "swrifl_cockpit_run.msh",
+   "bundle": "Scion_GUN__version3-rifle_stand.6-0",
+   "node_jaccard": 0.765,
+   "msh_scale": 0.98486,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00844,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.5632,
+   "texture_samples": 824
+  },
+  {
+   "msh": "swrifl_cockpit_snipe.msh",
+   "bundle": "Scion_GUN__version3-rifle_stand.6-0",
+   "node_jaccard": 0.765,
+   "msh_scale": 0.98486,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00843,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.5633,
+   "texture_samples": 824
+  },
+  {
+   "msh": "swrifl_cockpit_stand.msh",
+   "bundle": "Scion_GUN__version3-rifle_stand.6-0",
+   "node_jaccard": 0.765,
+   "msh_scale": 0.11818,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.00844,
+   "msh_uv_origin": "top_left",
+   "colour_correlation": 0.5633,
+   "texture_samples": 824
+  },
+  {
+   "msh": "tepool01.msh",
+   "bundle": "misceffects__effects__environment-biometal_pool.2-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 0.96257,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.02061,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": -0.0498,
+   "texture_samples": 7
+  },
+  {
+   "msh": "tospir01.msh",
+   "bundle": "TITAN__OBJECT-tispir01.3-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 1.11891,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.02691,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "tospir02.msh",
+   "bundle": "shell__interface___HUD-reticle_7.1-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 91.95507,
+   "axis_flips": [
+    1.0,
+    -1.0,
+    -1.0
+   ],
+   "geometry_mean_distance_rel": 10.848,
+   "msh_uv_origin": null,
+   "colour_correlation": null,
+   "texture_samples": 0
+  },
+  {
+   "msh": "uepool01.msh",
+   "bundle": "misceffects__effects__environment-biometal_pool.2-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 0.96257,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.02061,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": -0.2728,
+   "texture_samples": 7
+  },
+  {
+   "msh": "wepool01.msh",
+   "bundle": "misceffects__effects__environment-biometal_pool.2-0",
+   "node_jaccard": 0.5,
+   "msh_scale": 0.96257,
+   "axis_flips": [
+    -1.0,
+    1.0,
+    1.0
+   ],
+   "geometry_mean_distance_rel": 0.02061,
+   "msh_uv_origin": "bottom_left",
+   "colour_correlation": 0.0284,
+   "texture_samples": 7
+  }
+ ]
+}

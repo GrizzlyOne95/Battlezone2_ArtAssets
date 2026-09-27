@@ -16,6 +16,7 @@ generation remains a Blender/source-format concern.
 from __future__ import annotations
 
 import argparse
+import os
 import json
 import re
 import struct
@@ -260,7 +261,67 @@ def _is_exact_reference(raw_path: str, member: str) -> bool:
     return member.lower() in {candidate.lower() for candidate in _image_candidates(tail)}
 
 
+RETAIL_PICTURES_ROOT = Path(
+    os.environ.get("BZ2_RETAIL_PICTURES") or Path(__file__).resolve().parents[1] / ".bz2-source-cache" / "retail_bz2"
+)
+RETAIL_PAK_PRIORITY = ("data", "smtex", "bumps")
+_RETAIL_INDEX: dict[str, list[str]] | None = None
+
+
+def _retail_index() -> dict[str, list[str]]:
+    """Picture stem (lower case) -> retail members, best first (data > smtex > bumps, .pic first)."""
+    global _RETAIL_INDEX
+    if _RETAIL_INDEX is None:
+        index: dict[str, list[str]] = {}
+        if RETAIL_PICTURES_ROOT.is_dir():
+            for path in RETAIL_PICTURES_ROOT.rglob("*"):
+                if path.suffix.lower() in {".pic", ".tga", ".bmp"}:
+                    member = path.relative_to(RETAIL_PICTURES_ROOT).as_posix()
+                    index.setdefault(path.stem.lower(), []).append(member)
+
+            def rank(member: str) -> tuple[int, int, str]:
+                pak = member.split("/", 1)[0].lower()
+                order = RETAIL_PAK_PRIORITY.index(pak) if pak in RETAIL_PAK_PRIORITY else len(RETAIL_PAK_PRIORITY)
+                return (order, Path(member).suffix.lower() != ".pic", member)
+
+            for members in index.values():
+                members.sort(key=rank)
+        _RETAIL_INDEX = index
+    return _RETAIL_INDEX
+
+
+def resolve_retail_picture(raw_path: str) -> tuple[dscmat.SourceStore, str] | None:
+    """The shipped game's copy of a picture the art archive lacks (see bz2_retail_pictures.py)."""
+    stem = Path(raw_path.replace("\\", "/").strip()).name
+    stem = re.sub(r"\.(pic|tga|bmp)$", "", stem, flags=re.IGNORECASE).lower()
+    members = _retail_index().get(stem)
+    if not members:
+        return None
+    return dscmat.open_store(RETAIL_PICTURES_ROOT), members[0]
+
+
 def resolve_picture_for_crop(
+    store: dscmat.SourceStore,
+    raw_path: str,
+    scene_prefix: str,
+    crop: dict | None,
+    fallback_store: dscmat.SourceStore | None = None,
+) -> tuple[dscmat.SourceStore, str | None, dict]:
+    """Resolve from the art archive, else from the retail game's shipped pictures."""
+    picture_store, picture, provenance = _resolve_in_archive(store, raw_path, scene_prefix, crop, fallback_store)
+    if picture is None:
+        retail = resolve_retail_picture(raw_path)
+        if retail is not None:
+            picture_store, picture = retail
+            provenance = {
+                "picture_resolution": "retail_game_supplement",
+                "picture_source_store": "bz2_retail_1.0",
+                "note": "absent from the art archive; shipped game derivative (resized), not the artist original",
+            }
+    return picture_store, picture, provenance
+
+
+def _resolve_in_archive(
     store: dscmat.SourceStore,
     raw_path: str,
     scene_prefix: str,

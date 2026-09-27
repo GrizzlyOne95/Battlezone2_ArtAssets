@@ -279,6 +279,8 @@ TXMP +60..+66 crop                 source-image window
 TXMP +76/+78/+80...                auxiliary state, semantics unresolved
 ```
 
+**Update (2026-09-26, shipped `.msh` evidence):** a stored CurrentUV already includes the `+90` rotation. Applying the πY rotation to it again mirror-textured the worm, satchel, grenade launcher and APC wreck compared with the shipped game models. Leaving it out improved 22 of 74 textured models and worsened none (`docs/retail-ground-truth.md`). The rotation still applies to generated projections.
+
 A critical Softimage behavior also limits how `+90` can be validated: raw projection UVs and projection-definition transformation are separate until the projection transformation is frozen/baked. Raw HRC UVs therefore cannot by themselves determine whether the `+90` rotation should be applied direct/inverse or in what exact UVW order.
 
 ## Production reconstruction policy
