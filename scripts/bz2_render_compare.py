@@ -95,9 +95,27 @@ def reference_candidates(bundle_dir: Path) -> list[str]:
     if not output:
         return []
     lowered = output.lower()
-    relative = output[lowered.index(MODELS_MARKER) + len(MODELS_MARKER):] if MODELS_MARKER in lowered else output.lstrip("/")
+    if MODELS_MARKER in lowered:
+        relative = output[lowered.index(MODELS_MARKER) + len(MODELS_MARKER):]
+    elif "/render_pictures/" in lowered:
+        # an artist's local drive (E:/WALKER/walkerstuff/walker_final/...): keep
+        # "<group>/RENDER_PICTURES/<name>" and match it as a member-path suffix
+        at = lowered.rindex("/render_pictures/")
+        group = output[:at].rstrip("/").rsplit("/", 1)[-1]
+        relative = "*/" + group + output[at:]
+    else:
+        relative = output.lstrip("/")
     start, end = int(frames[0]), int(frames[1])
     return [f"{relative}.{frame}.pic" for frame in range(start, max(start, end) + 1)]
+
+
+def _match_member(members: dict[str, str], candidate: str) -> str | None:
+    key = candidate.lower()
+    if not key.startswith("*/"):
+        return members.get(key)
+    suffix = key[1:]
+    found = sorted(name for lower, name in members.items() if lower.endswith(suffix) or lower == suffix[1:])
+    return found[0] if found else None
 
 
 def load_reference(bundle_dir: Path, source_root: Path) -> tuple[np.ndarray, str] | None:
@@ -105,7 +123,7 @@ def load_reference(bundle_dir: Path, source_root: Path) -> tuple[np.ndarray, str
     tree, prefix = _source_tree(bundle_dir, source_root)
     members = _members(tree)
     for candidate in reference_candidates(bundle_dir):
-        name = members.get(candidate.lower())
+        name = _match_member(members, candidate)
         if name is None:
             continue
         data = tree.read(name) if isinstance(tree, zipfile.ZipFile) else (tree / name).read_bytes()
@@ -503,7 +521,7 @@ def find_pairs(reconstructed: Path, source_root: Path) -> list[Path]:
             continue
         tree, _prefix = _source_tree(bundle, source_root)
         members = _members(tree)
-        if any(candidate.lower() in members for candidate in candidates):
+        if any(_match_member(members, candidate) for candidate in candidates):
             pairs.append(bundle)
     return pairs
 

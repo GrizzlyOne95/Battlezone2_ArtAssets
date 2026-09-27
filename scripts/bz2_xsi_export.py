@@ -385,11 +385,49 @@ class TextureLibrary:
 # texture, so masked/scaled textures are baked against the material colour.
 
 
+# Reflection maps (TXMP codes 7/8) on reflective materials are approximated
+# by a view-independent, normal-based environment lookup blended at the MTR
+# reflectivity. Anchor: walker_final/walker_final_highres.1 and lowres.1:
+# all 7 walker scenes improve (error 0.62 -> 0.60); the glass visor
+# (reflectivity 1, black diffuse) shows its cavern reflection. No other
+# render or shipped .msh score changes.
+BAKE_REFLECTIONS = True
+
+
+def _reflectivity(material: dict | None) -> float:
+    mtr = ((material or {}).get("extras") or {}).get("bz2_softimage_mtr") or {}
+    return float(mtr.get("reflectivity") or 0.0)
+
+
+def _reflection_layers(layer_record: dict | None, material: dict | None) -> list[tuple[str, dict]]:
+    if not BAKE_REFLECTIONS or _reflectivity(material) <= 1.0e-6:
+        return []
+    return [
+        ("reflection", layer)
+        for layer in (layer_record or {}).get("layers") or []
+        if layer.get("uri") and int(layer.get("projection_or_mapping_code_candidate") or 0) in {7, 8}
+    ]
+
+
+def environment_uv(corner_normals: np.ndarray) -> np.ndarray:
+    """Spherical environment lookup by surface normal (view-independent reflection)."""
+    n = corner_normals / np.maximum(np.linalg.norm(corner_normals, axis=-1, keepdims=True), 1.0e-12)
+    u = 0.5 + np.arctan2(n[..., 0], n[..., 2]) / (2.0 * np.pi)
+    v = 0.5 + np.arcsin(np.clip(n[..., 1], -1.0, 1.0)) / np.pi
+    return np.stack([u, v], axis=-1)
+
+
+# SI_Texture2D "blending" is +26 float 7. Float 5 is ~always 1.0, while float
+# 7 varies like a blend slider. Using it improves both TANK.1 renders
+# (0.549 -> 0.538) with no regressions.
+BLENDING_INDEX = 7
+
+
 def _texture_blend(layer: dict | None) -> tuple[int, float, float]:
     raw = (layer or {}).get("field_f32_be_26_54_raw") or []
     mode = int((layer or {}).get("field_u16_be_86") or 3)
     diffuse = float(raw[1]) if len(raw) > 1 else 1.0
-    blending = float(raw[5]) if len(raw) > 5 else 1.0
+    blending = float(raw[BLENDING_INDEX]) if len(raw) > BLENDING_INDEX else 1.0
     return mode, blending, diffuse
 
 
@@ -638,13 +676,21 @@ def export_bundle(
         used_names.add(name.lower())
         return name
 
-    def bake_stack(stack, positions, triangles, corner_uv, node_points, node_uv_usable, material, frame_name, p_index):
+    def bake_stack(stack, positions, triangles, corner_uv, node_points, node_uv_usable, material, frame_name, p_index, normals=None):
         """Composite a multi-layer stack into a per-primitive atlas; None falls back to one layer."""
         bake_layers_in: list[texture_bake.Layer] = []
         described = []
         for kind, item in stack:
             image = textures.load(item.get("uri"))
             if image is None:
+                continue
+            if kind == "reflection":
+                if normals is None:
+                    continue
+                bake_layers_in.append(
+                    texture_bake.Layer(image, environment_uv(np.asarray(normals, np.float64)[triangles]), 3, _reflectivity(material), 1.0, item.get("texture_object", ""))
+                )
+                described.append({"scope": "reflection_approximation", "texture_object": item.get("texture_object"), "picture": item.get("resolved_picture"), "blending": _reflectivity(material)})
                 continue
             try:
                 layer_uv, _decision = effective_uvs(
@@ -675,7 +721,7 @@ def export_bundle(
                     "inherited_from_model": item.get("inherited_from_model"),
                 }
             )
-        if len(bake_layers_in) < 2:
+        if len(bake_layers_in) < 2 and not any(d.get("scope") == "reflection_approximation" for d in described):
             return None
         corners = positions[triangles].astype(np.float64)
         pixels, atlas_uv = texture_bake.bake(corners, bake_layers_in, _material_rgb(material))
@@ -739,8 +785,14 @@ def export_bundle(
             corner_uv = uv[triangles] if uv is not None else None
             baked = None
             stack = _layer_stack(layer_records.get(material_index), model_record) if bake_layers else []
-            if len(stack) >= 2:
-                baked = bake_stack(stack, positions, triangles, corner_uv, node_points, node_uv_usable, material, frame_name, p_index)
+            reflections = _reflection_layers(layer_records.get(material_index), material) if bake_layers else []
+            if reflections and len(stack) < 2:
+                # a lone diffuse layer must join the bake so the reflection composites over it
+                single = _base_layer(layer_records.get(material_index))
+                if not stack and single is not None and _drives_diffuse(single):
+                    stack = [("code401", single)]
+            if len(stack) >= 2 or reflections:
+                baked = bake_stack(stack + reflections, positions, triangles, corner_uv, node_points, node_uv_usable, material, frame_name, p_index, normals)
             if baked is not None:
                 texture_file, tri_uv = baked
                 uv_decisions["baked_layer_composite"] = uv_decisions.get("baked_layer_composite", 0) + 1
