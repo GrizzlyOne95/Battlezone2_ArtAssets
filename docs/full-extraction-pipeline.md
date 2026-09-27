@@ -297,3 +297,19 @@ The pipeline is operational without claiming every original Softimage/Mental Ray
 - renderer-specific Mental Ray, lens-shader, reflection and FxDirector effects.
 
 These should continue as additive fidelity stages rather than blocking already understood geometry/material/texture extraction.
+
+## Ready-to-open .blend files
+
+`scripts/bz2_make_blends.py` writes `<scene>.blend` into every bundle that has an engine export (1,165 of 1,180), running Blender in parallel:
+
+```bash
+python scripts/bz2_make_blends.py artifacts/reconstructed --jobs 12
+```
+
+Each file is built by `scripts/blender_engine_blend.py` from the engine glTF twin, so its model, baked textures and UVs are identical to the `.xsi`. It includes:
+- the recovered Softimage camera, with vertical FOV;
+- the scene's lights as point lights, whose energy is scaled to distance and shared across the lights;
+- STS ambience as the world colour and the STS render resolution;
+- a Material Preview viewport framed on the model.
+
+Texture paths are relative, so a bundle folder can be copied elsewhere and still opens with textures. Files are skipped when newer than their glTF; `--force` rebuilds them. Results are logged to `artifacts/reconstructed/blend_build.json`.
