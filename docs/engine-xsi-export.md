@@ -141,11 +141,25 @@ Softimage render visibility is not decodable from the DSC, HRC, MTR or STS. `dat
 
 Every engine export also writes `<scene>.gltf` next to the `.xsi`. It is the same flattened model: the frame hierarchy, rigid matrices, meshes, and one baked texture per material as PNG, with V flipped to glTF's top-left convention and Softimage-native Y-up axes. Blender's glTF importer renders it through the recovered TANK.1 camera with 0.9999 coverage IoU against the harness render. glTF, Blender and FBX workflows therefore get exactly what the engine gets, while `scene.gltf` stays the source-fidelity reconstruction.
 
+### Blending factor and reflection approximation
+
+- **Blending is +26 float 7.** The shipped Stasis `.xsi` has blending 1.0, and float 5 and float 7 both read 1.0 there, so it can't tell them apart. Float 5 is ~1.0 almost everywhere, while float 7 varies like a blend slider. Using float 7 improves both TANK.1 renders (error 0.549 → 0.538) with no regressions.
+- **Reflection maps on reflective materials are baked as a normal-based environment lookup.** These are TXMP codes 7/8, e.g. the walker's glass visor, which is black with reflectivity 1 over `cavern`, and the platinum/chrome parts. The lookup is blended at the MTR reflectivity. It is view-independent, so it approximates the look rather than reproducing mental ray's reflections. It improves all 7 walker_final renders (error 0.62 → 0.60) and changes nothing else.
+- **Local-drive render paths:** the harness also matches renders whose STS output is on an artist's drive (`E:/WALKER/walkerstuff/walker_final/RENDER_PICTURES/...`) by the `<group>/RENDER_PICTURES/<name>` tail. This adds the walker_final scenes 11–20 as references.
+
+### Checked and not changed
+
+- **Model-local vs material texture precedence:** skipping model-local textures on polygons whose material has its own texture changed no score.
+- **Generated projection codes 4 and 5:** swapping spherical and cylindrical gave mixed results against the shipped `.msh` models, so both stay as they are.
+- **Stored UVs for code-400 codes 4 and 5:** never applicable, because those meshes have no stored UVs.
+
 ### Still open
 
 - **Reflection maps** (special modes 7/8, diffuse factor 0, e.g. the walker visor's orange `cavern` reflection) are not reproduced. The engines' own environment/reflection material setup is the natural target.
 - **Glow/luminous effects beyond texture colour** are not reproduced. This includes the walker's blue foot glow: every intensity-mask definition tested (luminance × alpha, luminance, mean RGB, max RGB) scored within noise against `walker.1`.
 - **Procedural 3D textures** (`TEXTURES3D`, relation 501: `cloudy`, `clouds`, `stars`) are not evaluated. They occur in 46 of 1139 scenes, all cinematic (outros, wormhole, loading/splash screens), never in a unit or building model.
 - **Poses from animated frames**: `walka.0` (box-cover walker) and `walker.1` (a later Carey revision) differ in pose, not texture.
+- **Unassigned library textures:** Softimage library textures with no picture (`noIcon`) have none anywhere in the archive; 55 armor/bump/spec objects, e.g. the pilot figure on `Textured-TankBaseFinal3`. Those parts are untextured in every saved version.
+- **Walker pistons and blue glow:** the walker pistons are still orange-striped where the render shows chrome with an orange ring. The chest grille and foot glow are blue in the render; the grille looks like a transparency effect over a blue part behind it.
 - **Pictures absent from the archive**: 46 of 88 missing names are now filled from the shipped game's textures (`docs/retail-ground-truth.md`). The remaining 42 are Softimage library pictures or unshipped prototype art.
 - **Stored UVs vs the texture matrix**: the shipped `.msh` models show that stored CurrentUVs already include the `SI_Texture2D` rotation, which is therefore no longer applied a second time (`docs/retail-ground-truth.md`).
