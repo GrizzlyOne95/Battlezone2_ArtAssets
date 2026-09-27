@@ -8,7 +8,7 @@ sys.path.insert(0,str(ROOT/'scripts'))
 import bz2_projection_uv as uv
 
 class Code401CurrentUVEffectsTests(unittest.TestCase):
-    def test_stasis_pi_y_mirrors_u_without_mutating_input(self):
+    def test_stored_currentuv_ignores_texture_matrix_rotation(self):
         p={
             "relation_code":401,
             "si_texture2d_matrix_rotation_xyz_radians":[0.0,math.pi,0.0],
@@ -20,7 +20,8 @@ class Code401CurrentUVEffectsTests(unittest.TestCase):
         }
         source=(0.25,0.75,0.0)
         out=uv.apply_current_uv_effects(source,p)
-        self.assertAlmostEqual(out[0],-0.25,places=6)
+        # stored UVs already include the rotation (shipped .msh evidence)
+        self.assertAlmostEqual(out[0],0.25,places=6)
         self.assertAlmostEqual(out[1],0.75,places=6)
         self.assertEqual(source,(0.25,0.75,0.0))
 
@@ -34,8 +35,8 @@ class Code401CurrentUVEffectsTests(unittest.TestCase):
             "si_texture2d_uv_scale":[0.5,2],
             "si_texture2d_uv_offset":[0.1,-0.2],
         }
-        u,v,w=uv.apply_current_uv_effects((1,0,0),p)
-        # (1,0) rotated 90 deg -> (0,1); repeat -> (0,3); texture scale/offset
+        u,v,w=uv.apply_current_uv_effects((0,1,0),p)
+        # rotation ignored for stored UVs: (0,1); repeat -> (0,3); texture scale/offset
         # move the texture: u = (u - o) / s, and V is placed from the picture's
         # top row: v = 1 - ((1 - v) - o) / s.
         self.assertAlmostEqual(u,(0-0.1)/0.5,places=6)
